@@ -1,4 +1,4 @@
-# Channels Cleaner
+# <img src="docs/media/logo.svg" width="40" height="40" align="top" alt=""> Channels Cleaner
 
 [![CI](https://github.com/asteroid-den/telegram-channels-cleaner/actions/workflows/ci.yml/badge.svg)](https://github.com/asteroid-den/telegram-channels-cleaner/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/telegram-channels-cleaner)](https://pypi.org/project/telegram-channels-cleaner/)
