@@ -9,6 +9,7 @@ import { useUiStore } from '@/stores/ui'
 
 import AccountMenu from './AccountMenu.vue'
 import AppIcon from './AppIcon.vue'
+import AppLogo from './AppLogo.vue'
 import DeckSettings from './DeckSettings.vue'
 import SummaryPill from './SummaryPill.vue'
 
@@ -30,9 +31,7 @@ const onDeck = computed(() => auth.authorized && route.name === 'deck' && deck.l
       :aria-label="t('app.name')"
       class="flex shrink-0 items-center gap-2.5 font-display text-[15px] font-bold"
     >
-      <span
-        class="h-[22px] w-[22px] rounded-md bg-gradient-to-br from-ch to-ch2 transition-colors duration-500"
-      />
+      <AppLogo />
       <span>{{ t('app.name') }}</span>
     </RouterLink>
     <span v-if="ui.mock" class="tag bg-warn-soft text-warn">MOCK</span>
