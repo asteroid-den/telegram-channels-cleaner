@@ -1,3 +1,5 @@
+import socket
+
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import StreamingResponse
 
@@ -90,7 +92,7 @@ async def post_claim_pairing(
     token, code = ctx.network.claim(body.token, request.headers.get("user-agent", ""), client.host if client else None)
     # Plain http in the home network: no Secure flag. Strict: no other site gets the browser to send it
     response.set_cookie(COOKIE, token, max_age=COOKIE_MAX_AGE, httponly=True, samesite="strict")
-    return models.PairingResponse(status="waiting", code=code)
+    return models.PairingResponse(status="waiting", code=code, computer=socket.gethostname())
 
 
 @pairing_router.get("", responses=errors.error_responses())
@@ -99,9 +101,9 @@ async def get_pairing(request: Request, ctx: ContextDep) -> models.PairingRespon
     token = request.cookies.get(COOKIE)
 
     if ctx.network.device(token) is not None:
-        return models.PairingResponse(status="paired", code=None)
+        return models.PairingResponse(status="paired", code=None, computer=socket.gethostname())
 
     if pairing := ctx.network.waiting(token):
-        return models.PairingResponse(status="waiting", code=pairing.code)
+        return models.PairingResponse(status="waiting", code=pairing.code, computer=socket.gethostname())
 
     raise errors.DeviceNotPaired

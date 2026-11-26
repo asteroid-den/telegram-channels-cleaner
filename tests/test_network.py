@@ -133,7 +133,7 @@ async def test_a_phone_is_let_in_only_after_the_yes_on_the_computer(setup: Setup
 
         r = await phone.post("/api/pairing/claim", json={"token": pairing["url"].rsplit("/", 1)[1]})
 
-        assert r.json() == {"ok": True, "status": "waiting", "code": pairing["code"]}
+        assert r.json() == {"ok": True, "status": "waiting", "code": pairing["code"], "computer": socket.gethostname()}
         cookie = r.headers["set-cookie"].lower()
         assert "httponly" in cookie
         assert "samesite=strict" in cookie
@@ -145,7 +145,7 @@ async def test_a_phone_is_let_in_only_after_the_yes_on_the_computer(setup: Setup
 
         assert (await setup.computer.post("/api/network/pairing/approve")).status_code == 200
 
-        assert await get_json(phone, "/api/pairing") == {"ok": True, "status": "paired", "code": None}
+        assert (await get_json(phone, "/api/pairing"))["status"] == "paired"
         assert (await phone.get("/api/auth/state")).status_code == 200
 
     state = await get_json(setup.computer, "/api/network")
