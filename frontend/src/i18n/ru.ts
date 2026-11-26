@@ -216,6 +216,7 @@ const ru: typeof en = {
     was: 'Было',
     loupePosition: '№ {n} из {total}',
     loupeClick: 'клик — вернуться сюда',
+    loupeTap: 'нажмите на канал — вернуться к нему; долгое нажатие на полосе — в другое место',
     loupeWheel: 'колесо — листать',
     appliedMark: 'применено',
     pulseTitle: 'Активность · 26 недель',
@@ -277,6 +278,12 @@ const ru: typeof en = {
     syncing: 'Обновляем список…',
   },
   actions: {
+    // the round buttons on a phone: a word or two under a 52 px circle
+    unsubscribeShort: 'Отписка',
+    transferShort: 'Передать',
+    freeLinkShort: 'Ссылка',
+    muteShort: 'Мут',
+    archiveShort: 'Архив',
     unsubscribe: 'Отписаться',
     keep: 'Оставить',
     skip: 'Потом',

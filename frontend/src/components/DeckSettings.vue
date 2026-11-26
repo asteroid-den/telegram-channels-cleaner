@@ -4,12 +4,14 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import type { ArchiveFilter, ChatKind, RoleFilter, SortMode } from '@/api/types'
+import { useNarrow } from '@/composables/useNarrow'
 import { useDeckStore } from '@/stores/deck'
 
 import AppIcon from './AppIcon.vue'
 
 const { t } = useI18n()
 const deck = useDeckStore()
+const narrow = useNarrow()
 
 const open = ref(false)
 // Esc closes the menu wherever the focus is
@@ -38,7 +40,12 @@ function reset() {
   <div class="relative shrink-0">
     <!-- While the menu is open a click anywhere else only closes it: this catches the pointer
          before the deck (swipe, side zones) can read it as a decision -->
-    <div v-if="open" class="fixed inset-0 z-30" aria-hidden="true" @click="open = false" />
+    <div
+      v-if="open"
+      class="fixed inset-0 z-30 max-md:bg-black/55"
+      aria-hidden="true"
+      @click="open = false"
+    />
 
     <button
       class="relative z-40 flex h-[30px] items-center gap-2 rounded-lg border border-border-2 px-3 text-[12.5px] transition-colors hover:bg-surface-2"
@@ -55,9 +62,14 @@ function reset() {
         <span class="text-faint">·</span>
       </template>
       <span>{{ t(`settings.archiveShort.${deck.prefs.archive}`) }}</span>
-      <span class="text-faint">·</span>
-      <span>{{ t(`settings.sort.${deck.prefs.sort}`) }}</span>
-      <AppIcon v-if="deck.prefs.reverse" name="arrows" :size="12" class="text-muted" />
+      <span class="text-faint max-md:hidden">·</span>
+      <span class="max-md:hidden">{{ t(`settings.sort.${deck.prefs.sort}`) }}</span>
+      <AppIcon
+        v-if="deck.prefs.reverse"
+        name="arrows"
+        :size="12"
+        class="text-muted max-md:hidden"
+      />
       <AppIcon
         name="chevron"
         :size="12"
@@ -72,14 +84,14 @@ function reset() {
     </button>
 
     <Transition
-      enter-from-class="opacity-0 -translate-y-1"
-      leave-to-class="opacity-0 -translate-y-1"
-      enter-active-class="transition duration-150"
-      leave-active-class="transition duration-100"
+      :enter-from-class="narrow ? 'translate-y-full' : 'opacity-0 -translate-y-1'"
+      :leave-to-class="narrow ? 'translate-y-full' : 'opacity-0 -translate-y-1'"
+      :enter-active-class="narrow ? 'transition duration-250 ease-out' : 'transition duration-150'"
+      :leave-active-class="narrow ? 'transition duration-200 ease-in' : 'transition duration-100'"
     >
       <div
         v-if="open"
-        class="absolute left-0 z-40 mt-2 w-[330px] rounded-xl border border-border-2 bg-surface p-3.5 shadow-card"
+        class="sheet-narrow absolute left-0 z-40 mt-2 w-[330px] rounded-xl border border-border-2 bg-surface p-3.5 shadow-card"
         role="group"
         :aria-label="t('settings.title')"
         data-hotkeys-off

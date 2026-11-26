@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import type { Channel, Decision } from '@/api/types'
+import { useNarrow } from '@/composables/useNarrow'
 import { relativeTime } from '@/utils/format'
 
 import AppIcon, { type IconName } from './AppIcon.vue'
@@ -16,6 +17,8 @@ import ChannelAvatar from './ChannelAvatar.vue'
 const props = defineProps<{ trail: Channel[]; center: number; focus: number }>()
 const emit = defineEmits<{ focus: [index: number]; pick: [index: number] }>()
 const { t, locale } = useI18n()
+// On a phone the 15 avatars sit closer, so the loupe fits the screen
+const narrow = useNarrow()
 
 const HALF = 7
 const lo = computed(() =>
@@ -53,7 +56,9 @@ function place(i: number) {
   const k = i - props.focus
   const slot = i - (lo.value + HALF)
   return {
-    outer: { transform: `translateX(calc(-50% + ${slot * 34 + Math.sign(k) * 14}px))` },
+    outer: {
+      transform: `translateX(calc(-50% + ${slot * (narrow.value ? 20 : 34) + Math.sign(k) * (narrow.value ? 10 : 14)}px))`,
+    },
     inner: {
       transform:
         k === 0 ? 'scale(1.12)' : `perspective(500px) rotateY(${k < 0 ? 40 : -40}deg) scale(.9)`,
@@ -65,7 +70,9 @@ function place(i: number) {
 </script>
 
 <template>
-  <div class="w-[560px] rounded-2xl border border-border-2 bg-surface p-4 pb-3 shadow-card">
+  <div
+    class="w-[560px] rounded-2xl border border-border-2 bg-surface p-4 pb-3 shadow-card max-md:w-[calc(100vw-24px)]"
+  >
     <div class="relative h-[92px]" @pointerdown.prevent="emit('pick', focus)">
       <div
         v-for="{ i, channel } in shown"
@@ -85,7 +92,7 @@ function place(i: number) {
               :color-index="channel.color_index"
               :title="channel.title"
               :src="channel.avatar_url"
-              :size="58"
+              :size="narrow ? 44 : 58"
               rounded="14px"
             />
           </div>
@@ -117,9 +124,12 @@ function place(i: number) {
       </small>
     </div>
     <div class="mt-2 flex gap-3.5 text-[12px] text-faint">
-      <span>{{ t('deck.loupeClick') }}</span>
-      <span>{{ t('deck.loupeWheel') }}</span>
-      <span>Ctrl ← / →</span>
+      <span v-if="narrow">{{ t('deck.loupeTap') }}</span>
+      <template v-else>
+        <span>{{ t('deck.loupeClick') }}</span>
+        <span>{{ t('deck.loupeWheel') }}</span>
+        <span>Ctrl ← / →</span>
+      </template>
     </div>
   </div>
 </template>

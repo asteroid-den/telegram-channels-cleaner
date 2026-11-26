@@ -3,12 +3,13 @@ import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from
 import { useRouter } from 'vue-router'
 
 import type { ChatAdmin, Decision } from '@/api/types'
-import AppIcon from '@/components/AppIcon.vue'
+import AppIcon, { type IconName } from '@/components/AppIcon.vue'
 import DeckProgress from '@/components/DeckProgress.vue'
 import DeckSearch from '@/components/DeckSearch.vue'
 import SuccessorPicker from '@/components/SuccessorPicker.vue'
 import SwipeDeck from '@/components/SwipeDeck.vue'
 import { useChannelColor } from '@/composables/useChannelColor'
+import { useNarrow } from '@/composables/useNarrow'
 import { useKindI18n } from '@/composables/useKindI18n'
 import { useHotkeys } from '@/composables/useHotkeys'
 import { useApplyStore } from '@/stores/apply'
@@ -19,6 +20,7 @@ const deck = useDeckStore()
 const apply = useApplyStore()
 const router = useRouter()
 const swiper = useTemplateRef<InstanceType<typeof SwipeDeck>>('swiper')
+const narrow = useNarrow()
 
 useChannelColor(computed(() => deck.current))
 
@@ -213,6 +215,28 @@ const KEYS = computed<Key[]>(() => [
   },
 ])
 
+/** On a phone the keys become round buttons under the thumb: an icon each, the label under it. */
+const ROUND_ICON: Record<string, IconName> = {
+  unsubscribe: 'x',
+  skip: 'arrowDown',
+  free_link: 'link',
+  mute: 'bellOff',
+  archive: 'archive',
+  keep: 'check',
+}
+const ROUND_SHORT = computed<Record<string, string>>(() => ({
+  unsubscribe: owned.value
+    ? 'actions.transferShort'
+    : deck.current?.role === 'admin'
+      ? 'actions.leave'
+      : 'actions.unsubscribeShort',
+  skip: 'actions.skip',
+  free_link: 'actions.freeLinkShort',
+  mute: 'actions.muteShort',
+  archive: 'actions.archiveShort',
+  keep: 'actions.keep',
+}))
+
 const zoneLabel = (id: 'keep' | 'unsubscribe') =>
   id === 'keep'
     ? 'deck.zoneKeep'
@@ -230,8 +254,11 @@ const ZONES = [
 
 <template>
   <!-- overflow-y-clip: the cursor glow of the side zones runs past the zone, but not past the page -->
-  <div class="flex flex-1 flex-col overflow-y-clip">
-    <div v-if="deck.loaded && !showSync" class="relative z-20 flex justify-center px-6 pt-4">
+  <div class="flex flex-1 flex-col overflow-x-clip overflow-y-clip">
+    <div
+      v-if="deck.loaded && !showSync"
+      class="relative z-20 flex justify-center px-6 pt-4 max-md:px-4 max-md:pt-2.5"
+    >
       <div class="w-full max-w-[760px]"><DeckProgress /></div>
     </div>
 
@@ -297,13 +324,15 @@ const ZONES = [
         </template>
       </p>
 
-      <div class="relative w-full flex-1 pt-8">
+      <div
+        class="relative w-full flex-1 pt-8 max-md:flex max-md:flex-col max-md:justify-center max-md:pt-3"
+      >
         <p
           v-if="deck.rewinding && deck.cursor !== null"
           class="absolute top-2 left-1/2 z-10 -translate-x-1/2 text-[12.5px] whitespace-nowrap text-muted"
         >
           {{ t('deck.rewinding', { n: deck.cursor + 1, total: deck.trail.length }) }}
-          <span class="text-faint">· Ctrl ← / →</span>
+          <span class="text-faint max-md:hidden">· Ctrl ← / →</span>
         </p>
         <!-- clickable side zones: the same as swiping toward them -->
         <button
@@ -311,7 +340,7 @@ const ZONES = [
           :key="z.id"
           tabindex="-1"
           aria-hidden="true"
-          class="zone absolute inset-y-0 w-[calc(50%-260px)]"
+          class="zone absolute inset-y-0 w-[calc(50%-260px)] max-md:hidden"
           :class="z.cls"
           @pointermove="zoneMove"
           @pointerenter="zoneEnter(z.id)"
@@ -324,7 +353,11 @@ const ZONES = [
           </span>
         </button>
 
-        <div class="relative mx-auto h-[min(540px,calc(100vh-220px))] min-h-[420px] w-[460px]">
+        <!-- On a phone: the width less the margins, and a height that leaves no hollow in the card (the rest is air
+             around it); the next card peeks out below -->
+        <div
+          class="relative mx-auto h-[min(540px,calc(100vh-220px))] min-h-[420px] w-[460px] max-md:h-[min(500px,calc(100dvh-290px))] max-md:min-h-[340px] max-md:w-[calc(100vw-48px)]"
+        >
           <SwipeDeck
             ref="swiper"
             :items="deck.items"
@@ -337,7 +370,22 @@ const ZONES = [
         </div>
       </div>
 
-      <div class="relative z-10 flex flex-wrap justify-center gap-2 pt-4 pb-7">
+      <div
+        v-if="narrow"
+        class="relative z-10 flex justify-center gap-2.5 px-2 pt-4 pb-[calc(14px+env(safe-area-inset-bottom))]"
+      >
+        <button
+          v-for="k in KEYS"
+          :key="k.id"
+          class="round"
+          :class="[k.cls, pressed === k.id ? 'pressed' : '']"
+          @click="act(k.id)"
+        >
+          <span class="disc"><AppIcon :name="ROUND_ICON[k.id]!" :size="20" :stroke="2" /></span>
+          <span class="text-xs text-muted">{{ t(ROUND_SHORT[k.id]!) }}</span>
+        </button>
+      </div>
+      <div v-else class="relative z-10 flex flex-wrap justify-center gap-2 pt-4 pb-7">
         <button
           v-for="k in KEYS"
           :key="k.id"
@@ -362,7 +410,7 @@ const ZONES = [
       >
         <button
           v-if="deck.rewinding"
-          class="fixed right-6 bottom-6 z-20 flex items-center gap-2 rounded-full bg-text px-4 py-2.5 text-[13px] font-semibold text-bg shadow-card"
+          class="fixed right-6 bottom-6 z-20 flex max-md:right-1/2 max-md:bottom-[112px] max-md:translate-x-1/2 items-center gap-2 rounded-full bg-text px-4 py-2.5 text-[13px] font-semibold text-bg shadow-card"
           @click="deck.toEnd()"
         >
           {{ t('deck.toEnd', { n: deck.counts.undecided }) }}
@@ -403,6 +451,38 @@ const ZONES = [
 }
 
 /* The glow is not clipped by the zone: it runs on under the card, which covers it. */
+.round {
+  display: flex;
+  width: 52px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.round .disc {
+  display: flex;
+  width: 52px;
+  height: 52px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid var(--border-2);
+  background: var(--surface);
+  color: var(--muted);
+  transition: transform 0.12s;
+}
+.round.text-danger .disc {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 35%, transparent);
+}
+.round.text-success .disc {
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 35%, transparent);
+}
+.round:active .disc,
+.round.pressed .disc {
+  transform: scale(0.9);
+}
+
 .zone {
   --glow-r: 420px;
   cursor: pointer;

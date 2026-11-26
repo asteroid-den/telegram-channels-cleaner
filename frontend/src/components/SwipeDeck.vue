@@ -3,6 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import type { Channel, Decision } from '@/api/types'
+import { useNarrow } from '@/composables/useNarrow'
 import type { HistoryEntry } from '@/stores/deck'
 
 import AppIcon, { type IconName } from './AppIcon.vue'
@@ -86,25 +87,35 @@ const topStyle = computed(() => {
 })
 
 // The cards behind fan out to the left and right of the top one, so the deck has volume.
-const FAN = [
-  { x: 0, y: 0, r: 0 },
-  { x: -34, y: 10, r: -5 },
-  { x: 34, y: 10, r: 5 },
+const WIDE_FAN = [
+  { x: 0, y: 0, r: 0, s: 1 },
+  { x: -34, y: 10, r: -5, s: 1 },
+  { x: 34, y: 10, r: 5, s: 1 },
 ]
+// A phone has no room at the sides for the fan: the next card peeks out from under the top one, a little narrower,
+// and the one after it waits hidden behind
+const NARROW_FAN = [
+  { x: 0, y: 0, r: 0, s: 1 },
+  { x: 0, y: 18, r: 0, s: 0.94 },
+  { x: 0, y: 18, r: 0, s: 0.94 },
+]
+const narrow = useNarrow()
 
 function fanAt(level: number) {
-  const lo = FAN[Math.floor(level)]!
-  const hi = FAN[Math.min(FAN.length - 1, Math.ceil(level))]!
+  const fan = narrow.value ? NARROW_FAN : WIDE_FAN
+  const lo = fan[Math.floor(level)]!
+  const hi = fan[Math.min(fan.length - 1, Math.ceil(level))]!
   const k = level - Math.floor(level)
-  return { x: lo.x + (hi.x - lo.x) * k, y: lo.y + (hi.y - lo.y) * k, r: lo.r + (hi.r - lo.r) * k }
+  const mix = (a: number, b: number) => a + (b - a) * k
+  return { x: mix(lo.x, hi.x), y: mix(lo.y, hi.y), r: mix(lo.r, hi.r), s: mix(lo.s, hi.s) }
 }
 
 function depthStyle(depth: number) {
   // Cards behind move toward the front as the top card is dragged away.
   const pull = Math.min(1, Math.hypot(dx.value, dy.value) / 220) * (flying.value ? 1 : 0.6)
-  const { x, y, r } = fanAt(Math.max(0, depth - (flying.value ? 1 : pull)))
+  const { x, y, r, s } = fanAt(Math.max(0, depth - (flying.value ? 1 : pull)))
   return {
-    transform: `translate(${x}px, ${y}px) rotate(${r}deg)`,
+    transform: `translate(${x}px, ${y}px) rotate(${r}deg) scale(${s})`,
     transformOrigin: '50% 85%',
     transition: 'transform 0.35s cubic-bezier(.2,.8,.2,1)',
   }

@@ -95,8 +95,8 @@ async function logout(wipe: boolean) {
       @click="open = !open"
     >
       <ChannelAvatar v-if="user" :id="user.id" :title="name" :src="avatar" :size="22" />
-      <span class="max-w-32 truncate">{{ name }}</span>
-      <AppIcon name="chevron" :size="12" class="opacity-70" />
+      <span class="max-w-32 truncate max-md:hidden">{{ name }}</span>
+      <AppIcon name="chevron" :size="12" class="opacity-70 max-md:hidden" />
     </button>
     <Transition
       enter-from-class="opacity-0 -translate-y-1"
@@ -106,7 +106,7 @@ async function logout(wipe: boolean) {
     >
       <div
         v-if="open"
-        class="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-xl border border-border-2 bg-surface p-1 shadow-card"
+        class="absolute right-0 z-40 mt-2 w-80 max-w-[calc(100vw-24px)] overflow-hidden rounded-xl border border-border-2 bg-surface p-1 shadow-card"
         role="menu"
         data-hotkeys-off
       >
@@ -164,6 +164,31 @@ async function logout(wipe: boolean) {
           <AppIcon :name="item.icon" :size="16" class="shrink-0 opacity-80" />
           {{ t(item.label) }}
         </button>
+        <!-- On a phone the header has no room for these two -->
+        <div class="md:hidden">
+          <div class="mx-2 my-1 h-px bg-border" />
+          <button
+            role="menuitem"
+            class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm hover:bg-surface-2"
+            @click="ui.toggleLocale()"
+          >
+            <AppIcon name="globe" :size="16" class="shrink-0 opacity-80" />
+            {{ t('header.language') }}
+            <span class="ml-auto font-mono text-xs text-faint uppercase">{{ ui.locale }}</span>
+          </button>
+          <button
+            role="menuitem"
+            class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm hover:bg-surface-2"
+            @click="ui.toggleTheme()"
+          >
+            <AppIcon
+              :name="ui.theme === 'dark' ? 'sun' : 'moon'"
+              :size="16"
+              class="shrink-0 opacity-80"
+            />
+            {{ t('header.theme') }}
+          </button>
+        </div>
         <div class="mx-2 my-1 h-px bg-border" />
         <button
           v-for="item in logouts"
