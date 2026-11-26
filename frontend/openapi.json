@@ -7048,12 +7048,17 @@
               }
             ],
             "title": "Code"
+          },
+          "computer": {
+            "type": "string",
+            "title": "Computer"
           }
         },
         "type": "object",
         "required": [
           "status",
-          "code"
+          "code",
+          "computer"
         ],
         "title": "PairingResponse"
       },

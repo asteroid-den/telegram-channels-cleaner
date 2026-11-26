@@ -417,3 +417,5 @@ class PairingResponse(OkResponse):
     status: Literal["waiting", "paired"]
     #: to compare with the computer's, while waiting
     code: str | None
+    #: the computer's name, so the phone can tell which one it is pairing with
+    computer: str

@@ -1751,6 +1751,8 @@ export interface components {
             status: "waiting" | "paired";
             /** Code */
             code: string | null;
+            /** Computer */
+            computer: string;
         };
         /** PairingTakenError */
         PairingTakenError: {

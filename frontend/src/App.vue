@@ -18,14 +18,15 @@ const route = useRoute()
 
 onMounted(() => {
   void ui.loadHealth()
-  auth.connect()
+  // The pairing screen asks for nothing else: a phone there isn't let in yet
+  if (route.name !== 'pair') auth.connect()
 })
 
 // Keep the route in line with the auth state (login elsewhere, logout, revoked session…).
 watch(
   () => [auth.ready, auth.authorized] as const,
   ([ready, authorized]) => {
-    if (!ready) return
+    if (!ready || route.name === 'pair') return
     if (!authorized && route.name !== 'login') void router.replace({ name: 'login' })
     if (authorized && (route.name === 'login' || !route.name)) void router.replace({ name: 'deck' })
   },
@@ -52,7 +53,7 @@ watch(
 
 <template>
   <div class="flex min-h-full flex-col">
-    <AppHeader />
+    <AppHeader v-if="!route.meta.bare" />
     <main class="relative flex flex-1 flex-col">
       <div
         v-if="auth.switchingTo"

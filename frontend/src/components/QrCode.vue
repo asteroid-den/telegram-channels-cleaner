@@ -2,7 +2,8 @@
 import QRCode from 'qrcode'
 import { ref, watchEffect } from 'vue'
 
-const props = defineProps<{ value: string | null; size?: number }>()
+/** `plain`: without Telegram's mark in the middle (the app's own links) */
+const props = defineProps<{ value: string | null; size?: number; plain?: boolean }>()
 const svg = ref('')
 
 watchEffect(async () => {
@@ -35,7 +36,7 @@ watchEffect(async () => {
     <!-- eslint-enable vue/no-v-html -->
     <div v-else class="skeleton h-full w-full" />
     <div
-      v-if="svg"
+      v-if="svg && !plain"
       class="absolute top-1/2 left-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#2aabee] ring-4 ring-white"
     >
       <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">

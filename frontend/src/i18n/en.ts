@@ -39,6 +39,7 @@ export default {
     retry: 'Retry',
     continue: 'Continue',
     loading: 'Loading…',
+    done: 'Done',
     close: 'Close',
     mockMode: 'Mock mode',
   },
@@ -72,6 +73,64 @@ export default {
     reverse: 'Reverse order',
     theme: 'Toggle theme',
     language: 'Language',
+  },
+  phone: {
+    menu: 'Open on your phone',
+    title: 'Open on your phone',
+    intro:
+      'Go through your chats on the phone while the app runs on this computer. The Telegram session stays here: the phone only shows the cards.',
+    toggle: 'Let devices in from this network',
+    toggleOn: 'The app is at {host}, only for the devices you connect',
+    toggleOff: 'Off: the app is reachable from this computer only',
+    toggleOffPaired: 'Off: connected devices wait until it is on again',
+    step1: 'Connect the phone to the same Wi-Fi network',
+    step2: 'Point its camera at the QR code',
+    step3:
+      'A code shows up here once the phone opens the link: connect it if the phone shows the same code',
+    publicNetwork:
+      'An open or public network (a café, a hotel)? Better not: there other devices see the app too, though they can’t get in.',
+    qrOff: 'Turn on access from the network to get a QR code',
+    expiresIn: 'One-time link · {time} left',
+    showDevices: 'Connected devices: {n}',
+    requestTitle: 'Connect {name}?',
+    requestText:
+      '{ip} opened the link from the QR code. Connect it only if the phone shows the same code:',
+    reject: 'Not my phone',
+    approve: 'Connect',
+    paired: '{name} is connected',
+    shared: 'Cards and decisions are shared: carry on from any device, they all see the same.',
+    devices: 'Connected devices',
+    noDevices: 'None yet.',
+    rename: 'Rename',
+    disconnect: 'Disconnect',
+    pairAnother: 'Connect another',
+    pairFirst: 'Connect a phone',
+    unavailable: {
+      container:
+        'The app runs in Docker: its address is set by compose.yaml, so phone access can’t be turned on here.',
+      custom_host:
+        'The app was started with --host set to an address other than localhost: phone access can’t be turned on alongside it.',
+    },
+    errors: {
+      no_network: 'This computer isn’t connected to a network.',
+      address_in_use: 'Port {port} is taken in the network by another program.',
+      other: 'Could not open access from the network: {reason}',
+    },
+  },
+  pair: {
+    waitingTitle: 'Confirm on the computer',
+    waitingText: 'Channels Cleaner on {computer} shows the same code: press “Connect” there.',
+    code: 'Code',
+    waiting: 'Waiting for the answer…',
+    otherCode: 'Is the code on the computer different? It isn’t your computer: close this page.',
+    deniedTitle: 'Not connected',
+    deniedText: 'The computer turned it down, or the link ran out (2 minutes).',
+    again:
+      'On the computer, open the account menu → “Open on your phone” and point the camera at the new QR code.',
+    takenTitle: 'This link was already used',
+    takenText: 'Another device opened it. If it wasn’t you, press “Not my phone” on the computer.',
+    takenAgain: 'Then show a new QR code and point the camera at it again.',
+    offline: 'Can’t reach the computer. Is it on the same network?',
   },
   account: {
     accounts: 'Accounts',

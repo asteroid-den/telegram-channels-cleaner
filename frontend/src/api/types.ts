@@ -48,3 +48,7 @@ export type ErrorBody = Schemas['ErrorResponse']
 export type Account = Schemas['Account']
 export type ChatAdmin = Schemas['ChatAdmin']
 export type AccountsResponse = Schemas['AccountsResponse']
+/** Also what the network event stream sends, which has no `ok`. */
+export type NetworkState = Omit<Schemas['NetworkResponse'], 'ok'>
+export type Device = Schemas['Device']
+export type PairingState = Schemas['PairingResponse']

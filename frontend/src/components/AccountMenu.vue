@@ -6,12 +6,14 @@ import { useRouter } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth'
 import { useDeckStore } from '@/stores/deck'
+import { onComputer } from '@/stores/network'
 import { useUiStore } from '@/stores/ui'
 
 import type { Account } from '@/api/types'
 
 import AppIcon, { type IconName } from './AppIcon.vue'
 import ChannelAvatar from './ChannelAvatar.vue'
+import PhoneAccessDialog from './PhoneAccessDialog.vue'
 
 const { t } = useI18n()
 const auth = useAuthStore()
@@ -20,6 +22,7 @@ const ui = useUiStore()
 const router = useRouter()
 
 const open = ref(false)
+const phoneOpen = ref(false)
 const root = useTemplateRef<HTMLElement>('root')
 onClickOutside(root, () => (open.value = false))
 
@@ -51,6 +54,10 @@ async function run(action: () => Promise<unknown> | unknown) {
 }
 
 const items: { icon: IconName; label: string; danger?: boolean; action: () => unknown }[] = [
+  // Phones are paired from the computer the app runs on, not from another phone
+  ...(onComputer
+    ? [{ icon: 'smartphone' as const, label: 'phone.menu', action: () => (phoneOpen.value = true) }]
+    : []),
   { icon: 'refresh', label: 'account.resync', action: () => deck.resync() },
   { icon: 'chart', label: 'account.results', action: () => router.push('/results') },
   { icon: 'undo', label: 'account.resetKeeps', action: () => deck.reset('keep') },
@@ -171,5 +178,6 @@ async function logout(wipe: boolean) {
         </button>
       </div>
     </Transition>
+    <PhoneAccessDialog v-if="phoneOpen" @close="phoneOpen = false" />
   </div>
 </template>

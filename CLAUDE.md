@@ -148,6 +148,11 @@ Safety (2026-11-20, after an audit run from the mercury session):
   same code on both screens (a second claim: 409 `pairing_taken`). The enabled flag is an app-wide setting
   (`settings.account_id = 0`) and comes back on start. Disconnecting a device or turning access off kicks their
   open SSE streams at once (`network.kicked`); SSE pings every 3 s so a phone notices the computer went away.
+  UI: account menu → `PhoneAccessDialog` (computer only: `onComputer` = the page's host is loopback; QR, the
+  approval prompt over it, the device list; closing it cancels the QR). A phone opens `/pair/:token` (`PairView`, no
+  header): it claims, shows the code and the computer's name, polls `GET /api/pairing` each second and reloads into
+  the app once approved. `main.ts` asks `/api/pairing` before anything else in a browser that isn't on the computer:
+  an unpaired one only ever gets the pairing screen.
 - Apply: `start()` holds a lock from the check to the task (`running` is true meanwhile); `PUT /decisions` is
   409 while applying, like DELETE and reset; before each action the job re-reads the decision and skips it
   (failed, nothing written) if it changed; `mark_decision(expected=…)` updates only that pending decision.
