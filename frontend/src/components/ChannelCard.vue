@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Channel } from '@/api/types'
 import { useKindI18n } from '@/composables/useKindI18n'
+import { useDeckStore } from '@/stores/deck'
 import { ageShort, compactNumber, fullDate, pulseAxis, relativeTime } from '@/utils/format'
 import { verdictOf } from '@/utils/verdict'
 
@@ -19,6 +20,12 @@ const pluralCount = (n: number) => (n >= 1000 ? 1000 : n)
 
 const verdict = computed(() => verdictOf(props.channel))
 
+/** On a chat the user owns: how many others could take it over, once Telegram has said. */
+const deck = useDeckStore()
+const otherAdmins = computed(() =>
+  props.channel.role === 'owner' ? deck.admins[props.channel.id] : undefined,
+)
+
 /** A card met again while rewinding shows what was decided for it. */
 const earlier = computed(() => {
   const d = props.channel.decision
@@ -31,6 +38,9 @@ const EARLIER_CLASS: Record<string, string> = {
   unsubscribe: 'bg-danger-soft text-danger',
   mute: 'bg-warn-soft text-warn',
   archive: 'bg-accent-soft text-accent',
+  transfer: 'bg-danger-soft text-danger',
+  delete: 'bg-danger-soft text-danger',
+  free_link: 'bg-accent-soft text-accent',
 }
 const members = computed(() =>
   props.channel.members_count === null
@@ -100,6 +110,16 @@ const rate = computed(() =>
             <span v-if="channel.role !== 'member'" class="tag bg-accent-soft text-accent">{{
               t(`deck.role.${channel.role}`)
             }}</span>
+            <span
+              v-if="otherAdmins"
+              class="tag"
+              :class="otherAdmins.length ? 'bg-surface-3 text-muted' : 'bg-warn-soft text-warn'"
+              >{{
+                otherAdmins.length
+                  ? t('deck.otherAdmins', otherAdmins.length)
+                  : t('deck.noOtherAdmins')
+              }}</span
+            >
             <template v-if="channel.is_muted"><span>·</span>{{ t('deck.muted') }}</template>
             <template v-if="channel.is_archived"><span>·</span>{{ t('deck.archived') }}</template>
           </div>

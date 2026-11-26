@@ -9,15 +9,15 @@ import AppIcon, { type IconName } from './AppIcon.vue'
 import ChannelCard from './ChannelCard.vue'
 
 const props = withDefaults(
-  defineProps<{ items: Channel[]; returning: HistoryEntry | null; canLeave?: boolean }>(),
-  { canLeave: true },
+  defineProps<{ items: Channel[]; returning: HistoryEntry | null; pickOnLeft?: boolean }>(),
+  { pickOnLeft: false },
 )
 const emit = defineEmits<{
   decide: [decision: Decision]
   /** A card starts flying away (button, key, zone or drag); `from` is where it was. */
   flinging: [decision: Decision, from: DOMRect]
-  /** The decision was turned down (leaving a chat the user owns while that is off). */
-  refused: [decision: Decision]
+  /** Left on a chat the user owns: what leaving means there is chosen first (hand over, leave, delete). */
+  pick: []
 }>()
 const { t } = useI18n()
 
@@ -48,6 +48,8 @@ function flyTarget(decision: Decision): string {
     case 'keep':
       return `translate(${w}px, ${dy.value - 40}px) rotate(28deg)`
     case 'unsubscribe':
+    case 'transfer':
+    case 'delete':
       return `translate(${-w}px, ${dy.value - 40}px) rotate(-28deg)`
     case 'skip':
       return `translate(0, ${h}px) rotate(4deg)`
@@ -111,11 +113,18 @@ function depthStyle(depth: number) {
 /** Which stamp to show and how strongly (0..1). */
 const stamp = computed<{ decision: Decision; strength: number } | null>(() => {
   if (flying.value) return { decision: flying.value, strength: 1 }
-  if (preview.value && !dragging.value) return { decision: preview.value, strength: 0.35 }
+  if (preview.value && !dragging.value) {
+    const decision =
+      preview.value === 'unsubscribe' && props.pickOnLeft ? 'transfer' : preview.value
+    return { decision, strength: 0.35 }
+  }
   if (Math.abs(dx.value) > Math.abs(dy.value)) {
     if (dx.value > 12) return { decision: 'keep', strength: Math.min(1, dx.value / SWIPE_X) }
-    if (dx.value < -12 && props.canLeave)
-      return { decision: 'unsubscribe', strength: Math.min(1, -dx.value / SWIPE_X) }
+    if (dx.value < -12)
+      return {
+        decision: props.pickOnLeft ? 'transfer' : 'unsubscribe',
+        strength: Math.min(1, -dx.value / SWIPE_X),
+      }
   } else if (dy.value > 12) {
     return { decision: 'skip', strength: Math.min(1, dy.value / SWIPE_Y) }
   }
@@ -219,13 +228,14 @@ function onPointerUp(e: PointerEvent) {
   }
 }
 
-function fling(decision: Decision): boolean {
+/** `picked`: the choice for an owned chat is made, the card may go (otherwise a left asks for it first). */
+function fling(decision: Decision, picked = false): boolean {
   if (busy.value || !visible.value.length) return false
-  if (decision === 'unsubscribe' && !props.canLeave) {
+  if (decision === 'unsubscribe' && props.pickOnLeft && !picked) {
     preview.value = null
     dx.value = 0
     dy.value = 0
-    emit('refused', decision)
+    emit('pick')
     return false
   }
   const card = front?.querySelector('article')
