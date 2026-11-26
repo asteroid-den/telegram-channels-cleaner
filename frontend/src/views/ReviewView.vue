@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { api } from '@/api/client'
-import type { ActionDecision, Channel } from '@/api/types'
+import type { Channel, Decision } from '@/api/types'
 import AppIcon, { type IconName } from '@/components/AppIcon.vue'
 import ChannelAvatar from '@/components/ChannelAvatar.vue'
 import { useHotkeys } from '@/composables/useHotkeys'
@@ -26,11 +26,17 @@ const loading = ref(true)
 const starting = ref(false)
 
 const GROUPS: {
-  decision: ActionDecision | 'keep'
+  decision: Decision
   icon: IconName
   label: string
   cls: string
 }[] = [
+  {
+    decision: 'free_link',
+    icon: 'link',
+    label: 'review.freeLink',
+    cls: 'bg-accent-soft text-accent',
+  },
   {
     decision: 'unsubscribe',
     icon: 'x',
@@ -51,9 +57,43 @@ const GROUPS: {
 const grouped = computed(() =>
   GROUPS.map((g) => ({
     ...g,
-    items: pending.value.filter((c) => c.decision === g.decision),
+    // Leaving a chat the user owns has a block of its own, above
+    items: pending.value.filter((c) => c.decision === g.decision && !ownedLeave(c)),
   })).filter((g) => g.items.length),
 )
+
+const ownedLeave = (c: Channel) => c.decision === 'unsubscribe' && c.role === 'owner'
+const transfers = computed(() => pending.value.filter((c) => c.decision === 'transfer'))
+const leavingOwnedList = computed(() => pending.value.filter(ownedLeave))
+const deletions = computed(() => pending.value.filter((c) => c.decision === 'delete'))
+
+// Kept only on this page and sent once with the start; the server holds it for the job alone
+const password = ref('')
+const deleteWord = ref('')
+const deletionsConfirmed = computed(
+  () => deleteWord.value.trim().toLowerCase() === t('review.deleteWord').toLowerCase(),
+)
+/** What waits in the queue if applied now: transfers without the password, deletions without the word. */
+const heldTransfers = computed(() => (password.value ? 0 : transfers.value.length))
+const heldDeletions = computed(() => (deletionsConfirmed.value ? 0 : deletions.value.length))
+const runnable = computed(() => pending.value.length - heldTransfers.value - heldDeletions.value)
+
+/** The chats about to be deleted, as a CSV to keep: titles, links, descriptions. */
+function saveDeletions() {
+  const cell = (v: string | number | null) => `"${String(v ?? '').replaceAll('"', '""')}"`
+  const rows = [
+    ['title', 'link', 'members', 'about'],
+    ...deletions.value.map((c) => [c.title, c.link, c.members_count, c.about]),
+  ]
+  const blob = new Blob([rows.map((r) => r.map(cell).join(',')).join('\n')], {
+    type: 'text/csv;charset=utf-8',
+  })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = 'deleted-chats.csv'
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
 const minutes = computed(() => Math.round((pending.value.length * 2.6) / 60))
 /** Private channels being left: without an invite link there is no way back. */
 const noWayBack = computed(
@@ -101,7 +141,8 @@ async function retryFailed() {
 async function start() {
   starting.value = true
   try {
-    await apply.start()
+    await apply.start({ password: password.value, confirmDeletions: deletionsConfirmed.value })
+    password.value = ''
     await router.push('/apply')
   } catch (err) {
     ui.toast(err instanceof Error ? err.message : String(err))
@@ -115,7 +156,7 @@ onMounted(load)
 useHotkeys({
   Escape: () => void router.push('/'),
   'mod+Enter': () => {
-    if (pending.value.length && !starting.value) void start()
+    if (runnable.value && !starting.value) void start()
   },
 })
 </script>
@@ -140,6 +181,124 @@ useHotkeys({
       <p v-if="!pending.length && !failed.length" class="mt-10 text-center text-muted">
         {{ t('review.empty') }}
       </p>
+
+      <!-- hand over and leave: one password for all of them -->
+      <div
+        v-if="transfers.length"
+        class="mt-8 overflow-hidden rounded-xl border border-border-2 bg-surface"
+      >
+        <h2 class="block-head">
+          {{ t('review.transfer') }}
+          <span class="font-normal text-muted"
+            >· {{ transfers.length }} · {{ t('review.transferHint') }}</span
+          >
+        </h2>
+        <ul>
+          <li v-for="c in transfers" :key="c.id" class="block-row">
+            <ChannelAvatar :id="c.id" :title="c.title" :src="c.avatar_url" :size="28" />
+            <span class="min-w-0 truncate font-medium">{{ c.title }}</span>
+            <span class="shrink-0 text-muted">→</span>
+            <ChannelAvatar
+              :id="c.successor_id ?? 0"
+              :title="c.successor_name ?? '?'"
+              :src="null"
+              :size="24"
+            />
+            <span class="min-w-0 flex-1 truncate">{{ c.successor_name }}</span>
+            <button class="put-back" :aria-label="t('review.putBack')" @click="putBack(c)">
+              <AppIcon name="x" :size="14" />
+            </button>
+          </li>
+        </ul>
+        <div class="border-t border-border px-4 py-3.5">
+          <p class="text-[13px] text-muted">{{ t('review.passwordHint', transfers.length) }}</p>
+          <div class="mt-2.5 flex items-center gap-3">
+            <input
+              v-model="password"
+              type="password"
+              autocomplete="off"
+              :aria-label="t('review.password')"
+              :placeholder="t('review.password')"
+              class="w-64 rounded-[10px] border border-border-2 bg-surface-3 px-3 py-2 text-sm outline-none focus:border-accent"
+            />
+            <span v-if="!password" class="text-xs text-warn">{{ t('review.transfersWait') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- leaving a chat the user owns, nobody taking it over -->
+      <div
+        v-if="leavingOwnedList.length"
+        class="mt-6 overflow-hidden rounded-xl border border-danger/40 bg-surface"
+      >
+        <h2 class="block-head bg-danger-soft/50">
+          {{ t('review.leaveOwned') }}
+          <span class="font-normal text-muted">
+            · {{ leavingOwnedList.length }} · {{ t('review.leaveOwnedHint') }}
+          </span>
+        </h2>
+        <ul>
+          <li v-for="c in leavingOwnedList" :key="c.id" class="block-row">
+            <ChannelAvatar :id="c.id" :title="c.title" :src="c.avatar_url" :size="28" />
+            <span class="min-w-0 flex-1 truncate font-medium">{{ c.title }}</span>
+            <span v-if="c.members_count !== null" class="shrink-0 text-xs text-muted tabular-nums">
+              {{ c.members_count }} {{ t('deck.subscribers', c.members_count) }}
+            </span>
+            <button class="put-back" :aria-label="t('review.putBack')" @click="putBack(c)">
+              <AppIcon name="x" :size="14" />
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- deletions: all the weight of the confirmation is here, once -->
+      <div
+        v-if="deletions.length"
+        class="mt-6 overflow-hidden rounded-xl border border-danger/40 bg-surface"
+      >
+        <h2 class="block-head bg-danger-soft/50">
+          {{ t('review.delete') }}
+          <span class="font-normal text-muted"
+            >· {{ deletions.length }} · {{ t('review.deleteHint') }}</span
+          >
+        </h2>
+        <ul>
+          <li v-for="c in deletions" :key="c.id" class="block-row">
+            <ChannelAvatar :id="c.id" :title="c.title" :src="c.avatar_url" :size="28" />
+            <span class="min-w-0 flex-1 truncate font-medium">{{ c.title }}</span>
+            <span class="shrink-0 text-xs text-muted">
+              {{ t(`review.kindOne.${c.kind}`) }}
+              <template v-if="c.username"> · @{{ c.username }}</template>
+              <template v-if="c.members_count !== null"> · {{ c.members_count }}</template>
+            </span>
+            <button class="put-back" :aria-label="t('review.putBack')" @click="putBack(c)">
+              <AppIcon name="x" :size="14" />
+            </button>
+          </li>
+        </ul>
+        <div class="border-t border-border px-4 py-3.5">
+          <button class="text-[13px] text-accent hover:underline" @click="saveDeletions">
+            <AppIcon name="download" :size="13" class="mr-1 inline" />{{ t('review.saveList') }}
+          </button>
+          <label class="mt-2.5 flex items-center gap-3 text-[13px]">
+            <i18n-t keypath="review.typeWord" tag="span">
+              <template #word>
+                <b class="font-mono">{{ t('review.deleteWord') }}</b>
+              </template>
+            </i18n-t>
+            <input
+              v-model="deleteWord"
+              autocomplete="off"
+              spellcheck="false"
+              class="w-32 rounded-[10px] border bg-surface-3 px-3 py-1.5 text-sm outline-none"
+              :class="deletionsConfirmed ? 'border-danger' : 'border-border-2 focus:border-accent'"
+            />
+          </label>
+          <p v-if="!deletionsConfirmed" class="mt-2 text-xs text-warn">
+            {{ t('review.deletionsWait') }}
+          </p>
+        </div>
+      </div>
 
       <div v-for="group in grouped" :key="group.decision" class="mt-8">
         <h2 class="label mb-3 flex items-center gap-2">
@@ -243,13 +402,46 @@ useHotkeys({
         </div>
         <button
           class="flex shrink-0 items-center gap-2 rounded-[10px] bg-danger-strong px-5 py-3 font-semibold text-white shadow-card hover:brightness-110 disabled:opacity-50"
-          :disabled="starting"
+          :disabled="starting || !runnable"
           @click="start"
         >
-          {{ t('review.apply', pending.length) }}
+          {{ t('review.apply', runnable) }}
+          <span v-if="heldTransfers + heldDeletions" class="font-normal opacity-80">
+            · {{ t('review.waiting', heldTransfers + heldDeletions) }}
+          </span>
           <kbd class="font-mono text-[11px] font-medium opacity-75">{{ modKey }} ↵</kbd>
         </button>
       </div>
     </div>
   </section>
 </template>
+
+<style scoped>
+.block-head {
+  padding: 0.75rem 1rem;
+  font-size: 14px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
+.block-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.block-row:last-child {
+  border-bottom: none;
+}
+.put-back {
+  flex-shrink: 0;
+  border-radius: 6px;
+  padding: 0.25rem;
+  color: var(--faint);
+}
+.put-back:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+</style>
