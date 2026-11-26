@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from channels_cleaner.database.models_dao import AccountDAO, ApplyJobDAO, ChannelDAO, DecisionDAO, SettingDAO
+from channels_cleaner.database.models_dao import AccountDAO, ApplyJobDAO, ChannelDAO, DecisionDAO, DeviceDAO, SettingDAO
 
 
-class DAO(AccountDAO, ApplyJobDAO, ChannelDAO, DecisionDAO, SettingDAO):
+class DAO(AccountDAO, ApplyJobDAO, ChannelDAO, DecisionDAO, DeviceDAO, SettingDAO):
     """Writes are Core statements that don't refresh loaded objects, so selects of objects use populate_existing."""
 
     def __init__(self, session: AsyncSession) -> None:
