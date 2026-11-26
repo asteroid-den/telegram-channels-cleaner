@@ -97,7 +97,10 @@ function saveDeletions() {
 const minutes = computed(() => Math.round((pending.value.length * 2.6) / 60))
 /** Private channels being left: without an invite link there is no way back. */
 const noWayBack = computed(
-  () => pending.value.filter((c) => c.decision === 'unsubscribe' && !c.username).length,
+  // an owned chat left without an owner has its own block and warning: not counted twice
+  () =>
+    pending.value.filter((c) => c.decision === 'unsubscribe' && !c.username && !ownedLeave(c))
+      .length,
 )
 /** Chats the user runs that they are about to leave: admin rights go with them. */
 const leavingRun = computed(
