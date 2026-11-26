@@ -5,6 +5,7 @@ import { api, ApiError, subscribe } from '@/api/client'
 import type {
   ArchiveFilter,
   Channel,
+  ChatAdmin,
   ChatKind,
   RoleFilter,
   ChannelsResponse,
@@ -37,7 +38,7 @@ function readKind(): ChatKind {
     return 'channel'
   }
 }
-const ACTIONS: Decision[] = ['unsubscribe', 'mute', 'archive']
+const ACTIONS: Decision[] = ['unsubscribe', 'mute', 'archive', 'transfer', 'delete', 'free_link']
 const TRAIL_CODE = {
   keep: 'k',
   unsubscribe: 'u',
@@ -47,6 +48,11 @@ const TRAIL_CODE = {
   delete: 'd',
   free_link: 'l',
 } as const
+
+/** What a decision may carry besides itself: who gets the chat on a transfer. */
+export interface DecisionExtra {
+  successor_id?: number
+}
 
 export interface HistoryEntry {
   channel: Channel
@@ -246,13 +252,13 @@ export const useDeckStore = defineStore('deck', () => {
     cursor.value = cursor.value + 1 < trail.value.length ? cursor.value + 1 : null
   }
 
-  async function decide(decision: Decision) {
+  async function decide(decision: Decision, extra: DecisionExtra = {}) {
     returning.value = null
-    if (cursor.value !== null) return revise(cursor.value, decision)
+    if (cursor.value !== null) return revise(cursor.value, decision, extra)
     const channel = queue.value.shift()
     if (!channel) return
     if (decision === 'skip') queue.value.push(channel)
-    else trail.value.push({ ...channel, decision })
+    else trail.value.push({ ...channel, decision, successor_id: extra.successor_id ?? null })
     history.value.push({ channel, decision })
     const before = snapshot()
     if (decision !== 'skip') {
@@ -265,6 +271,7 @@ export const useDeckStore = defineStore('deck', () => {
     try {
       const res = await api.put<{ counts: DeckCounts }>(`/api/decisions/${channel.id}`, {
         decision,
+        ...extra,
       })
       counts.value = res.counts
     } catch (err) {
@@ -278,14 +285,14 @@ export const useDeckStore = defineStore('deck', () => {
   }
 
   /** Change a decision made earlier, in place, and move on to the next one. */
-  async function revise(index: number, decision: Decision) {
+  async function revise(index: number, decision: Decision, extra: DecisionExtra = {}) {
     const channel = trail.value[index]
     if (!channel) return
     const previous = channel.decision ?? 'keep'
     // While rewinding, "later" means "leave this one as it is".
     if (decision === 'skip' || decision === previous) return advance()
     const before = snapshot()
-    trail.value[index] = { ...channel, decision }
+    trail.value[index] = { ...channel, decision, successor_id: extra.successor_id ?? null }
     counts.value.trail =
       counts.value.trail.slice(0, index) +
       TRAIL_CODE[decision] +
@@ -295,6 +302,7 @@ export const useDeckStore = defineStore('deck', () => {
     try {
       const res = await api.put<{ counts: DeckCounts }>(`/api/decisions/${channel.id}`, {
         decision,
+        ...extra,
       })
       counts.value = res.counts
     } catch (err) {
@@ -312,8 +320,11 @@ export const useDeckStore = defineStore('deck', () => {
     // A changed decision goes back to what it was, and the card comes back on top.
     if (entry.previous !== undefined && entry.index !== undefined) {
       try {
+        // A transfer goes back to the same successor
+        const successor = entry.previous === 'transfer' ? entry.channel.successor_id : null
         const res = await api.put<{ counts: DeckCounts }>(`/api/decisions/${entry.channel.id}`, {
           decision: entry.previous,
+          ...(successor ? { successor_id: successor } : {}),
         })
         counts.value = res.counts
       } catch (err) {
@@ -480,6 +491,19 @@ export const useDeckStore = defineStore('deck', () => {
     }
   }
 
+  /** Who could take over each chat the user owns: loaded when its card comes up, `null` when Telegram said no. */
+  const admins = ref<Record<number, ChatAdmin[] | null>>({})
+
+  async function loadAdmins(channelId: number) {
+    if (channelId in admins.value) return
+    try {
+      const res = await api.get<{ items: ChatAdmin[] }>(`/api/channels/${channelId}/admins`)
+      admins.value[channelId] = res.items
+    } catch {
+      admins.value[channelId] = null
+    }
+  }
+
   function clear() {
     queue.value = []
     trail.value = []
@@ -487,6 +511,7 @@ export const useDeckStore = defineStore('deck', () => {
     history.value = []
     loaded.value = false
     returning.value = null
+    admins.value = {}
     pausedUntil = 0
     if (resumeTimer) clearTimeout(resumeTimer)
     resumeTimer = null
@@ -513,6 +538,8 @@ export const useDeckStore = defineStore('deck', () => {
     eta,
     position,
     syncing,
+    admins,
+    loadAdmins,
     load,
     setKind,
     setRole,

@@ -25,8 +25,6 @@ export const useUiStore = defineStore('ui', () => {
   const theme = ref<Theme>(readTheme())
   const locale = ref<Locale>(i18n.global.locale.value as Locale)
   const mock = ref(false)
-  /** Leaving a chat the user owns is off unless the app was started with --allow-owner-leave. */
-  const allowOwnerLeave = ref(false)
   const toasts = ref<Toast[]>([])
   let toastSeq = 0
 
@@ -70,9 +68,8 @@ export const useUiStore = defineStore('ui', () => {
 
   async function loadHealth() {
     try {
-      const health = await api.get<{ mock: boolean; allow_owner_leave: boolean }>('/api/health')
+      const health = await api.get<{ mock: boolean }>('/api/health')
       mock.value = health.mock
-      allowOwnerLeave.value = health.allow_owner_leave
     } catch {
       /* backend not up yet */
     }
@@ -82,7 +79,6 @@ export const useUiStore = defineStore('ui', () => {
     theme,
     locale,
     mock,
-    allowOwnerLeave,
     toasts,
     toggleTheme,
     toggleLocale,
