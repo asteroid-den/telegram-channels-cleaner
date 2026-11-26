@@ -57,7 +57,8 @@ run api:types`, commit both `frontend/openapi.json` and `frontend/src/api/schema
 **Before every commit with Python changes**: `python3 -I .local/unstick_blocks.py src/channels_cleaner tests`
 then `uv run ruff format` — blank lines around if/for/while/try/with/match and before elif/else/except/finally
 (user's style). `--check` only reports. `.local/` is local-only (in `.git/info/exclude`), not in the repo or CI.
-Mock mode: QR auto-"scans" after ~4 s; phone code `12345`; `CC_MOCK_2FA=1` → password `mock`.
+Mock mode: QR auto-"scans" after ~4 s; phone code `12345`; `CC_MOCK_2FA=1` → password `mock`;
+transfers of ownership always take `mock`.
 Settings via `CC_*` env / `.env` (see `.env.example`): API id/hash (default = public TDesktop 2040),
 data dir, host/port, mock knobs, apply delay range.
 
@@ -186,6 +187,13 @@ Key behaviours / decisions (agreed with the user):
   right above the deck (mockup D in `mockups/header-layout.html`). Switching kind is deliberately two clicks.
 - Decisions: keep/skip are final immediately; unsubscribe/mute/archive are `pending` until the
   apply job. "Skip" = back of the deck, forgotten on next launch. Undo = DELETE decision.
+- Owner actions (`OWNER_ACTIONS`, owner role only, checked in `decisions.check_allowed`): `transfer` (to one of
+  `GET /channels/{id}/admins`, cached 10 min; `decisions.successor_id/_name`), `delete` (refused above
+  `DELETE_LIMIT` members), `free_link` (drops the username). `POST /apply` takes `{password, confirm_deletions}`:
+  without them transfers/deletions stay queued (`held_transfers/_deletions`). The password lives in
+  `ApplyService.password` for the job only, never stored or logged. One refusal of it (wrong, missing, too fresh)
+  fails the remaining transfers without asking Telegram again; `error_code`/`retry_after` on the item. A transfer
+  that went through but whose leave failed becomes a failed `unsubscribe` (role admin), so a retry only leaves.
 - Full info (raw GetFullChannel) and pulse (raw `messages.GetHistory`, limit 100, no parsing) are
   fetched lazily per card with a semaphore of 1; cached 72 h. Rows without pulse are refetched.
   Both invoke with `sleep_threshold=0`: a flood wait comes back at once instead of kurigram sleeping up to 30 s
