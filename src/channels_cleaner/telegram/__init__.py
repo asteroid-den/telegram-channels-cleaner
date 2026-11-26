@@ -2,28 +2,36 @@ from .device_profiles import DeviceProfile
 from .gateway import TelegramGateway
 from .mock_gateway import MockGateway
 from .types import (
+    DELETE_LIMIT,
     LEGACY_SESSION,
     ChannelFull,
     ChannelInfo,
+    ChatAdmin,
+    ChatTooLargeError,
     FloodWaitError,
     GatewayError,
     InvalidCodeError,
     InvalidPasswordError,
     InvalidPhoneError,
     NotAuthorizedError,
+    PasswordMissingError,
     PasswordNeededError,
     QrExpiredError,
     QrToken,
     RequestRefusedError,
     TgUser,
+    TooFreshError,
     new_session_name,
 )
 
 # KurigramGateway stays out: imported here, Kurigram would load in mock mode too
 __all__ = (
+    "DELETE_LIMIT",
     "LEGACY_SESSION",
     "ChannelFull",
     "ChannelInfo",
+    "ChatAdmin",
+    "ChatTooLargeError",
     "DeviceProfile",
     "FloodWaitError",
     "GatewayError",
@@ -32,11 +40,13 @@ __all__ = (
     "InvalidPhoneError",
     "MockGateway",
     "NotAuthorizedError",
+    "PasswordMissingError",
     "PasswordNeededError",
     "QrExpiredError",
     "QrToken",
     "RequestRefusedError",
     "TelegramGateway",
     "TgUser",
+    "TooFreshError",
     "new_session_name",
 )

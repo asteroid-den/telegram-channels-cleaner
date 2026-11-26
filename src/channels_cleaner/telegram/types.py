@@ -41,10 +41,25 @@ class ChannelInfo:
 
 
 @dataclass(slots=True, frozen=True)
+class ChatAdmin:
+    """Someone who could take over the chat: a live admin, not a bot, not the user."""
+
+    id: int
+    first_name: str
+    last_name: str | None
+    username: str | None
+    #: may add admins: the one an owner usually hands the chat to
+    can_promote: bool
+
+
+@dataclass(slots=True, frozen=True)
 class ChannelFull:
     about: str | None
     members_count: int | None
 
+
+#: Telegram deletes chats only up to about this many members (CHANNEL_TOO_LARGE above it)
+DELETE_LIMIT = 1000
 
 #: the session of the versions with one account; later ones get a name of their own
 LEGACY_SESSION = "account"
@@ -84,6 +99,22 @@ class NotAuthorizedError(GatewayError):
 
 class RequestRefusedError(GatewayError):
     """A 4xx (CHANNEL_PRIVATE…): the same answer if asked again soon, unlike a dropped connection."""
+
+
+class PasswordMissingError(GatewayError):
+    """A transfer of ownership needs a cloud password (2FA), and the account has none."""
+
+
+class TooFreshError(GatewayError):
+    """The session or the cloud password is too new for a transfer of ownership."""
+
+    def __init__(self, message: str, seconds: int) -> None:
+        super().__init__(message)
+        self.seconds = seconds
+
+
+class ChatTooLargeError(GatewayError):
+    """Telegram deletes only chats up to about a thousand members."""
 
 
 class FloodWaitError(GatewayError):

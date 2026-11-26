@@ -25,17 +25,21 @@ from channels_cleaner.telegram.types import (
     LEGACY_SESSION,
     ChannelFull,
     ChannelInfo,
+    ChatAdmin,
+    ChatTooLargeError,
     FloodWaitError,
     GatewayError,
     InvalidCodeError,
     InvalidPasswordError,
     InvalidPhoneError,
     NotAuthorizedError,
+    PasswordMissingError,
     PasswordNeededError,
     QrExpiredError,
     QrToken,
     RequestRefusedError,
     TgUser,
+    TooFreshError,
 )
 
 log = logging.getLogger(__name__)
@@ -536,3 +540,58 @@ class KurigramGateway:
     async def unarchive(self, channel_id: int) -> None:
         with telegram_errors():
             await self.client.unarchive_chats(channel_id)
+
+    async def get_admins(self, channel_id: int) -> list[ChatAdmin]:
+        admins: list[ChatAdmin] = []
+
+        with telegram_errors():
+            async for member in self.client.get_chat_members(channel_id, filter=enums.ChatMembersFilter.ADMINISTRATORS):
+                user = member.user
+
+                # Only someone who can take the chat over: not a bot, a deleted account or the user
+                if user is None or user.is_bot or user.is_deleted or user.is_self:
+                    continue
+
+                privileges = member.privileges
+                admins.append(
+                    ChatAdmin(
+                        id=user.id,
+                        first_name=user.first_name or "",
+                        last_name=user.last_name,
+                        username=user.username,
+                        can_promote=bool(privileges and privileges.can_promote_members),
+                    )
+                )
+
+        return admins
+
+    async def transfer_ownership(self, channel_id: int, user_id: int, password: str) -> None:
+        with telegram_errors():
+            try:
+                await self.client.transfer_chat_ownership(channel_id, user_id, password)
+
+            except errors.PasswordHashInvalid as exc:
+                raise InvalidPasswordError(str(exc.MESSAGE)) from exc
+
+            except errors.PasswordMissing as exc:
+                raise PasswordMissingError(str(exc.MESSAGE)) from exc
+
+            except (errors.PasswordTooFresh, errors.SessionTooFresh) as exc:
+                raise TooFreshError(str(exc.MESSAGE), int(exc.value or 0)) from exc
+
+            # Kurigram's own check: the chat is no channel or the user no user
+            except ValueError as exc:
+                raise RequestRefusedError(str(exc)) from exc
+
+    async def delete_chat(self, channel_id: int) -> None:
+        with telegram_errors():
+            try:
+                # Supergroups too: both are channels.deleteChannel
+                await self.client.delete_channel(channel_id)
+
+            except errors.ChannelTooLarge as exc:
+                raise ChatTooLargeError(str(exc.MESSAGE)) from exc
+
+    async def free_link(self, channel_id: int) -> None:
+        with telegram_errors():
+            await self.client.set_chat_username(channel_id, None)

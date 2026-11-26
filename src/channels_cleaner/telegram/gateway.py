@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Protocol
 
 from channels_cleaner.telegram.device_profiles import DeviceProfile
-from channels_cleaner.telegram.types import ChannelFull, ChannelInfo, QrToken, TgUser
+from channels_cleaner.telegram.types import ChannelFull, ChannelInfo, ChatAdmin, QrToken, TgUser
 
 
 class TelegramGateway(Protocol):
@@ -65,3 +65,17 @@ class TelegramGateway(Protocol):
     async def unmute(self, channel_id: int) -> None: ...
 
     async def unarchive(self, channel_id: int) -> None: ...
+
+    async def get_admins(self, channel_id: int) -> list[ChatAdmin]: ...
+
+    async def transfer_ownership(self, channel_id: int, user_id: int, password: str) -> None:
+        """Raises ``InvalidPasswordError``, ``PasswordMissingError`` or ``TooFreshError`` when Telegram says no."""
+        ...
+
+    async def delete_chat(self, channel_id: int) -> None:
+        """Raises ``ChatTooLargeError`` for a chat Telegram won't delete."""
+        ...
+
+    async def free_link(self, channel_id: int) -> None:
+        """Drops the chat's public username: the chat becomes private and the name free to take."""
+        ...
