@@ -19,3 +19,6 @@ EXPORT: dict[int | str, dict[str, Any]] = {
         "content": {"text/csv": {}},
     },
 }
+
+#: pictures are addressed with a version in the query, so a changed one is a new URL
+IMMUTABLE = {"Cache-Control": "private, max-age=604800, immutable"}

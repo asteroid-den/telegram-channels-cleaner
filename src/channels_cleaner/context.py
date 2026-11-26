@@ -17,7 +17,14 @@ from channels_cleaner.services import (
     ChannelsService,
     SyncService,
 )
-from channels_cleaner.telegram import LEGACY_SESSION, MockGateway, TelegramGateway, TgUser, new_session_name
+from channels_cleaner.telegram import (
+    LEGACY_SESSION,
+    GatewayError,
+    MockGateway,
+    TelegramGateway,
+    TgUser,
+    new_session_name,
+)
 
 log = logging.getLogger(__name__)
 
@@ -130,6 +137,17 @@ class AppContext:
 
         if empty or outdated:
             self.sync.start(user.id)
+
+        try:
+            await self.channels.refresh_own_photo(user.id)
+
+        # The one from before stays; the next login tries again
+        except GatewayError as exc:
+            log.warning("Could not fetch the profile photo: %s", exc)
+
+        # Tells the UI the accounts list changed: it now has the photo
+        else:
+            self.auth.publish()
 
     async def wait_ready(self) -> None:
         if self.boot_task is not None:
