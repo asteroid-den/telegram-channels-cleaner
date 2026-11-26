@@ -24,7 +24,7 @@ const onDeck = computed(() => auth.authorized && route.name === 'deck' && deck.l
 
 <template>
   <header
-    class="relative z-30 flex h-14 shrink-0 items-center gap-4 border-b border-border bg-surface px-5"
+    class="relative z-30 flex h-14 shrink-0 items-center gap-4 border-b border-border bg-surface px-5 max-md:h-[52px] max-md:gap-2.5 max-md:px-3.5"
   >
     <RouterLink
       to="/"
@@ -32,17 +32,18 @@ const onDeck = computed(() => auth.authorized && route.name === 'deck' && deck.l
       class="flex shrink-0 items-center gap-2.5 font-display text-[15px] font-bold"
     >
       <AppLogo />
-      <span>{{ t('app.name') }}</span>
+      <span class="max-md:hidden">{{ t('app.name') }}</span>
     </RouterLink>
-    <span v-if="ui.mock" class="tag bg-warn-soft text-warn">MOCK</span>
+    <span v-if="ui.mock" class="tag bg-warn-soft text-warn max-md:hidden">MOCK</span>
 
     <DeckSettings v-if="onDeck" />
 
     <div class="flex-1" />
     <SummaryPill v-if="onDeck" />
 
+    <!-- On a phone these two live in the account menu -->
     <button
-      class="rounded-lg border border-border-2 px-2.5 py-1.5 font-mono text-[11.5px] text-muted uppercase hover:text-text"
+      class="rounded-lg border border-border-2 px-2.5 py-1.5 font-mono max-md:hidden text-[11.5px] text-muted uppercase hover:text-text"
       :title="t('header.language')"
       :aria-label="`${t('header.language')}: ${ui.locale.toUpperCase()}`"
       @click="ui.toggleLocale()"
@@ -50,7 +51,7 @@ const onDeck = computed(() => auth.authorized && route.name === 'deck' && deck.l
       {{ ui.locale }}
     </button>
     <button
-      class="flex h-[30px] w-[30px] items-center justify-center rounded-lg border border-border-2 text-muted hover:text-text"
+      class="flex h-[30px] w-[30px] items-center justify-center rounded-lg border border-border-2 text-muted hover:text-text max-md:hidden"
       :title="t('header.theme')"
       :aria-label="t('header.theme')"
       @click="ui.toggleTheme()"

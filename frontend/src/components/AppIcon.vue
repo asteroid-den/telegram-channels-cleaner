@@ -15,6 +15,7 @@ const PATHS = {
   chevron: 'm6 9 6 6 6-6',
   external: 'M7 17 17 7M8 7h9v9',
   arrowRight: 'M5 12h14m-6-6 6 6-6 6',
+  arrowDown: 'M12 5v14m7-7-7 7-7-7',
   arrowLeft: 'M19 12H5m6 6-6-6 6-6',
   user: 'M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
   logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5m5 5H9',

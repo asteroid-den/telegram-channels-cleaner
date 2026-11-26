@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onClickOutside } from '@vueuse/core'
 import { computed, ref, useTemplateRef, watch } from 'vue'
 
 import type { DeckCounts } from '@/api/types'
@@ -55,7 +56,13 @@ const center = ref(0)
 const focus = ref(0)
 const loupeLeft = ref(0)
 let hideTimer: ReturnType<typeof setTimeout> | undefined
-const LOUPE_W = 560
+const loupeWidth = () => Math.min(560, window.innerWidth - 24)
+/** A long press on a touch screen opened it: it stays open until a tap elsewhere or on an avatar. */
+const held = ref(false)
+let pressTimer: ReturnType<typeof setTimeout> | undefined
+let pressAt: { x: number; y: number } | null = null
+let lastPointer = 'mouse'
+const LONG_PRESS = 450
 
 const step = computed(() => (shown.value.total ? 100 / shown.value.total : 0))
 const windowLo = computed(() => Math.max(0, Math.min(deck.trail.length - 15, center.value - 7)))
@@ -71,20 +78,49 @@ function indexAt(clientX: number): number | null {
   return Math.max(0, Math.min(deck.trail.length - 1, Math.floor((x / r.width) * shown.value.total)))
 }
 
+function openAt(i: number, clientX: number) {
+  clearTimeout(hideTimer)
+  center.value = focus.value = i
+  const r = hit.value!.getBoundingClientRect()
+  const width = loupeWidth()
+  const want = clientX - width / 2
+  loupeLeft.value = Math.max(12, Math.min(window.innerWidth - width - 12, want)) - r.left
+  open.value = true
+}
 function onBarMove(e: PointerEvent) {
+  // A finger has no hover: the loupe opens on a long press instead
+  if (e.pointerType === 'touch') {
+    if (pressAt && Math.hypot(e.clientX - pressAt.x, e.clientY - pressAt.y) > 10) cancelPress()
+    return
+  }
   // Moving inside the loupe is precise picking there, not hovering the bar.
   if ((e.target as Element).closest('[data-loupe]')) return
   inLoupe.value = false
   const i = indexAt(e.clientX)
-  if (i === null) return
-  clearTimeout(hideTimer)
-  center.value = focus.value = i
-  const r = hit.value!.getBoundingClientRect()
-  const want = e.clientX - LOUPE_W / 2
-  loupeLeft.value = Math.max(12, Math.min(window.innerWidth - LOUPE_W - 12, want)) - r.left
-  open.value = true
+  if (i !== null) openAt(i, e.clientX)
 }
+function onBarDown(e: PointerEvent) {
+  lastPointer = e.pointerType
+  if (e.pointerType !== 'touch' || (e.target as Element).closest('[data-loupe]')) return
+  const i = indexAt(e.clientX)
+  if (i === null) return
+  pressAt = { x: e.clientX, y: e.clientY }
+  pressTimer = setTimeout(() => {
+    held.value = true
+    openAt(i, e.clientX)
+    navigator.vibrate?.(10)
+  }, LONG_PRESS)
+}
+function cancelPress() {
+  clearTimeout(pressTimer)
+  pressAt = null
+}
+onClickOutside(hit, () => {
+  if (held.value) open.value = held.value = inLoupe.value = false
+})
 function onLeave() {
+  // A lifted finger "leaves" too: what a long press opened stays
+  if (held.value) return
   clearTimeout(hideTimer)
   hideTimer = setTimeout(() => (open.value = inLoupe.value = false), 220)
 }
@@ -99,10 +135,12 @@ function onWheel(e: WheelEvent) {
   focus.value = Math.max(0, Math.min(last, focus.value + d))
 }
 function pick(i: number) {
-  open.value = inLoupe.value = false
+  open.value = inLoupe.value = held.value = false
   deck.jumpTo(i)
 }
 function onBarClick(e: MouseEvent) {
+  // A tap on the bar is not a jump: on a phone that's what the long press and the loupe are for
+  if (lastPointer === 'touch') return
   const i = indexAt(e.clientX)
   if (i !== null) pick(i)
 }
@@ -121,9 +159,11 @@ const runs = computed(() => {
 
 <template>
   <!-- the bar sits in the middle column, so it is centred over the deck; the count hangs off its left -->
-  <div class="grid w-full grid-cols-[1fr_minmax(140px,460px)_1fr] items-center gap-3.5">
+  <div
+    class="grid w-full grid-cols-[1fr_minmax(140px,460px)_1fr] items-center gap-3.5 max-md:grid-cols-[auto_1fr] max-md:gap-2.5"
+  >
     <span
-      class="origin-right justify-self-end text-right font-mono text-[15px] font-bold tabular-nums"
+      class="origin-right justify-self-end text-right font-mono text-[15px] font-bold tabular-nums max-md:text-[13px]"
       :class="pulse ? 'count-bump' : ''"
       @animationend="pulse = false"
     >
@@ -132,8 +172,12 @@ const runs = computed(() => {
 
     <div
       ref="hit"
-      class="relative flex h-7 items-center"
+      class="relative flex h-7 items-center select-none [-webkit-touch-callout:none]"
       :class="deck.trail.length ? 'cursor-pointer' : ''"
+      @pointerdown="onBarDown"
+      @pointerup="cancelPress"
+      @pointercancel="cancelPress"
+      @contextmenu.prevent
       @pointermove="onBarMove"
       @pointerleave="onLeave"
       @click.self="onBarClick"

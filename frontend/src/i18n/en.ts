@@ -213,6 +213,7 @@ export default {
     was: 'Was',
     loupePosition: '#{n} of {total}',
     loupeClick: 'click to go back here',
+    loupeTap: 'tap a chat to go back to it; long-press the bar elsewhere to look there',
     loupeWheel: 'scroll to browse',
     appliedMark: 'applied',
     pulseTitle: 'Activity · 26 weeks',
@@ -274,6 +275,12 @@ export default {
     syncing: 'Updating list…',
   },
   actions: {
+    // the round buttons on a phone: a word or two under a 52 px circle
+    unsubscribeShort: 'Leave',
+    transferShort: 'Hand over',
+    freeLinkShort: 'Free link',
+    muteShort: 'Mute',
+    archiveShort: 'Archive',
     unsubscribe: 'Unsubscribe',
     keep: 'Keep',
     skip: 'Later',

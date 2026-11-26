@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Channel } from '@/api/types'
 import { useKindI18n } from '@/composables/useKindI18n'
+import { useNarrow } from '@/composables/useNarrow'
 import { useDeckStore } from '@/stores/deck'
 import { ageShort, compactNumber, fullDate, pulseAxis, relativeTime } from '@/utils/format'
 import { verdictOf } from '@/utils/verdict'
@@ -14,6 +15,7 @@ import PulseChart from './PulseChart.vue'
 const props = defineProps<{ channel: Channel; stacked?: boolean }>()
 const { t, tk } = useKindI18n(() => props.channel.kind)
 const { locale } = useI18n()
+const narrow = useNarrow()
 
 /** Compact figures ("18,7 тыс.") take the plural form of a round number, not of the raw count. */
 const pluralCount = (n: number) => (n >= 1000 ? 1000 : n)
@@ -72,7 +74,7 @@ const rate = computed(() =>
 
     <div
       data-card-body
-      class="flex min-h-0 flex-1 flex-col gap-4 px-6 pt-5 pb-5 transition-opacity duration-200"
+      class="flex min-h-0 flex-1 flex-col gap-4 px-6 pt-5 pb-5 transition-opacity duration-200 max-md:gap-3 max-md:px-4 max-md:pt-4 max-md:pb-4"
       :class="stacked ? 'invisible opacity-0' : ''"
     >
       <!-- met again while rewinding: what was decided for it -->
@@ -88,11 +90,13 @@ const rate = computed(() =>
           :color-index="channel.color_index"
           :title="channel.title"
           :src="channel.avatar_url"
-          :size="64"
-          rounded="16px"
+          :size="narrow ? 48 : 64"
+          :rounded="narrow ? '13px' : '16px'"
         />
         <div class="min-w-0 flex-1">
-          <h2 class="line-clamp-2 text-[23px] leading-[1.15] font-bold tracking-[-0.01em]">
+          <h2
+            class="line-clamp-2 text-[23px] leading-[1.15] font-bold tracking-[-0.01em] max-md:text-[19px]"
+          >
             {{ channel.title }}
           </h2>
           <div class="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-[13px] text-muted">
@@ -138,12 +142,12 @@ const rate = computed(() =>
       </div>
 
       <!-- verdict: the one figure that decides, plus the supporting facts -->
-      <div class="rounded-xl border border-border px-4 pt-3.5 pb-3">
-        <div class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-5">
-          <div class="min-w-[7.5rem]">
+      <div class="rounded-xl border border-border px-4 pt-3.5 pb-3 max-md:px-3 max-md:pt-3">
+        <div class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-5 max-md:gap-x-3.5">
+          <div class="min-w-[7.5rem] max-md:min-w-[5.5rem]">
             <template v-if="verdict">
               <div
-                class="font-display text-[46px] leading-none font-semibold tracking-[-0.02em] whitespace-nowrap text-ch-ink"
+                class="font-display text-[46px] leading-none font-semibold tracking-[-0.02em] whitespace-nowrap text-ch-ink max-md:text-[34px]"
                 :title="channel.last_post_at ? fullDate(channel.last_post_at, locale) : ''"
               >
                 <template v-if="verdict.kind === 'rate'">{{ rate }}</template>
@@ -219,7 +223,7 @@ const rate = computed(() =>
           v-if="channel.thumb_url"
           :src="channel.thumb_url"
           alt=""
-          class="h-[88px] w-[88px] shrink-0 rounded-[10px] object-cover"
+          class="h-[88px] w-[88px] shrink-0 rounded-[10px] object-cover max-md:h-16 max-md:w-16"
           draggable="false"
           loading="lazy"
           @error="($event.target as HTMLImageElement).style.display = 'none'"
@@ -229,7 +233,9 @@ const rate = computed(() =>
             {{ tk('deck.lastPost') }} · {{ relativeTime(channel.last_post_at, locale) }}
             <template v-if="mediaLabel"> · {{ mediaLabel }}</template>
           </div>
-          <p class="mt-1 line-clamp-5 text-[14px] leading-snug whitespace-pre-line">
+          <p
+            class="mt-1 line-clamp-5 text-[14px] leading-snug whitespace-pre-line max-md:line-clamp-3 max-md:text-[13px]"
+          >
             {{ channel.last_post_text ?? mediaLabel ?? '…' }}
           </p>
         </div>

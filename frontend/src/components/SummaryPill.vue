@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import type { Decision } from '@/api/types'
+import { useNarrow } from '@/composables/useNarrow'
 import { useDeckStore } from '@/stores/deck'
 import { relativeTime } from '@/utils/format'
 
@@ -13,6 +14,7 @@ import ChannelAvatar from './ChannelAvatar.vue'
 const { t, locale } = useI18n()
 const deck = useDeckStore()
 const router = useRouter()
+const narrow = useNarrow()
 
 /** Opens on hover for a quick look; a click pins it open until dismissed. */
 const open = ref(false)
@@ -72,28 +74,38 @@ function review() {
         :class="deck.counts.pending ? 'bg-danger' : 'bg-border-2'"
       />
       <span
-        ><b class="font-mono">{{ deck.counts.pending }}</b> {{ t('deck.toApply') }}</span
+        ><b class="font-mono">{{ deck.counts.pending }}</b
+        ><span class="ml-1 max-md:sr-only">{{ t('deck.toApply') }}</span></span
       >
       <span class="hidden h-3.5 w-px bg-border-2 xl:block" />
       <span class="hidden xl:inline"
         ><b class="font-mono">{{ deck.counts.by_decision.keep }}</b>
         {{ t('deck.keptSession') }}</span
       >
-      <svg width="10" height="10" viewBox="0 0 10 10" class="text-faint" aria-hidden="true">
+      <svg
+        width="10"
+        height="10"
+        viewBox="0 0 10 10"
+        class="text-faint max-md:hidden"
+        aria-hidden="true"
+      >
         <path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" />
       </svg>
     </button>
 
+    <div v-if="open && narrow" class="fixed inset-0 z-30 bg-black/55" @click="close" />
     <Transition
-      enter-from-class="opacity-0 -translate-y-1.5 scale-[.98]"
-      leave-to-class="opacity-0 -translate-y-1"
-      enter-active-class="transition duration-150 ease-out"
-      leave-active-class="transition duration-100"
+      :enter-from-class="narrow ? 'translate-y-full' : 'opacity-0 -translate-y-1.5 scale-[.98]'"
+      :leave-to-class="narrow ? 'translate-y-full' : 'opacity-0 -translate-y-1'"
+      :enter-active-class="
+        narrow ? 'transition duration-250 ease-out' : 'transition duration-150 ease-out'
+      "
+      :leave-active-class="narrow ? 'transition duration-200 ease-in' : 'transition duration-100'"
     >
       <div
         v-show="open"
         id="deck-summary"
-        class="absolute top-full right-0 z-40 mt-2 w-[360px] rounded-2xl border border-border-2 bg-surface p-4 shadow-card"
+        class="sheet-narrow absolute top-full right-0 z-40 mt-2 w-[360px] rounded-2xl border border-border-2 bg-surface p-4 shadow-card"
       >
         <dl class="mb-4 grid grid-cols-2 rounded-xl border border-border">
           <div class="px-3 py-2.5">

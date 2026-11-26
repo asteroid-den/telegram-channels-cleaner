@@ -248,3 +248,31 @@ button:disabled {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* On a phone a popover becomes a sheet from the bottom of the screen */
+@media (max-width: 767px) {
+  .sheet-narrow {
+    position: fixed;
+    inset: auto 0 0 0;
+    width: auto;
+    max-height: 85dvh;
+    margin: 0;
+    overflow-y: auto;
+    border-width: 1px 0 0;
+    border-radius: 22px 22px 0 0;
+    padding: 26px 18px calc(22px + env(safe-area-inset-bottom));
+    box-shadow: 0 -20px 50px -10px rgb(0 0 0 / 0.6);
+  }
+  /* the grab handle */
+  .sheet-narrow::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    width: 40px;
+    height: 5px;
+    border-radius: 9px;
+    background: var(--border-2);
+    translate: -50% 0;
+  }
+}
