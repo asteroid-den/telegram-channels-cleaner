@@ -346,6 +346,8 @@ class ApplyService:
                 "item_failed",
                 channel_id=item.channel_id,
                 error=item.error,
+                error_code=item.error_code,
+                retry_after=item.retry_after,
                 done=state.done,
                 failed=state.failed,
             )

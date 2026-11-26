@@ -4,12 +4,13 @@ import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
-import type { Decision } from '@/api/types'
+import type { ApplyItem, Decision } from '@/api/types'
 import AppIcon, { type IconName } from '@/components/AppIcon.vue'
 import ChannelAvatar from '@/components/ChannelAvatar.vue'
 import { useHotkeys } from '@/composables/useHotkeys'
 import { useApplyStore } from '@/stores/apply'
 import { useDeckStore } from '@/stores/deck'
+import { actionErrorKind } from '@/utils/errors'
 
 const { t } = useI18n()
 const apply = useApplyStore()
@@ -38,6 +39,20 @@ const queue = computed(() =>
 const shown = computed(() => queue.value.slice(0, VISIBLE))
 const hidden = computed(() => Math.max(0, queue.value.length - VISIBLE))
 const failedItems = computed(() => state.value.items.filter((i) => i.status === 'failed'))
+const held = computed(() => state.value.held_transfers + state.value.held_deletions)
+
+/** Why an item failed, in words; a too fresh session says how long Telegram wants to wait. */
+function reason(item: ApplyItem): string {
+  const wait = item.retry_after
+  if (item.error_code === 'too_fresh' && wait) {
+    const left =
+      wait >= 3600
+        ? t('time.hoursShort', { n: Math.ceil(wait / 3600) })
+        : t('time.minutesShort', { n: Math.ceil(wait / 60) })
+    return t('apply.tooFreshIn', { t: left })
+  }
+  return t(`review.errors.${item.error_code ?? actionErrorKind(item.error)}`)
+}
 const current = computed(() => state.value.items.find((i) => i.status === 'running') ?? null)
 const finished = computed(() => ['finished', 'cancelled', 'error'].includes(state.value.status))
 const floodLeft = computed(() =>
@@ -234,15 +249,15 @@ function onLeave(el: Element, done: () => void) {
     <div v-if="failedItems.length" class="mt-6 w-full max-w-3xl">
       <p class="mb-2 text-sm text-danger">{{ t('apply.failed', { n: failedItems.length }) }}</p>
       <TransitionGroup
-        tag="div"
-        class="flex flex-wrap gap-2"
+        tag="ul"
+        class="overflow-hidden rounded-xl border border-danger/40 bg-surface"
         enter-from-class="opacity-0 translate-y-3"
         enter-active-class="transition duration-300"
       >
-        <div
+        <li
           v-for="item in failedItems"
           :key="item.channel_id"
-          class="flex items-center gap-2 rounded-lg border border-danger/40 bg-danger-soft py-1 pr-3 pl-1 text-xs"
+          class="flex items-center gap-2.5 border-b border-border px-3 py-2 text-[13px] last:border-b-0"
           :title="item.error ?? ''"
         >
           <ChannelAvatar
@@ -251,9 +266,24 @@ function onLeave(el: Element, done: () => void) {
             :src="avatarUrl(item.channel_id, item.has_photo)"
             :size="24"
           />
-          <span class="max-w-40 truncate">{{ item.title }}</span>
-        </div>
+          <span class="max-w-56 shrink-0 truncate font-medium"
+            >{{ item.title
+            }}<template v-if="item.successor_name"> → {{ item.successor_name }}</template></span
+          >
+          <span class="min-w-0 flex-1 truncate text-right text-danger">{{ reason(item) }}</span>
+        </li>
       </TransitionGroup>
+    </div>
+
+    <div
+      v-if="finished && held"
+      class="mt-6 w-full max-w-3xl rounded-xl bg-warn-soft px-4 py-3 text-sm text-warn"
+    >
+      <p v-if="state.held_transfers">{{ t('apply.heldTransfers', { n: state.held_transfers }) }}</p>
+      <p v-if="state.held_deletions">{{ t('apply.heldDeletions', { n: state.held_deletions }) }}</p>
+      <RouterLink to="/review" class="mt-1 inline-block font-medium underline">
+        {{ t('apply.backToReview') }}
+      </RouterLink>
     </div>
 
     <div class="mt-10 flex gap-3">

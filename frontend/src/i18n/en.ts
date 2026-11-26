@@ -251,6 +251,23 @@ export default {
     unsubscribe: 'Unsubscribe',
     mute: 'Mute forever',
     archive: 'Move to archive',
+    freeLink: 'Free the link',
+    transfer: 'Hand over and leave',
+    transferHint: 'the handover first, then the leave',
+    password: '2FA password',
+    passwordHint:
+      'Telegram confirms a handover with your two-step verification password. It is asked once for the {n} handover and kept nowhere. | Telegram confirms a handover with your two-step verification password. It is asked once for all {n} handovers and kept nowhere.',
+    transfersWait: 'Without the password the handovers stay queued',
+    leaveOwned: 'Leave without a handover',
+    leaveOwnedHint: 'left without an owner',
+    delete: 'Delete for good',
+    deleteHint: 'for every member, no way back',
+    saveList: 'Save their list first: titles, links, descriptions (CSV)',
+    typeWord: 'To delete, type {word}',
+    deleteWord: 'delete',
+    deletionsWait: 'Until the word is typed, the deletions stay queued',
+    waiting: '{n} waits | {n} wait',
+    kindOne: { channel: 'channel', supergroup: 'group' },
     putBack: 'Put back',
     revert: 'Undo earlier changes',
     reverts: { mute: 'unmute', archive: 'take out of archive' },
@@ -267,6 +284,7 @@ export default {
       keep: 'These were muted or archived earlier. That will be taken back.',
       archive:
         'The channels move to the Telegram archive. If not muted, a channel comes back with its next post.',
+      free_link: 'The chats become private and their names free: anyone can take them, you too.',
     },
     leavingRun:
       'You are leaving {n} chat you administer — you will lose your admin rights | You are leaving {n} chats you administer — you will lose your admin rights',
@@ -278,6 +296,10 @@ export default {
     errors: {
       gone: 'Channel is unavailable — you may have already left it',
       flood: 'Telegram kept asking us to wait for too long',
+      password_invalid: 'Wrong 2FA password, type it again',
+      password_missing: 'The account has no 2FA password, and Telegram won’t hand over without one',
+      too_fresh: 'The session or the password is too new: Telegram allows the handover later',
+      too_large: 'Telegram doesn’t delete chats over ~1000 members',
       unknown: 'Telegram returned an error — hover to see details',
     },
   },
@@ -292,6 +314,10 @@ export default {
     error: 'Applying stopped because of an error. Pending actions are kept — start again.',
     seeResults: 'See results',
     failed: 'Failed: {n}',
+    tooFreshIn: 'The session is too new: the handover becomes possible in {t}',
+    heldTransfers: 'Handovers waiting for the password: {n}',
+    heldDeletions: 'Deletions waiting for the confirmation: {n}',
+    backToReview: 'Back to the review',
   },
   results: {
     title: 'Results',
@@ -320,5 +346,7 @@ export default {
   },
   time: {
     minutes: 'less than a minute | about {n} minute | about {n} minutes',
+    hoursShort: '{n} h',
+    minutesShort: '{n} min',
   },
 }

@@ -570,14 +570,15 @@ class KurigramGateway:
             try:
                 await self.client.transfer_chat_ownership(channel_id, user_id, password)
 
+            # Telegram's IDs as the messages: the UI tells a refusal by them in the failed decisions
             except errors.PasswordHashInvalid as exc:
-                raise InvalidPasswordError(str(exc.MESSAGE)) from exc
+                raise InvalidPasswordError(exc.ID) from exc
 
             except errors.PasswordMissing as exc:
-                raise PasswordMissingError(str(exc.MESSAGE)) from exc
+                raise PasswordMissingError(exc.ID) from exc
 
             except (errors.PasswordTooFresh, errors.SessionTooFresh) as exc:
-                raise TooFreshError(str(exc.MESSAGE), int(exc.value or 0)) from exc
+                raise TooFreshError(exc.ID or "TOO_FRESH", int(exc.value or 0)) from exc
 
             # Kurigram's own check: the chat is no channel or the user no user
             except ValueError as exc:
@@ -590,7 +591,7 @@ class KurigramGateway:
                 await self.client.delete_channel(channel_id)
 
             except errors.ChannelTooLarge as exc:
-                raise ChatTooLargeError(str(exc.MESSAGE)) from exc
+                raise ChatTooLargeError(exc.ID) from exc
 
     async def free_link(self, channel_id: int) -> None:
         with telegram_errors():
