@@ -771,6 +771,8 @@ export interface components {
             username: string | null;
             /** Link */
             link: string | null;
+            /** Telegram Url */
+            telegram_url: string;
             /** About */
             about: string | null;
             /** Members Count */
@@ -850,6 +852,8 @@ export interface components {
             username: string | null;
             /** Link */
             link: string | null;
+            /** Telegram Url */
+            telegram_url: string;
             /** About */
             about: string | null;
             /** Members Count */

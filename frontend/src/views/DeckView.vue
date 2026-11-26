@@ -96,6 +96,8 @@ useHotkeys({
   m: () => act('mute'),
   a: () => act('archive'),
   l: () => canFreeLink.value && act('free_link'),
+  // the chat itself, in the Telegram app
+  o: () => deck.current && window.location.assign(deck.current.telegram_url),
   // Find a card by name and put it on top; Ctrl+K is what the browser would use for its own search otherwise
   'mod+k': () => (searching.value = !swiper.value?.busy),
   'mod+z': () => void undo(),

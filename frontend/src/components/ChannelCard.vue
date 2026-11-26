@@ -124,6 +124,16 @@ const rate = computed(() =>
             <template v-if="channel.is_archived"><span>·</span>{{ t('deck.archived') }}</template>
           </div>
         </div>
+        <!-- the chat itself, at its last post, in the Telegram app -->
+        <a
+          :href="channel.telegram_url"
+          :title="t('deck.openInTelegram')"
+          :aria-label="t('deck.openInTelegram')"
+          class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] border border-border-2 text-muted transition-colors hover:border-text/40 hover:text-text"
+          @pointerdown.stop
+        >
+          <AppIcon name="external" :size="17" :stroke="2.2" />
+        </a>
       </div>
 
       <!-- verdict: the one figure that decides, plus the supporting facts -->
