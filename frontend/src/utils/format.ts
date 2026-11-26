@@ -54,17 +54,32 @@ export function initials(title: string): string {
   )
 }
 
-const PALETTE = [
-  '#e17076',
-  '#7bc862',
-  '#e5ca77',
-  '#65aadd',
-  '#a695e7',
-  '#ee7aae',
-  '#6ec9cb',
-  '#faa774',
+/**
+ * Telegram Desktop's empty-avatar gradients (lib_ui colors.palette, historyPeerNUserpicBg → Bg2), in its own order:
+ * red, green, yellow (unused), blue, purple, pink, sea, orange.
+ */
+const USERPIC: readonly (readonly [string, string])[] = [
+  ['#ff845e', '#d45246'],
+  ['#9ad164', '#46ba43'],
+  ['#e5ca77', '#e5ca77'],
+  ['#5caffa', '#408acf'],
+  ['#b694f9', '#6c61df'],
+  ['#ff8aac', '#d95574'],
+  ['#5bcbe3', '#359ad4'],
+  ['#febb5b', '#f68136'],
 ]
+/** Colour index (red, orange, violet, green, cyan, blue, pink) → palette entry, as Telegram Desktop maps it. */
+const TO_USERPIC = [0, 7, 4, 1, 6, 3, 5]
+/** Bot API ids of channels and supergroups are -100 followed by the channel's own id. */
+const CHANNEL_ID_OFFSET = -1_000_000_000_000
 
-export function colorFor(id: number): string {
-  return PALETTE[Math.abs(id) % PALETTE.length]!
+/** Telegram's colour index of a peer that picked none: its own id (users as they are, chats without -100) % 7. */
+export function colorIndexOf(id: number): number {
+  const bare = id <= CHANNEL_ID_OFFSET ? CHANNEL_ID_OFFSET - id : Math.abs(id)
+  return bare % 7
+}
+
+/** The two stops of the gradient Telegram draws behind a peer's initials. */
+export function userpicColors(colorIndex: number): readonly [string, string] {
+  return USERPIC[TO_USERPIC[colorIndex % 7]!]!
 }

@@ -29,6 +29,7 @@ from channels_cleaner.telegram.types import (
     QrToken,
     RequestRefusedError,
     TgUser,
+    color_index,
 )
 
 MOCK_CODE = "12345"
@@ -152,6 +153,16 @@ ADMIN_NAMES = [
     ("Dasha", "K.", "dashak"),
 ]
 COLORS = ["#e17076", "#7bc862", "#e5ca77", "#65aadd", "#a695e7", "#ee7aae", "#6ec9cb", "#faa774"]
+#: Telegram's empty-avatar gradients by colour index (red, orange, violet, green, cyan, blue, pink), as in the UI
+USERPIC = [
+    ("#ff845e", "#d45246"),
+    ("#febb5b", "#f68136"),
+    ("#b694f9", "#6c61df"),
+    ("#9ad164", "#46ba43"),
+    ("#5bcbe3", "#359ad4"),
+    ("#5caffa", "#408acf"),
+    ("#ff8aac", "#d95574"),
+]
 
 
 ID_BASE: dict[ChatKind, int] = {ChatKind.CHANNEL: -1001000000000, ChatKind.SUPERGROUP: -1002000000000}
@@ -199,6 +210,9 @@ def generate_chat(
         # its own generator, so the roles don't shift what everything else is generated from
         role_roll = random.Random(f"{seed}/{kind}/{i}").random()
         role = ChatRole.OWNER if role_roll < 0.04 else ChatRole.ADMIN if role_roll < 0.11 else ChatRole.MEMBER
+        # A few chats with a colour their owner picked; also on its own generator
+        color_rng = random.Random(f"{seed}/{kind}/{i}/color")
+        color = color_rng.randrange(7) if color_rng.random() < 0.15 else None
         info = ChannelInfo(
             id=channel_id,
             title=title,
@@ -215,6 +229,7 @@ def generate_chat(
             last_post_media=media,
             kind=kind,
             role=role,
+            color=color,
         )
 
         if info.photo_file_id is None:
@@ -231,10 +246,14 @@ def initials(title: str) -> str:
     return "".join(w[0] for w in words[:2]).upper() or "?"
 
 
-def avatar_svg(title: str, color: str) -> str:
+def avatar_svg(title: str, colors: tuple[str, str]) -> str:
+    """A "photo" that looks like Telegram's own avatar without one: its gradient, the initials."""
+    top, bottom = colors
     return (
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">'
-        f'<rect width="160" height="160" fill="{color}"/>'
+        '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">'
+        f'<stop offset="0" stop-color="{top}"/><stop offset="1" stop-color="{bottom}"/></linearGradient></defs>'
+        '<rect width="160" height="160" fill="url(#g)"/>'
         '<text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" '
         'font-family="system-ui, sans-serif" font-size="64" font-weight="600" fill="#fff">'
         f"{escape(initials(title))}</text></svg>"
@@ -492,8 +511,8 @@ class MockGateway:
             return None
 
         path = dest.with_suffix(".svg")
-        color = COLORS[abs(channel_id) % len(COLORS)]
-        path.write_text(avatar_svg(entry[0].title, color), "utf-8")
+        colors = USERPIC[color_index(channel_id, entry[0].color)]
+        path.write_text(avatar_svg(entry[0].title, colors), "utf-8")
         return path
 
     async def download_own_photo(self, dest: Path) -> Path | None:

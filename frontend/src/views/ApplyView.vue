@@ -217,6 +217,7 @@ function onLeave(el: Element, done: () => void) {
             >
               <ChannelAvatar
                 :id="item.channel_id"
+                :color-index="item.color_index"
                 :title="item.title"
                 :src="avatarUrl(item.channel_id, item.has_photo)"
                 :size="104"
@@ -262,6 +263,7 @@ function onLeave(el: Element, done: () => void) {
         >
           <ChannelAvatar
             :id="item.channel_id"
+            :color-index="item.color_index"
             :title="item.title"
             :src="avatarUrl(item.channel_id, item.has_photo)"
             :size="24"

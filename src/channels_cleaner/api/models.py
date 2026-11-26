@@ -23,10 +23,9 @@ from channels_cleaner.enums import (
     RoleFilter,
     SortMode,
 )
+from channels_cleaner.telegram import CHANNEL_ID_OFFSET, color_index
 
 THUMB_MEDIA = {MediaKind.PHOTO, MediaKind.VIDEO, MediaKind.ANIMATION}
-#: Bot API ids of channels and supergroups are -100 followed by the channel's own id
-CHANNEL_ID_OFFSET = -1_000_000_000_000
 
 
 def telegram_url(channel_id: int, username: str | None, post_id: int | None) -> str:
@@ -129,6 +128,8 @@ class Channel(BaseModel):
     link: str | None
     #: a tg:// link that opens the chat in the Telegram app, at its last post
     telegram_url: str
+    #: Telegram's colour of the chat (0–6: red, orange, violet, green, cyan, blue, pink), for an avatar without a photo
+    color_index: int
     about: str | None
     members_count: int | None
     unread_count: int
@@ -163,6 +164,7 @@ class Channel(BaseModel):
             username=channel.username,
             link=f"https://t.me/{channel.username}" if channel.username else None,
             telegram_url=telegram_url(channel.channel_id, channel.username, channel.last_post_id),
+            color_index=color_index(channel.channel_id, channel.color),
             about=channel.about,
             members_count=channel.members_count,
             unread_count=channel.unread_count,
@@ -215,6 +217,7 @@ class ApplyItem(BaseModel):
     retry_after: int | None
     reverts: Decision | None
     role: ChatRole
+    color_index: int
     successor_name: str | None
 
 

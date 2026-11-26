@@ -388,6 +388,7 @@ class KurigramGateway:
             last_post_media=media,
             kind=kind,
             role=ChatRole.OWNER if chat.is_creator else ChatRole.ADMIN if chat.is_admin else ChatRole.MEMBER,
+            color=getattr(chat, "accent_color_id", None),
         )
 
     async def get_full(self, channel_id: int) -> ChannelFull:

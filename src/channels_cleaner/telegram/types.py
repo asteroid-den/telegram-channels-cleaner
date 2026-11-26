@@ -38,6 +38,8 @@ class ChannelInfo:
     last_post_media: MediaKind | None
     kind: ChatKind = ChatKind.CHANNEL
     role: ChatRole = ChatRole.MEMBER
+    #: the colour the chat's owner picked (a Telegram palette id); None: Telegram derives one from the id
+    color: int | None = None
 
 
 @dataclass(slots=True, frozen=True)
@@ -60,6 +62,19 @@ class ChannelFull:
 
 #: Telegram deletes chats only up to about this many members (CHANNEL_TOO_LARGE above it)
 DELETE_LIMIT = 1000
+#: Bot API ids of channels and supergroups are -100 followed by the channel's own id
+CHANNEL_ID_OFFSET = -1_000_000_000_000
+#: how many colours Telegram picks an empty avatar from (red, orange, violet, green, cyan, blue, pink)
+COLOR_COUNT = 7
+
+
+def color_index(channel_id: int, color: int | None) -> int:
+    """Telegram's colour of a chat: the one its owner picked, else its own id (without the -100) modulo 7.
+
+    As Telegram Desktop's ``DecideColorIndex``; the UI maps it to Telegram's avatar gradients.
+    """
+    return (color if color is not None else CHANNEL_ID_OFFSET - channel_id) % COLOR_COUNT
+
 
 #: the session of the versions with one account; later ones get a name of their own
 LEGACY_SESSION = "account"

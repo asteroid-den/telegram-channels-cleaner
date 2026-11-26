@@ -36,6 +36,8 @@ class Channel(Base):
     pulse: Mapped[dict[str, Any] | None]
     kind: Mapped[ChatKind] = mapped_column(default=ChatKind.CHANNEL)
     role: Mapped[ChatRole] = mapped_column(default=ChatRole.MEMBER)
+    # A Telegram palette id the owner picked; None: derived from the id, as Telegram does
+    color: Mapped[int | None]
 
     # No foreign key: the tables from before SQLAlchemy have none, and a decision is written on its own anyway
     decision: Mapped[ChannelDecision | None] = relationship(

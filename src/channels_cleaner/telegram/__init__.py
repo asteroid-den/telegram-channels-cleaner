@@ -2,6 +2,7 @@ from .device_profiles import DeviceProfile
 from .gateway import TelegramGateway
 from .mock_gateway import MockGateway
 from .types import (
+    CHANNEL_ID_OFFSET,
     DELETE_LIMIT,
     LEGACY_SESSION,
     ChannelFull,
@@ -21,11 +22,13 @@ from .types import (
     RequestRefusedError,
     TgUser,
     TooFreshError,
+    color_index,
     new_session_name,
 )
 
 # KurigramGateway stays out: imported here, Kurigram would load in mock mode too
 __all__ = (
+    "CHANNEL_ID_OFFSET",
     "DELETE_LIMIT",
     "LEGACY_SESSION",
     "ChannelFull",
@@ -48,5 +51,6 @@ __all__ = (
     "TelegramGateway",
     "TgUser",
     "TooFreshError",
+    "color_index",
     "new_session_name",
 )

@@ -102,7 +102,13 @@ function onKey(e: KeyboardEvent) {
           @pointerenter="selected = i"
           @click="go(c)"
         >
-          <ChannelAvatar :id="c.id" :title="c.title" :src="c.avatar_url" :size="32" />
+          <ChannelAvatar
+            :id="c.id"
+            :color-index="c.color_index"
+            :title="c.title"
+            :src="c.avatar_url"
+            :size="32"
+          />
           <span class="min-w-0 flex-1">
             <span class="block truncate text-sm font-medium">{{ c.title }}</span>
             <span class="block truncate text-xs text-muted">

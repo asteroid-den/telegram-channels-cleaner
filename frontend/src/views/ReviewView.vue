@@ -198,7 +198,13 @@ useHotkeys({
         </h2>
         <ul>
           <li v-for="c in transfers" :key="c.id" class="block-row">
-            <ChannelAvatar :id="c.id" :title="c.title" :src="c.avatar_url" :size="28" />
+            <ChannelAvatar
+              :id="c.id"
+              :color-index="c.color_index"
+              :title="c.title"
+              :src="c.avatar_url"
+              :size="28"
+            />
             <span class="min-w-0 truncate font-medium">{{ c.title }}</span>
             <span class="shrink-0 text-muted">→</span>
             <ChannelAvatar
@@ -242,7 +248,13 @@ useHotkeys({
         </h2>
         <ul>
           <li v-for="c in leavingOwnedList" :key="c.id" class="block-row">
-            <ChannelAvatar :id="c.id" :title="c.title" :src="c.avatar_url" :size="28" />
+            <ChannelAvatar
+              :id="c.id"
+              :color-index="c.color_index"
+              :title="c.title"
+              :src="c.avatar_url"
+              :size="28"
+            />
             <span class="min-w-0 flex-1 truncate font-medium">{{ c.title }}</span>
             <span v-if="c.members_count !== null" class="shrink-0 text-xs text-muted tabular-nums">
               {{ c.members_count }} {{ t('deck.subscribers', c.members_count) }}
@@ -267,7 +279,13 @@ useHotkeys({
         </h2>
         <ul>
           <li v-for="c in deletions" :key="c.id" class="block-row">
-            <ChannelAvatar :id="c.id" :title="c.title" :src="c.avatar_url" :size="28" />
+            <ChannelAvatar
+              :id="c.id"
+              :color-index="c.color_index"
+              :title="c.title"
+              :src="c.avatar_url"
+              :size="28"
+            />
             <span class="min-w-0 flex-1 truncate font-medium">{{ c.title }}</span>
             <span class="shrink-0 text-xs text-muted">
               {{ t(`review.kindOne.${c.kind}`) }}
@@ -324,7 +342,13 @@ useHotkeys({
             :key="c.id"
             class="flex items-center gap-3 border-b border-border bg-surface px-4 py-3 last:border-b-0"
           >
-            <ChannelAvatar :id="c.id" :title="c.title" :src="c.avatar_url" :size="40" />
+            <ChannelAvatar
+              :id="c.id"
+              :color-index="c.color_index"
+              :title="c.title"
+              :src="c.avatar_url"
+              :size="40"
+            />
             <div class="min-w-0 flex-1">
               <div class="truncate font-medium">{{ c.title }}</div>
               <div class="truncate text-xs text-muted">
@@ -371,7 +395,13 @@ useHotkeys({
             :key="c.id"
             class="flex items-center gap-3 border-b border-border px-4 py-3 last:border-b-0"
           >
-            <ChannelAvatar :id="c.id" :title="c.title" :src="c.avatar_url" :size="36" />
+            <ChannelAvatar
+              :id="c.id"
+              :color-index="c.color_index"
+              :title="c.title"
+              :src="c.avatar_url"
+              :size="36"
+            />
             <div class="min-w-0 flex-1">
               <div class="truncate text-sm font-medium">{{ c.title }}</div>
               <div class="truncate text-xs text-danger" :title="c.error ?? ''">
