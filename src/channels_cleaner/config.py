@@ -8,7 +8,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Self
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 log = logging.getLogger(__name__)
@@ -91,6 +91,13 @@ class Settings(BaseSettings):
     apply_delay_max: float = Field(default=3.0, ge=0)
 
     full_info_ttl_hours: int = Field(default=72, ge=0)
+
+    @field_validator("data_dir")
+    @classmethod
+    def absolute_data_dir(cls, value: Path) -> Path:
+        # Kurigram puts a relative download path under its own workdir (data/sessions), not the cwd: the media cache
+        # would land in data/sessions/data/media and never be found again
+        return value.expanduser().absolute()
 
     @model_validator(mode="after")
     def check_delay_range(self) -> Self:
