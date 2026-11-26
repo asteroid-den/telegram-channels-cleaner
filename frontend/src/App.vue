@@ -4,14 +4,17 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import AppHeader from '@/components/AppHeader.vue'
+import ConnectionBanner from '@/components/ConnectionBanner.vue'
 import ToastStack from '@/components/ToastStack.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useConnectionStore } from '@/stores/connection'
 import { useDeckStore } from '@/stores/deck'
 import { useUiStore } from '@/stores/ui'
 
 const auth = useAuthStore()
 const deck = useDeckStore()
 const ui = useUiStore()
+const connection = useConnectionStore()
 const router = useRouter()
 const { t } = useI18n()
 const route = useRoute()
@@ -19,7 +22,9 @@ const route = useRoute()
 onMounted(() => {
   void ui.loadHealth()
   // The pairing screen asks for nothing else: a phone there isn't let in yet
-  if (route.name !== 'pair') auth.connect()
+  if (route.name === 'pair') return
+  auth.connect()
+  connection.start(auth.reconnect)
 })
 
 // Keep the route in line with the auth state (login elsewhere, logout, revoked session…).
@@ -55,6 +60,7 @@ watch(
   <div class="flex min-h-full flex-col">
     <AppHeader v-if="!route.meta.bare" />
     <main class="relative flex flex-1 flex-col">
+      <ConnectionBanner />
       <div
         v-if="auth.switchingTo"
         class="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-bg/80 text-sm text-muted"

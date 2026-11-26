@@ -147,7 +147,14 @@ Safety (2026-11-20, after an audit run from the mercury session):
   phone that claims it gets its cookie at once, valid only after the user approves it *on the computer* with the
   same code on both screens (a second claim: 409 `pairing_taken`). The enabled flag is an app-wide setting
   (`settings.account_id = 0`) and comes back on start. Disconnecting a device or turning access off kicks their
-  open SSE streams at once (`network.kicked`); SSE pings every 3 s so a phone notices the computer went away.
+  open SSE streams at once (`network.kicked`). SSE pings every 3 s as a real `ping` event (a comment line never
+  reaches EventSource); `stores/connection.ts` asks the server directly after 7 s without any event, every 3 s while
+  offline and on `visibilitychange`, shows `ConnectionBanner` ("the computer/app doesn't answer", then "back online"),
+  holds the deck's buttons and swipe meanwhile and reopens the auth stream; a phone asks `/api/pairing`, so one
+  disconnected on the computer lands on the pairing screen. Only MessageEvents count: the browser's own `error` on a
+  failed reconnect shares its name with the sync stream's `error` event.
+- Stopping: `cli.AppServer.shutdown` first closes the event bus (`EventBus.close` → a `closed` event ends every
+  stream), else uvicorn waited for the open tabs' streams forever and Ctrl+C hung until pressed twice.
   UI: account menu → `PhoneAccessDialog` (computer only: `onComputer` = the page's host is loopback; QR, the
   approval prompt over it, the device list; closing it cancels the QR). A phone opens `/pair/:token` (`PairView`, no
   header): it claims, shows the code and the computer's name, polls `GET /api/pairing` each second and reloads into

@@ -165,13 +165,15 @@ useHotkeys({
 </script>
 
 <template>
-  <section class="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pt-8 pb-32">
+  <section
+    class="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pt-8 pb-32 max-md:pt-5 max-md:pb-40"
+  >
     <RouterLink
       to="/"
       class="mb-4 inline-flex w-fit items-center gap-1.5 text-sm text-muted hover:text-text"
     >
       <AppIcon name="arrowLeft" :size="16" />{{ t('review.backToDeck') }}
-      <kbd class="font-mono text-[11px] text-faint">Esc</kbd>
+      <kbd class="font-mono text-[11px] text-faint max-md:hidden">Esc</kbd>
     </RouterLink>
     <h1 class="text-3xl font-bold tracking-tight">{{ t('review.title') }}</h1>
     <p class="mt-1 text-muted">{{ t('review.subtitle') }}</p>
@@ -418,9 +420,12 @@ useHotkeys({
 
     <div
       v-if="pending.length"
-      class="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-bg/85 px-4 py-4 backdrop-blur-md"
+      class="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-bg/85 px-4 py-4 pb-[calc(16px+env(safe-area-inset-bottom))] backdrop-blur-md"
     >
-      <div class="mx-auto flex max-w-2xl items-center gap-4">
+      <!-- On a phone: the warnings over a full-width button -->
+      <div
+        class="mx-auto flex max-w-2xl items-center gap-4 max-md:flex-col max-md:items-stretch max-md:gap-2.5"
+      >
         <div class="flex-1 text-xs leading-relaxed text-muted">
           <p v-if="noWayBack" class="mb-0.5 flex items-center gap-1.5 font-medium text-danger">
             <AppIcon name="lock" :size="12" />{{ t('review.noWayBackCount', noWayBack) }}
@@ -431,10 +436,10 @@ useHotkeys({
           <p v-if="leavingRun" class="mb-0.5 flex items-center gap-1.5 font-medium text-danger">
             <AppIcon name="alert" :size="12" />{{ t('review.leavingRun', leavingRun) }}
           </p>
-          <p>{{ t('review.pacing', { m: t('time.minutes', minutes) }) }}</p>
+          <p class="max-md:hidden">{{ t('review.pacing', { m: t('time.minutes', minutes) }) }}</p>
         </div>
         <button
-          class="flex shrink-0 items-center gap-2 rounded-[10px] bg-danger-strong px-5 py-3 font-semibold text-white shadow-card hover:brightness-110 disabled:opacity-50"
+          class="flex shrink-0 items-center gap-2 rounded-[10px] bg-danger-strong px-5 py-3 font-semibold text-white shadow-card hover:brightness-110 disabled:opacity-50 max-md:justify-center max-md:py-3.5"
           :disabled="starting || !runnable"
           @click="start"
         >
@@ -442,7 +447,9 @@ useHotkeys({
           <span v-if="heldTransfers + heldDeletions" class="font-normal opacity-80">
             · {{ t('review.waiting', heldTransfers + heldDeletions) }}
           </span>
-          <kbd class="font-mono text-[11px] font-medium opacity-75">{{ modKey }} ↵</kbd>
+          <kbd class="font-mono text-[11px] font-medium opacity-75 max-md:hidden"
+            >{{ modKey }} ↵</kbd
+          >
         </button>
       </div>
     </div>

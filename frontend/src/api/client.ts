@@ -57,11 +57,19 @@ export const api = {
 
 export type SseHandlers = Record<string, (data: never) => void>
 
+/** When an event stream last said anything, pings included: a quiet stream for long means the server is gone. */
+export const heard = { at: Date.now() }
+
 export function subscribe(url: string, handlers: SseHandlers): () => void {
   const source = new EventSource(url)
+  // The server pings every 3 s even when nothing happens
+  source.addEventListener('ping', () => (heard.at = Date.now()))
   for (const [event, handler] of Object.entries(handlers)) {
     source.addEventListener(event, (e) => {
-      handler(JSON.parse((e as MessageEvent<string>).data) as never)
+      // A server's "error" event shares its name with the browser's own one (a failed reconnect), which has no data
+      if (!(e instanceof MessageEvent)) return
+      heard.at = Date.now()
+      handler(JSON.parse(e.data as string) as never)
     })
   }
   return () => source.close()
