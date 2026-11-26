@@ -45,6 +45,8 @@ watch(
     }
     shownUser = id
   },
+  // The user is often known before this component is: without it the first switch after a page load went unnoticed
+  { immediate: true },
 )
 </script>
 
