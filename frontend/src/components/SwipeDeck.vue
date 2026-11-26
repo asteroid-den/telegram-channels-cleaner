@@ -153,6 +153,24 @@ const STAMPS: Record<Decision, { label: string; icon: IconName; cls: string; pos
     cls: 'border-accent text-accent',
     pos: 'left-1/2 top-1/3 -translate-x-1/2',
   },
+  transfer: {
+    label: 'actions.transfer',
+    icon: 'user',
+    cls: 'border-danger text-danger',
+    pos: 'right-5 top-[86px] rotate-6',
+  },
+  delete: {
+    label: 'actions.delete',
+    icon: 'trash',
+    cls: 'border-danger text-danger',
+    pos: 'right-5 top-[86px] rotate-6',
+  },
+  free_link: {
+    label: 'actions.freeLink',
+    icon: 'link',
+    cls: 'border-accent text-accent',
+    pos: 'left-1/2 top-1/3 -translate-x-1/2',
+  },
 }
 
 function onPointerDown(e: PointerEvent) {

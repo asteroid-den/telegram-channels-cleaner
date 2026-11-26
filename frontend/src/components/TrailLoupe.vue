@@ -34,12 +34,18 @@ const BADGE: Record<Exclude<Decision, 'skip'>, { icon: IconName; cls: string }> 
   unsubscribe: { icon: 'x', cls: 'bg-danger-strong' },
   mute: { icon: 'bellOff', cls: 'bg-warn' },
   archive: { icon: 'archive', cls: 'bg-accent' },
+  transfer: { icon: 'user', cls: 'bg-danger-strong' },
+  delete: { icon: 'trash', cls: 'bg-danger-strong' },
+  free_link: { icon: 'link', cls: 'bg-accent' },
 }
 const TAG: Record<Exclude<Decision, 'skip'>, string> = {
   keep: 'bg-success-soft text-success',
   unsubscribe: 'bg-danger-soft text-danger',
   mute: 'bg-warn-soft text-warn',
   archive: 'bg-accent-soft text-accent',
+  transfer: 'bg-danger-soft text-danger',
+  delete: 'bg-danger-soft text-danger',
+  free_link: 'bg-accent-soft text-accent',
 }
 const kind = (c: Channel) => (c.decision && c.decision !== 'skip' ? c.decision : 'keep')
 

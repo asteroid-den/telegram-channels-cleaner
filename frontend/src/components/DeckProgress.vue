@@ -42,6 +42,9 @@ const RUN_CLASS: Record<string, string> = {
   u: 'bg-danger',
   m: 'bg-warn',
   a: 'bg-accent',
+  t: 'bg-danger',
+  d: 'bg-danger',
+  l: 'bg-accent',
 }
 
 // The loupe: hover the bar to see the decisions around the pointer, click to rewind

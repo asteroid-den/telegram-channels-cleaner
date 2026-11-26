@@ -208,6 +208,9 @@ const ru: typeof en = {
     undo: 'Отменить',
     mute: 'Без звука',
     archive: 'В архив',
+    transfer: 'Передать и выйти',
+    delete: 'Удалить',
+    freeLink: 'Освободить ссылку',
   },
   review: {
     title: 'Проверка',

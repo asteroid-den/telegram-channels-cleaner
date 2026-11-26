@@ -72,6 +72,9 @@ const CHIP_CLASS: Record<Exclude<Decision, 'skip'>, string> = {
   unsubscribe: 'bg-danger-strong',
   mute: 'bg-warn',
   archive: 'bg-accent',
+  transfer: 'bg-danger-strong',
+  delete: 'bg-danger-strong',
+  free_link: 'bg-accent',
 }
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
 

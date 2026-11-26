@@ -13,6 +13,8 @@ const IDLE: ApplyState = {
   current: null,
   flood_wait_until: null,
   items: [],
+  held_transfers: 0,
+  held_deletions: 0,
 }
 
 export const useApplyStore = defineStore('apply', () => {
