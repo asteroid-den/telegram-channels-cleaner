@@ -2,7 +2,7 @@ import { ref, watch, type Ref } from 'vue'
 
 import type { Channel } from '@/api/types'
 import { companion, css, hexToRgb, ink, normalize, sampleImage, type Rgb } from '@/utils/color'
-import { colorFor } from '@/utils/format'
+import { colorIndexOf, userpicColors } from '@/utils/format'
 
 /**
  * Keeps --ch / --ch2 on <html> in sync with the given channel's avatar colour.
@@ -13,7 +13,7 @@ export function useChannelColor(channel: Ref<Channel | null>) {
 
   async function apply(ch: Channel | null) {
     if (!ch) return
-    const fallback = normalize(hexToRgb(colorFor(ch.id)))
+    const fallback = normalize(hexToRgb(userpicColors(ch.color_index ?? colorIndexOf(ch.id))[0]))
     const sampled = ch.avatar_url ? await sampleImage(ch.avatar_url) : null
     if (channel.value?.id !== ch.id) return // the user already moved on
     const base = sampled ? normalize(sampled) : fallback

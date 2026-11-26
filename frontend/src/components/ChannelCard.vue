@@ -85,6 +85,7 @@ const rate = computed(() =>
       <div class="flex items-start gap-4">
         <ChannelAvatar
           :id="channel.id"
+          :color-index="channel.color_index"
           :title="channel.title"
           :src="channel.avatar_url"
           :size="64"

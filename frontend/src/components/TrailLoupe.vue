@@ -82,6 +82,7 @@ function place(i: number) {
           >
             <ChannelAvatar
               :id="channel.id"
+              :color-index="channel.color_index"
               :title="channel.title"
               :src="channel.avatar_url"
               :size="58"

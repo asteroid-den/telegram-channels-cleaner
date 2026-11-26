@@ -1,12 +1,22 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
-import { colorFor, initials } from '@/utils/format'
+import { colorIndexOf, initials, userpicColors } from '@/utils/format'
 
 const props = withDefaults(
-  defineProps<{ id: number; title: string; src: string | null; size?: number; rounded?: string }>(),
+  defineProps<{
+    id: number
+    title: string
+    src: string | null
+    size?: number
+    rounded?: string
+    /** Telegram's colour of the peer when known (an owner may pick one), else derived from the id as Telegram does */
+    colorIndex?: number | null
+  }>(),
   { size: 48, rounded: '9999px' },
 )
+
+const stops = computed(() => userpicColors(props.colorIndex ?? colorIndexOf(props.id)))
 
 const failed = ref(false)
 watch(
@@ -24,7 +34,7 @@ watch(
       width: `${size}px`,
       height: `${size}px`,
       borderRadius: rounded,
-      background: colorFor(id),
+      background: `linear-gradient(${stops[0]}, ${stops[1]})`,
     }"
   >
     <img

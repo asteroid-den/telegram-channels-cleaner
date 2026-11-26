@@ -140,6 +140,7 @@ function review() {
           >
             <ChannelAvatar
               :id="h.channel.id"
+              :color-index="h.channel.color_index"
               :title="h.channel.title"
               :src="h.channel.avatar_url"
               :size="22"
@@ -163,6 +164,7 @@ function review() {
             >
               <ChannelAvatar
                 :id="c.id"
+                :color-index="c.color_index"
                 :title="c.title"
                 :src="c.avatar_url"
                 :size="22"
