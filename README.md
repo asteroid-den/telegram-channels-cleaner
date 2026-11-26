@@ -41,6 +41,8 @@ userbot + FastAPI) and a web UI that opens in your browser. No hosted service, n
 | ![The deck in the light theme](docs/media/deck-light.png) | ![Magnified history over the progress bar](docs/media/loupe.png) |
 | **Review** | **Applying** |
 | ![Review screen grouping the queued actions](docs/media/review.png) | ![Actions being applied one by one](docs/media/apply.png) |
+| **A chat you own: who gets it** | **Ctrl+K: find a chat** |
+| ![Picking an admin to hand an owned channel to](docs/media/owner.png) | ![Searching the deck by name](docs/media/search.png) |
 
 ## Quick start
 
