@@ -110,7 +110,8 @@ def utc(value: datetime | None) -> datetime | None:
     if value is None:
         return None
 
-    return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
+    # Kurigram's dates are naive local times (datetime.fromtimestamp), not UTC: astimezone reads a naive one as local
+    return value.astimezone(UTC)
 
 
 class KurigramGateway:

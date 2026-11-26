@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import time
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -9,7 +11,7 @@ import pytest
 from pyrogram import enums
 
 from channels_cleaner.config import Settings
-from channels_cleaner.telegram.kurigram_gateway import KurigramGateway
+from channels_cleaner.telegram.kurigram_gateway import KurigramGateway, utc
 
 
 def dialog(chat_type: enums.ChatType, chat_id: int, *, creator: bool = False, admin: bool = False) -> Any:  # noqa: ANN401
@@ -60,3 +62,17 @@ async def test_forums_count_as_supergroups_and_the_rest_is_left_out(tmp_path: Pa
         3: ("supergroup", "owner"),
         4: ("supergroup", "admin"),
     }
+
+
+def test_kurigrams_naive_dates_are_local_time(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Kurigram builds dates with datetime.fromtimestamp: naive, in the machine's local time
+    monkeypatch.setenv("TZ", "Europe/Moscow")
+    time.tzset()
+    moment = datetime(2026, 11, 26, 19, 46, tzinfo=UTC)
+
+    try:
+        assert utc(datetime.fromtimestamp(moment.timestamp())) == moment  # noqa: DTZ006 - what Kurigram does
+
+    finally:
+        monkeypatch.undo()
+        time.tzset()
