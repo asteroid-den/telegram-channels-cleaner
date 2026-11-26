@@ -3885,6 +3885,10 @@
             ],
             "title": "Link"
           },
+          "telegram_url": {
+            "type": "string",
+            "title": "Telegram Url"
+          },
           "about": {
             "anyOf": [
               {
@@ -4071,6 +4075,7 @@
           "title",
           "username",
           "link",
+          "telegram_url",
           "about",
           "members_count",
           "unread_count",
@@ -4179,6 +4184,10 @@
             ],
             "title": "Link"
           },
+          "telegram_url": {
+            "type": "string",
+            "title": "Telegram Url"
+          },
           "about": {
             "anyOf": [
               {
@@ -4371,6 +4380,7 @@
           "title",
           "username",
           "link",
+          "telegram_url",
           "about",
           "members_count",
           "unread_count",

@@ -3,6 +3,7 @@ from __future__ import annotations
 import httpx
 import pytest
 
+from channels_cleaner.api.models import telegram_url
 from channels_cleaner.context import AppContext
 from channels_cleaner.telegram import ChannelFull, FloodWaitError, GatewayError, MockGateway, RequestRefusedError
 from tests.conftest import get_json, login, open_dao
@@ -138,3 +139,10 @@ async def test_a_flood_wait_on_pictures_holds_the_next_ones(
 
     assert statuses == [429, 429]
     assert calls == ids[:1]
+
+
+def test_a_card_opens_its_chat_in_telegram_at_the_last_post() -> None:
+    assert telegram_url(-1001234567890, "rust_news", 512) == "tg://resolve?domain=rust_news&post=512"
+    assert telegram_url(-1001234567890, "rust_news", None) == "tg://resolve?domain=rust_news"
+    # A private one by its own id, without the -100 of the Bot API form
+    assert telegram_url(-1001234567890, None, 7) == "tg://privatepost?channel=1234567890&post=7"

@@ -25,6 +25,17 @@ from channels_cleaner.enums import (
 )
 
 THUMB_MEDIA = {MediaKind.PHOTO, MediaKind.VIDEO, MediaKind.ANIMATION}
+#: Bot API ids of channels and supergroups are -100 followed by the channel's own id
+CHANNEL_ID_OFFSET = -1_000_000_000_000
+
+
+def telegram_url(channel_id: int, username: str | None, post_id: int | None) -> str:
+    """Opens the chat in the Telegram app, at its last post when it has one."""
+    if username:
+        return f"tg://resolve?domain={username}" + (f"&post={post_id}" if post_id else "")
+
+    # A private chat opens only through a post of it
+    return f"tg://privatepost?channel={CHANNEL_ID_OFFSET - channel_id}&post={post_id or 1}"
 
 
 class SendCodeRequest(BaseModel):
@@ -116,6 +127,8 @@ class Channel(BaseModel):
     title: str
     username: str | None
     link: str | None
+    #: a tg:// link that opens the chat in the Telegram app, at its last post
+    telegram_url: str
     about: str | None
     members_count: int | None
     unread_count: int
@@ -149,6 +162,7 @@ class Channel(BaseModel):
             title=channel.title,
             username=channel.username,
             link=f"https://t.me/{channel.username}" if channel.username else None,
+            telegram_url=telegram_url(channel.channel_id, channel.username, channel.last_post_id),
             about=channel.about,
             members_count=channel.members_count,
             unread_count=channel.unread_count,
