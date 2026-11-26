@@ -11,10 +11,27 @@ from typing import Any
 from channels_cleaner.api.errors import ApplyJobRunning
 from channels_cleaner.config import Settings
 from channels_cleaner.database import DAO, DatabaseManager, utc_now
-from channels_cleaner.enums import ApplyStatus, ChatRole, Decision, DecisionStatus, ItemStatus, JobStatus
+from channels_cleaner.enums import (
+    LEAVING_ACTIONS,
+    ApplyStatus,
+    ChatRole,
+    Decision,
+    DecisionStatus,
+    ItemErrorCode,
+    ItemStatus,
+    JobStatus,
+)
 from channels_cleaner.events import EventBus
 from channels_cleaner.services import decisions
-from channels_cleaner.telegram import FloodWaitError, GatewayError, TelegramGateway
+from channels_cleaner.telegram import (
+    ChatTooLargeError,
+    FloodWaitError,
+    GatewayError,
+    InvalidPasswordError,
+    PasswordMissingError,
+    TelegramGateway,
+    TooFreshError,
+)
 
 log = logging.getLogger(__name__)
 
@@ -22,6 +39,14 @@ APPLY_TOPIC = "apply"
 
 
 MAX_FLOOD_RETRIES = 5
+
+#: Telegram's refusals of an owner's action the UI explains in its own words
+ERROR_CODES: dict[type[GatewayError], ItemErrorCode] = {
+    InvalidPasswordError: "password_invalid",
+    PasswordMissingError: "password_missing",
+    TooFreshError: "too_fresh",
+    ChatTooLargeError: "too_large",
+}
 
 
 @dataclass(slots=True)
@@ -34,6 +59,12 @@ class ApplyItem:
     error: str | None = None
     reverts: Decision | None = None
     role: ChatRole = ChatRole.MEMBER
+    successor_id: int | None = None
+    successor_name: str | None = None
+    error_code: ItemErrorCode | None = None
+    retry_after: int | None = None
+    #: the transfer itself went through, only the leave is left (a retry must not transfer again)
+    transferred: bool = False
 
 
 @dataclass(slots=True)
@@ -46,6 +77,8 @@ class ApplyState:
     current: int | None = None
     flood_wait_until: float | None = None
     items: list[ApplyItem] = field(default_factory=list)
+    held_transfers: int = 0
+    held_deletions: int = 0
 
     def snapshot(self) -> dict[str, Any]:
         return asdict(self)
@@ -63,29 +96,45 @@ class ApplyService:
         # Held from the check to the task's creation: a second start in between would run the same queue twice
         self.starting = asyncio.Lock()
         self.rng = random.Random()  # noqa: S311 - pause jitter, not cryptography
+        # The cloud password for the transfers of the running job: never stored, never logged, dropped at its end
+        self.password: str | None = None
+        # Once Telegram refuses the password (wrong, missing, too fresh), the other transfers would only get the same
+        # answer: the item that got it, copied onto the rest without asking Telegram again
+        self.transfer_refusal: ApplyItem | None = None
 
     @property
     def running(self) -> bool:
         return self.starting.locked() or (self.task is not None and not self.task.done())
 
-    async def start(self, account_id: int) -> ApplyState:
+    async def start(
+        self, account_id: int, *, password: str | None = None, confirm_deletions: bool = False
+    ) -> ApplyState:
         if self.running:
             raise ApplyJobRunning
 
         async with self.starting:
-            return await self.start_job(account_id)
+            return await self.start_job(account_id, password=password, confirm_deletions=confirm_deletions)
 
-    async def start_job(self, account_id: int) -> ApplyState:
+    async def start_job(self, account_id: int, *, password: str | None, confirm_deletions: bool) -> ApplyState:
         async with self.database.session() as session:
             dao = DAO(session)
-            pending = [
+            queued = [
                 (channel, channel.decision)
                 for channel in await dao.list_decided(account_id, status=DecisionStatus.PENDING)
                 if channel.decision is not None
             ]
+            # Without the password or the confirmation these stay in the queue, untouched, for a later run
+            held_transfers = sum(1 for _, d in queued if d.decision is Decision.TRANSFER and not password)
+            held_deletions = sum(1 for _, d in queued if d.decision is Decision.DELETE and not confirm_deletions)
+            pending = [
+                (channel, decision)
+                for channel, decision in queued
+                if not (decision.decision is Decision.TRANSFER and not password)
+                and not (decision.decision is Decision.DELETE and not confirm_deletions)
+            ]
 
             if not pending:
-                self.state = ApplyState(status="finished")
+                self.state = ApplyState(status="finished", held_transfers=held_transfers, held_deletions=held_deletions)
                 return self.state
 
             job = await dao.create_job(account_id, len(pending), utc_now())
@@ -103,10 +152,16 @@ class ApplyService:
                     has_photo=channel.photo_file_id is not None,
                     reverts=decision.reverts,
                     role=channel.role,
+                    successor_id=decision.successor_id,
+                    successor_name=decision.successor_name,
                 )
                 for channel, decision in pending
             ],
+            held_transfers=held_transfers,
+            held_deletions=held_deletions,
         )
+        self.password = password
+        self.transfer_refusal = None
         self.cancel_requested.clear()
         self.bus.publish(APPLY_TOPIC, "started", **self.state.snapshot())
         self.task = asyncio.create_task(self.run(account_id), name="apply-job")
@@ -132,7 +187,7 @@ class ApplyService:
 
     async def execute(self, item: ApplyItem) -> None:
         # Normally refused when the decision is made; this covers one queued while the flag was on
-        leaving = item.decision is Decision.UNSUBSCRIBE
+        leaving = item.decision in LEAVING_ACTIONS
 
         if decisions.leaves_owned_chat(item.decision, item.role, allowed=self.settings.allow_owner_leave):
             msg = "Leaving a chat you own is off (start with --allow-owner-leave)"
@@ -143,14 +198,32 @@ class ApplyService:
             undo = {Decision.MUTE: self.gateway.unmute, Decision.ARCHIVE: self.gateway.unarchive}[item.reverts]
             await undo(item.channel_id)
 
+        if item.decision is Decision.TRANSFER:
+            await self.transfer(item)
+            return
+
         action = {
             Decision.UNSUBSCRIBE: self.gateway.leave,
             Decision.MUTE: self.gateway.mute,
             Decision.ARCHIVE: self.gateway.archive,
+            Decision.DELETE: self.gateway.delete_chat,
+            Decision.FREE_LINK: self.gateway.free_link,
         }.get(item.decision)
 
         if action is not None:
             await action(item.channel_id)
+
+    async def transfer(self, item: ApplyItem) -> None:
+        """Hands the chat to its successor, then leaves it; a failed leave is retried without transferring again."""
+        if not item.transferred:
+            if self.password is None or item.successor_id is None:
+                msg = "No password or successor for the transfer"
+                raise GatewayError(msg)
+
+            await self.gateway.transfer_ownership(item.channel_id, item.successor_id, self.password)
+            item.transferred = True
+
+        await self.gateway.leave(item.channel_id)
 
     async def run(self, account_id: int) -> None:
         state = self.state
@@ -188,6 +261,8 @@ class ApplyService:
             state.status = "error"
 
         finally:
+            self.password = None
+
             for item in state.items:
                 if item.status == "running":
                     item.status = "queued"
@@ -215,14 +290,21 @@ class ApplyService:
             now = utc_now()
 
             if item.status == "failed":
-                await dao.mark_decision(
-                    account_id,
-                    item.channel_id,
-                    DecisionStatus.FAILED,
-                    expected=item.decision,
-                    error=item.error,
-                    now=now,
-                )
+                if item.transferred:
+                    # The chat is the successor's now, the user one of its admins: only the leave is left to retry
+                    await dao.mark_transferred(account_id, item.channel_id, item.error or "")
+                    await dao.set_channel_role(account_id, item.channel_id, ChatRole.ADMIN)
+
+                else:
+                    await dao.mark_decision(
+                        account_id,
+                        item.channel_id,
+                        DecisionStatus.FAILED,
+                        expected=item.decision,
+                        error=item.error,
+                        now=now,
+                    )
+
                 await dao.commit()
                 return
 
@@ -230,8 +312,11 @@ class ApplyService:
                 account_id, item.channel_id, DecisionStatus.APPLIED, expected=item.decision, now=now
             )
 
-            if item.decision is Decision.UNSUBSCRIBE:
+            if item.decision in LEAVING_ACTIONS:
                 await dao.set_channel_gone(account_id, item.channel_id)
+
+            elif item.decision is Decision.FREE_LINK:
+                await dao.set_channel_username(account_id, item.channel_id, None)
 
             else:
                 # The mute or archive taken back is off now, the decision's own one is on
@@ -290,6 +375,14 @@ class ApplyService:
             item.error = "The decision changed while applying"
             return item.status
 
+        refusal = self.transfer_refusal
+
+        if item.decision is Decision.TRANSFER and refusal is not None:
+            item.status = "failed"
+            item.error, item.error_code, item.retry_after = refusal.error, refusal.error_code, refusal.retry_after
+            await self.record(account_id, item)
+            return item.status
+
         for _ in range(MAX_FLOOD_RETRIES + 1):
             try:
                 await self.execute(item)
@@ -317,6 +410,12 @@ class ApplyService:
             except GatewayError as exc:
                 item.status = "failed"
                 item.error = str(exc) or type(exc).__name__
+                item.error_code = ERROR_CODES.get(type(exc))
+                item.retry_after = exc.seconds if isinstance(exc, TooFreshError) else None
+
+                if item.decision is Decision.TRANSFER and not item.transferred and item.error_code is not None:
+                    self.transfer_refusal = item
+
                 await self.record(account_id, item)
                 return item.status
 

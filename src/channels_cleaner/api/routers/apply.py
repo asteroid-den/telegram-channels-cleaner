@@ -10,8 +10,13 @@ router = APIRouter(prefix="/apply", tags=["apply"])
 
 
 @router.post("", responses=errors.error_responses(errors.NotAuthorized, errors.ApplyJobRunning))
-async def post_apply(ctx: ContextDep, account_id: AccountIdDep) -> models.ApplyStateResponse:
-    return models.ApplyStateResponse.model_validate(await ctx.apply.start(account_id))
+async def post_apply(
+    ctx: ContextDep, account_id: AccountIdDep, body: models.ApplyRequest | None = None
+) -> models.ApplyStateResponse:
+    body = body or models.ApplyRequest()
+    password = body.password.get_secret_value() if body.password is not None else None
+    state = await ctx.apply.start(account_id, password=password or None, confirm_deletions=body.confirm_deletions)
+    return models.ApplyStateResponse.model_validate(state)
 
 
 @router.post("/cancel", responses=errors.error_responses())
