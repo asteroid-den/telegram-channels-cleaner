@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from channels_cleaner.database import DAO
-from channels_cleaner.enums import ChatKind, Decision, DecisionStatus, RoleFilter
+from channels_cleaner.enums import LEAVING_ACTIONS, ChatKind, DecisionStatus, RoleFilter
 
 AGE_BUCKETS: list[tuple[str, float]] = [
     ("week", 7),
@@ -58,7 +58,7 @@ async def export_rows(
     dao: DAO, account_id: int, kind: ChatKind = ChatKind.CHANNEL, role: RoleFilter = RoleFilter.MEMBER
 ) -> list[dict[str, Any]]:
     channels = await dao.list_decided(
-        account_id, status=DecisionStatus.APPLIED, decisions=(Decision.UNSUBSCRIBE,), kind=kind, role=role
+        account_id, status=DecisionStatus.APPLIED, decisions=LEAVING_ACTIONS, kind=kind, role=role
     )
     return [
         {

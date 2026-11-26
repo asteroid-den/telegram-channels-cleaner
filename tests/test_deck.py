@@ -47,7 +47,15 @@ async def test_decide_undo_skip(client: httpx.AsyncClient, ctx: AppContext) -> N
     assert b not in ids
     assert ids[-1] == c  # skipped goes to the back
     assert deck["counts"]["pending"] == 1
-    assert deck["counts"]["by_decision"] == {"keep": 1, "unsubscribe": 1, "mute": 0, "archive": 0}
+    assert deck["counts"]["by_decision"] == {
+        "keep": 1,
+        "unsubscribe": 1,
+        "mute": 0,
+        "archive": 0,
+        "transfer": 0,
+        "delete": 0,
+        "free_link": 0,
+    }
     assert deck["counts"]["trail"] == "ku"  # in the order decided, skips left out
 
     undo = await client.delete(f"/api/decisions/{b}")

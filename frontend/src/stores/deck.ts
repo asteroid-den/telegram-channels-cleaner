@@ -38,7 +38,15 @@ function readKind(): ChatKind {
   }
 }
 const ACTIONS: Decision[] = ['unsubscribe', 'mute', 'archive']
-const TRAIL_CODE = { keep: 'k', unsubscribe: 'u', mute: 'm', archive: 'a' } as const
+const TRAIL_CODE = {
+  keep: 'k',
+  unsubscribe: 'u',
+  mute: 'm',
+  archive: 'a',
+  transfer: 't',
+  delete: 'd',
+  free_link: 'l',
+} as const
 
 export interface HistoryEntry {
   channel: Channel
@@ -73,7 +81,15 @@ export const useDeckStore = defineStore('deck', () => {
     undecided: 0,
     pending: 0,
     pending_other: 0,
-    by_decision: { keep: 0, unsubscribe: 0, mute: 0, archive: 0 },
+    by_decision: {
+      keep: 0,
+      unsubscribe: 0,
+      mute: 0,
+      archive: 0,
+      transfer: 0,
+      delete: 0,
+      free_link: 0,
+    },
     trail: '',
   })
   const sync = ref<SyncState | null>(null)

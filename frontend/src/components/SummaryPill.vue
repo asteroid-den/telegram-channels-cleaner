@@ -48,6 +48,9 @@ const TAG_CLASS: Record<Decision, string> = {
   skip: 'bg-surface-3 text-muted',
   mute: 'bg-warn-soft text-warn',
   archive: 'bg-accent-soft text-accent',
+  transfer: 'bg-danger-soft text-danger',
+  delete: 'bg-danger-soft text-danger',
+  free_link: 'bg-accent-soft text-accent',
 }
 
 function review() {

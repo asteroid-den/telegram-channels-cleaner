@@ -296,6 +296,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/channels/{channel_id}/admins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Channel Admins */
+        get: operations["get_channel_admins_api_channels__channel_id__admins_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/channels/{channel_id}/avatar": {
         parameters: {
             query?: never;
@@ -592,6 +609,17 @@ export interface components {
             /** Items */
             items: components["schemas"]["Account"][];
         };
+        /** AdminsResponse */
+        AdminsResponse: {
+            /**
+             * Ok
+             * @default true
+             * @constant
+             */
+            ok: true;
+            /** Items */
+            items: components["schemas"]["ChatAdmin"][];
+        };
         /** ApplyItem */
         ApplyItem: {
             /** Channel Id */
@@ -608,8 +636,14 @@ export interface components {
             status: "queued" | "running" | "done" | "failed";
             /** Error */
             error: string | null;
+            /** Error Code */
+            error_code: ("password_invalid" | "password_missing" | "too_fresh" | "too_large") | null;
+            /** Retry After */
+            retry_after: number | null;
             reverts: components["schemas"]["Decision"] | null;
             role: components["schemas"]["ChatRole"];
+            /** Successor Name */
+            successor_name: string | null;
         };
         /** ApplyJobRunningError */
         ApplyJobRunningError: {
@@ -630,6 +664,16 @@ export interface components {
              * @default Wait for the running apply job to finish
              */
             message: string;
+        };
+        /** ApplyRequest */
+        ApplyRequest: {
+            /** Password */
+            password?: string | null;
+            /**
+             * Confirm Deletions
+             * @default false
+             */
+            confirm_deletions: boolean;
         };
         /** ApplyStateResponse */
         ApplyStateResponse: {
@@ -652,6 +696,10 @@ export interface components {
             flood_wait_until: number | null;
             /** Items */
             items: components["schemas"]["ApplyItem"][];
+            /** Held Transfers */
+            held_transfers: number;
+            /** Held Deletions */
+            held_deletions: number;
             /**
              * Ok
              * @default true
@@ -752,6 +800,10 @@ export interface components {
             error: string | null;
             pulse: components["schemas"]["Pulse"] | null;
             reverts?: components["schemas"]["Decision"] | null;
+            /** Successor Id */
+            successor_id?: number | null;
+            /** Successor Name */
+            successor_name?: string | null;
         };
         /** ChannelListResponse */
         ChannelListResponse: {
@@ -827,12 +879,29 @@ export interface components {
             error: string | null;
             pulse: components["schemas"]["Pulse"] | null;
             reverts?: components["schemas"]["Decision"] | null;
+            /** Successor Id */
+            successor_id?: number | null;
+            /** Successor Name */
+            successor_name?: string | null;
             /**
              * Ok
              * @default true
              * @constant
              */
             ok: true;
+        };
+        /** ChatAdmin */
+        ChatAdmin: {
+            /** Id */
+            id: number;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string | null;
+            /** Username */
+            username: string | null;
+            /** Can Promote */
+            can_promote: boolean;
         };
         /**
          * ChatKind
@@ -844,6 +913,30 @@ export interface components {
          * @enum {string}
          */
         ChatRole: "member" | "admin" | "owner";
+        /** ChatTooLargeToDeleteError */
+        ChatTooLargeToDeleteError: {
+            /**
+             * Ok
+             * @default false
+             * @constant
+             */
+            ok: false;
+            /**
+             * Type
+             * @default chat_too_large_to_delete
+             * @constant
+             */
+            type: "chat_too_large_to_delete";
+            /**
+             * Message
+             * @default Telegram deletes only chats up to 1000 members; leave or hand it over instead
+             */
+            message: string;
+            /** Channel Id */
+            channel_id: number;
+            /** Members Count */
+            members_count: number;
+        };
         /** CheckPasswordRequest */
         CheckPasswordRequest: {
             /** Password */
@@ -873,10 +966,12 @@ export interface components {
          * Decision
          * @enum {string}
          */
-        Decision: "keep" | "unsubscribe" | "mute" | "archive" | "skip";
+        Decision: "keep" | "unsubscribe" | "mute" | "archive" | "skip" | "transfer" | "delete" | "free_link";
         /** DecisionRequest */
         DecisionRequest: {
             decision: components["schemas"]["Decision"];
+            /** Successor Id */
+            successor_id?: number | null;
         };
         /** DecisionResponse */
         DecisionResponse: {
@@ -1212,6 +1307,28 @@ export interface components {
          * @enum {string}
          */
         MediaKind: "photo" | "video" | "animation" | "document" | "audio" | "voice" | "poll" | "sticker" | "other";
+        /** NoPublicLinkError */
+        NoPublicLinkError: {
+            /**
+             * Ok
+             * @default false
+             * @constant
+             */
+            ok: false;
+            /**
+             * Type
+             * @default no_public_link
+             * @constant
+             */
+            type: "no_public_link";
+            /**
+             * Message
+             * @default The chat has no public link to free
+             */
+            message: string;
+            /** Channel Id */
+            channel_id: number;
+        };
         /** NotAuthorizedError */
         NotAuthorizedError: {
             /**
@@ -1231,6 +1348,28 @@ export interface components {
              * @default Log in to Telegram first
              */
             message: string;
+        };
+        /** NotChatOwnerError */
+        NotChatOwnerError: {
+            /**
+             * Ok
+             * @default false
+             * @constant
+             */
+            ok: false;
+            /**
+             * Type
+             * @default not_chat_owner
+             * @constant
+             */
+            type: "not_chat_owner";
+            /**
+             * Message
+             * @default Only the chat's owner can do that
+             */
+            message: string;
+            /** Channel Id */
+            channel_id: number;
         };
         /** OwnerLeaveNotEnabledError */
         OwnerLeaveNotEnabledError: {
@@ -1359,6 +1498,30 @@ export interface components {
             last_post_age: {
                 [key: string]: number;
             };
+        };
+        /** SuccessorNotAdminError */
+        SuccessorNotAdminError: {
+            /**
+             * Ok
+             * @default false
+             * @constant
+             */
+            ok: false;
+            /**
+             * Type
+             * @default successor_not_admin
+             * @constant
+             */
+            type: "successor_not_admin";
+            /**
+             * Message
+             * @default The chat can go only to one of its admins
+             */
+            message: string;
+            /** Channel Id */
+            channel_id: number;
+            /** User Id */
+            user_id: number;
         };
         /** SyncState */
         SyncState: {
@@ -2665,6 +2828,109 @@ export interface operations {
             };
         };
     };
+    get_channel_admins_api_channels__channel_id__admins_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channel_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminsResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotAuthorizedError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostNotAllowedError"] | components["schemas"]["CrossOriginRefusedError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChannelNotFoundError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotChatOwnerError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FloodWaitError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HttpInternalError"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramError"];
+                };
+            };
+            /** @description An error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_channel_avatar_api_channels__channel_id__avatar_get: {
         parameters: {
             query?: never;
@@ -2910,7 +3176,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApplyJobRunningError"] | components["schemas"]["OwnerLeaveNotEnabledError"];
+                    "application/json": components["schemas"]["ApplyJobRunningError"] | components["schemas"]["OwnerLeaveNotEnabledError"] | components["schemas"]["NotChatOwnerError"] | components["schemas"]["ChatTooLargeToDeleteError"] | components["schemas"]["NoPublicLinkError"] | components["schemas"]["SuccessorNotAdminError"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -2922,6 +3188,15 @@ export interface operations {
                     "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FloodWaitError"];
+                };
+            };
             /** @description Internal Server Error */
             500: {
                 headers: {
@@ -2929,6 +3204,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HttpInternalError"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramError"];
                 };
             };
             /** @description An error */
@@ -3316,7 +3600,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ApplyRequest"] | null;
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

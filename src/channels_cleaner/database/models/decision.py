@@ -19,3 +19,6 @@ class ChannelDecision(Base):
     error: Mapped[str | None]
     # A mute or archive the app already applied and the current decision takes back first
     reverts: Mapped[Decision | None]
+    # Who gets the chat on a transfer; the name as it was when chosen, for the review screen
+    successor_id: Mapped[int | None]
+    successor_name: Mapped[str | None]

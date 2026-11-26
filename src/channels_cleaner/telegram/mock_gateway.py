@@ -13,9 +13,12 @@ from channels_cleaner.config import Settings
 from channels_cleaner.enums import ChatKind, ChatRole, MediaKind
 from channels_cleaner.telegram.device_profiles import DeviceProfile, all_profiles
 from channels_cleaner.telegram.types import (
+    DELETE_LIMIT,
     LEGACY_SESSION,
     ChannelFull,
     ChannelInfo,
+    ChatAdmin,
+    ChatTooLargeError,
     FloodWaitError,
     GatewayError,
     InvalidCodeError,
@@ -139,6 +142,15 @@ MEDIA: list[MediaKind | None] = [
     MediaKind.DOCUMENT,
     MediaKind.POLL,
 ]
+ADMIN_NAMES = [
+    ("Anna", "Petrova", "anna_p"),
+    ("Max", None, "maxwell"),
+    ("Ilya", "Sokolov", None),
+    ("Kate", "Moss", "kate_m"),
+    ("Oleg", None, None),
+    ("Sam", "Lee", "samlee"),
+    ("Dasha", "K.", "dashak"),
+]
 COLORS = ["#e17076", "#7bc862", "#e5ca77", "#65aadd", "#a695e7", "#ee7aae", "#6ec9cb", "#faa774"]
 
 
@@ -254,6 +266,22 @@ def thumb_svg(seed: int) -> str:
         f'r="{rng.randint(20, 60)}" '
         'fill="#fff" fill-opacity=".25"/></svg>'
     )
+
+
+def generate_admins(channel_id: int) -> list[ChatAdmin]:
+    """A few admins per chat, none in about a quarter of them; the same ones every time."""
+    rng = random.Random(f"admins/{channel_id}")
+    count = 0 if rng.random() < 0.25 else rng.randint(1, 4)
+    return [
+        ChatAdmin(
+            id=900_000_000 + abs(channel_id) % 100_000 * 10 + index,
+            first_name=first,
+            last_name=last,
+            username=username,
+            can_promote=index == 0 or rng.random() < 0.3,
+        )
+        for index, (first, last, username) in enumerate(rng.sample(ADMIN_NAMES, count))
+    ]
 
 
 class MockGateway:
@@ -503,6 +531,9 @@ class MockGateway:
     async def leave(self, channel_id: int) -> None:
         self.require_auth()
         await self.maybe_fail()
+        self.drop(channel_id)
+
+    def drop(self, channel_id: int) -> None:
         self.channels.pop(channel_id, None)
         gone: set[int] = set()
 
@@ -543,3 +574,61 @@ class MockGateway:
         if channel_id in self.channels:
             info, full = self.channels[channel_id]
             self.channels[channel_id] = (replace(info, is_archived=False), full)
+
+    def update_info(self, channel_id: int, **changes: object) -> None:
+        if channel_id in self.channels:
+            info, full = self.channels[channel_id]
+            self.channels[channel_id] = (replace(info, **changes), full)  # pyright: ignore[reportArgumentType] - ChannelInfo fields
+
+    def owned(self, channel_id: int) -> tuple[ChannelInfo, ChannelFull]:
+        entry = self.channels.get(channel_id)
+
+        if entry is None or entry[0].role is not ChatRole.OWNER:
+            msg = "CHAT_ADMIN_REQUIRED"
+            raise RequestRefusedError(msg)
+
+        return entry
+
+    async def get_admins(self, channel_id: int) -> list[ChatAdmin]:
+        self.require_auth()
+        await asyncio.sleep(self.action_delay)
+
+        if channel_id not in self.channels:
+            msg = "CHANNEL_INVALID"
+            raise RequestRefusedError(msg)
+
+        return generate_admins(channel_id)
+
+    async def transfer_ownership(self, channel_id: int, user_id: int, password: str) -> None:
+        self.require_auth()
+        await asyncio.sleep(self.action_delay)
+        self.owned(channel_id)
+
+        # Every mock account has a cloud password for this, whatever CC_MOCK_2FA says about the login
+        if password != MOCK_PASSWORD:
+            msg = "PASSWORD_HASH_INVALID"
+            raise InvalidPasswordError(msg)
+
+        if user_id not in {admin.id for admin in generate_admins(channel_id)}:
+            msg = "USER_ID_INVALID"
+            raise RequestRefusedError(msg)
+
+        # The old owner stays on as an admin
+        self.update_info(channel_id, role=ChatRole.ADMIN)
+
+    async def delete_chat(self, channel_id: int) -> None:
+        self.require_auth()
+        await self.maybe_fail()
+        _, full = self.owned(channel_id)
+
+        if (full.members_count or 0) > DELETE_LIMIT:
+            msg = "CHANNEL_TOO_LARGE"
+            raise ChatTooLargeError(msg)
+
+        self.drop(channel_id)
+
+    async def free_link(self, channel_id: int) -> None:
+        self.require_auth()
+        await self.maybe_fail()
+        self.owned(channel_id)
+        self.update_info(channel_id, username=None)

@@ -35,6 +35,10 @@ class Decision(StrEnum):
     ARCHIVE = auto()
     # "Later": back of the deck, forgotten on the next launch
     SKIP = auto()
+    # The owner's own actions: hand the chat to an admin and leave, delete it, make it private
+    TRANSFER = auto()
+    DELETE = auto()
+    FREE_LINK = auto()
 
 
 class DecisionStatus(StrEnum):
@@ -69,7 +73,18 @@ class RoleFilter(StrEnum):
     MANAGED = auto()
 
 
-ACTION_DECISIONS = (Decision.UNSUBSCRIBE, Decision.MUTE, Decision.ARCHIVE)
+ACTION_DECISIONS = (
+    Decision.UNSUBSCRIBE,
+    Decision.MUTE,
+    Decision.ARCHIVE,
+    Decision.TRANSFER,
+    Decision.DELETE,
+    Decision.FREE_LINK,
+)
+#: actions after which the chat is gone from the user's list
+LEAVING_ACTIONS = (Decision.UNSUBSCRIBE, Decision.TRANSFER, Decision.DELETE)
+#: actions only the chat's owner can take
+OWNER_ACTIONS = (Decision.TRANSFER, Decision.DELETE, Decision.FREE_LINK)
 #: applied actions the app can take back (a left chat is gone for good)
 REVERSIBLE_ACTIONS = (Decision.MUTE, Decision.ARCHIVE)
 
@@ -78,3 +93,5 @@ AuthStatus = Literal["starting", "unauthorized", "qr", "code", "password", "auth
 #: "idle" before any job; the rest is written down as a JobStatus
 ApplyStatus = Literal["idle", "running", "finished", "cancelled", "error"]
 ItemStatus = Literal["queued", "running", "done", "failed"]
+#: why Telegram refused an owner's action, for the UI to explain
+ItemErrorCode = Literal["password_invalid", "password_missing", "too_fresh", "too_large"]

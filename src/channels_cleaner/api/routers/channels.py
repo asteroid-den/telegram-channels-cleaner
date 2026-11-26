@@ -62,6 +62,12 @@ async def get_channel_full(channel_id: int, ctx: ContextDep, account_id: Account
     return models.ChannelResponse.from_channel(await ctx.channels.get_full(account_id, channel_id))
 
 
+@router.get("/{channel_id}/admins", responses=errors.error_responses(*FROM_TELEGRAM, errors.NotChatOwner))
+async def get_channel_admins(channel_id: int, ctx: ContextDep, account_id: AccountIdDep) -> models.AdminsResponse:
+    admins = await ctx.channels.admins(account_id, channel_id)
+    return models.AdminsResponse(items=[models.ChatAdmin.model_validate(admin) for admin in admins])
+
+
 @router.get(
     "/{channel_id}/avatar",
     response_class=FileResponse,

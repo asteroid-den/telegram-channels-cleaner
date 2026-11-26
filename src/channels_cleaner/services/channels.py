@@ -9,17 +9,19 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from channels_cleaner.api.errors import ChannelNotFound
+from channels_cleaner.api.errors import ChannelNotFound, NotChatOwner, SuccessorNotAdmin
 from channels_cleaner.config import Settings
 from channels_cleaner.database import DAO, DatabaseManager, utc_now
 from channels_cleaner.database.models import Channel
-from channels_cleaner.enums import MediaKind
+from channels_cleaner.enums import ChatRole, MediaKind
 from channels_cleaner.pulse import HISTORY_LIMIT, compute_pulse
-from channels_cleaner.telegram import ChannelFull, FloodWaitError, RequestRefusedError, TelegramGateway
+from channels_cleaner.telegram import ChannelFull, ChatAdmin, FloodWaitError, RequestRefusedError, TelegramGateway
 
 log = logging.getLogger(__name__)
 
 NONE_MARKER = ".none"
+#: how long a chat's admins are taken as known: long enough to pick one and confirm, short enough to see a change
+ADMINS_TTL = 600
 
 
 class ChannelsService:
@@ -34,10 +36,13 @@ class ChannelsService:
         # Until when (time.monotonic) Telegram asked us to leave each kind of request alone. A flood wait on one card
         # holds for the next ones too: they would only get the same answer, and Telegram lengthens waits for that.
         self.cooldowns: dict[str, float] = {}
+        # (account, chat) → (time.monotonic of the answer, the admins)
+        self.admins_cache: dict[tuple[int, int], tuple[float, list[ChatAdmin]]] = {}
 
     def reset(self) -> None:
         """Another account is on: a flood wait was the last one's."""
         self.cooldowns.clear()
+        self.admins_cache.clear()
 
     def check_cooldown(self, kind: str) -> None:
         left = self.cooldowns.get(kind, 0) - time.monotonic()
@@ -58,6 +63,39 @@ class ChannelsService:
             raise ChannelNotFound(channel_id=channel_id)
 
         return row
+
+    async def admins(self, account_id: int, channel_id: int) -> list[ChatAdmin]:
+        """Who could take over a chat the user owns."""
+        row = await self.get_row(account_id, channel_id)
+
+        if row.role is not ChatRole.OWNER:
+            raise NotChatOwner(channel_id=channel_id)
+
+        key = (account_id, channel_id)
+        cached = self.admins_cache.get(key)
+
+        if cached is not None and time.monotonic() - cached[0] < ADMINS_TTL:
+            return cached[1]
+
+        self.check_cooldown("admins")
+
+        try:
+            admins = await self.gateway.get_admins(channel_id)
+
+        except FloodWaitError as exc:
+            self.cool_down("admins", exc)
+            raise
+
+        self.admins_cache[key] = (time.monotonic(), admins)
+        return admins
+
+    async def successor(self, account_id: int, channel_id: int, user_id: int) -> ChatAdmin:
+        admin = next((admin for admin in await self.admins(account_id, channel_id) if admin.id == user_id), None)
+
+        if admin is None:
+            raise SuccessorNotAdmin(channel_id=channel_id, user_id=user_id)
+
+        return admin
 
     def is_fresh(self, fetched_at: datetime | None) -> bool:
         if fetched_at is None:

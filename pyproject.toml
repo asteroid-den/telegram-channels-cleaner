@@ -71,7 +71,8 @@ ban-relative-imports = "all"
 "src/channels_cleaner/telegram/mock_gateway.py" = ["S311", "PLR2004", "S105"]
 # Alembic's env.py: a script in a plain directory, not a module of the package
 "src/channels_cleaner/migrations/*" = ["INP001"]
-"tests/*" = ["S101", "PLR2004", "ARG001", "ANN001", "ANN201", "TRY003", "EM101", "EM102", "INP001"]
+# Tests: the passwords are made up for the mock
+"tests/*" = ["S101", "S105", "S106", "PLR2004", "ARG001", "ANN001", "ANN201", "TRY003", "EM101", "EM102", "INP001"]
 
 [tool.ruff.lint.pylint]
 max-args = 8

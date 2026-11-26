@@ -200,6 +200,9 @@ export default {
     undo: 'Undo',
     mute: 'Mute',
     archive: 'Archive',
+    transfer: 'Hand over and leave',
+    delete: 'Delete',
+    freeLink: 'Free the link',
   },
   review: {
     title: 'Review',

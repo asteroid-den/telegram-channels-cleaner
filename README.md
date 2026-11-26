@@ -71,7 +71,8 @@ uvx telegram-channels-cleaner --mock
 ```
 
 The QR code "scans" itself after a few seconds. The phone code is `12345`; with `CC_MOCK_2FA=1`
-the 2FA password is `mock`. The screenshots above are from mock mode.
+the 2FA password is `mock`, which is also the one a transfer of ownership asks for. The screenshots
+above are from mock mode.
 
 ### Docker
 

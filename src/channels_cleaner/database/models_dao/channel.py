@@ -13,6 +13,7 @@ from channels_cleaner.enums import (
     ACTION_DECISIONS,
     ArchiveFilter,
     ChatKind,
+    ChatRole,
     Decision,
     DecisionStatus,
     RoleFilter,
@@ -95,6 +96,22 @@ class ChannelDAO:
     async def set_channel_gone(self, account_id: int, channel_id: int) -> None:
         statement = (
             update(Channel).where(Channel.account_id == account_id, Channel.channel_id == channel_id).values(gone=True)
+        )
+
+        await self.session.execute(statement)
+
+    async def set_channel_username(self, account_id: int, channel_id: int, username: str | None) -> None:
+        statement = (
+            update(Channel)
+            .where(Channel.account_id == account_id, Channel.channel_id == channel_id)
+            .values(username=username)
+        )
+
+        await self.session.execute(statement)
+
+    async def set_channel_role(self, account_id: int, channel_id: int, role: ChatRole) -> None:
+        statement = (
+            update(Channel).where(Channel.account_id == account_id, Channel.channel_id == channel_id).values(role=role)
         )
 
         await self.session.execute(statement)

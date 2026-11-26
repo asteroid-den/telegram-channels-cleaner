@@ -4,7 +4,7 @@ import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
-import type { ActionDecision } from '@/api/types'
+import type { Decision } from '@/api/types'
 import AppIcon, { type IconName } from '@/components/AppIcon.vue'
 import ChannelAvatar from '@/components/ChannelAvatar.vue'
 import { useHotkeys } from '@/composables/useHotkeys'
@@ -46,16 +46,16 @@ const floodLeft = computed(() =>
     : null,
 )
 
-const BADGE: Record<
-  ActionDecision | 'keep' | 'skip',
-  { icon: IconName; cls: string; verb: string }
-> = {
+const BADGE: Record<Decision, { icon: IconName; cls: string; verb: string }> = {
   unsubscribe: { icon: 'x', cls: 'bg-danger', verb: 'actions.unsubscribe' },
   // a changed decision that only takes back an applied mute/archive
   keep: { icon: 'undo', cls: 'bg-faint', verb: 'review.revert' },
   skip: { icon: 'undo', cls: 'bg-faint', verb: 'review.revert' },
   mute: { icon: 'bellOff', cls: 'bg-warn', verb: 'actions.mute' },
   archive: { icon: 'archive', cls: 'bg-accent', verb: 'actions.archive' },
+  transfer: { icon: 'user', cls: 'bg-danger', verb: 'actions.transfer' },
+  delete: { icon: 'trash', cls: 'bg-danger', verb: 'actions.delete' },
+  free_link: { icon: 'link', cls: 'bg-accent', verb: 'actions.freeLink' },
 }
 
 const avatarUrl = (id: number, hasPhoto: boolean) =>
