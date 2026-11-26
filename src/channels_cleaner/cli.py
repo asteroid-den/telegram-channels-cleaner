@@ -12,6 +12,7 @@ import urllib.request
 from typing import Any
 
 import uvicorn
+from fastapi import FastAPI
 from pydantic import ValidationError
 
 from channels_cleaner import logs
@@ -110,6 +111,23 @@ def settings_from_args(args: argparse.Namespace) -> Settings:
     return settings
 
 
+class AppServer(uvicorn.Server):
+    """Ends the app's event streams first when it stops: uvicorn waits for every open connection, and an open tab
+    holds one forever, so Ctrl+C would hang until the second press."""
+
+    def __init__(self, config: uvicorn.Config, app: FastAPI) -> None:
+        super().__init__(config)
+        self.fastapi = app
+
+    async def shutdown(self, sockets: list[socket.socket] | None = None) -> None:
+        ctx = getattr(self.fastapi.state, "ctx", None)
+
+        if ctx is not None:
+            ctx.bus.close()
+
+        await super().shutdown(sockets)
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="telegram-channels-cleaner", description=__doc__)
     parser.add_argument("--host", help="bind address (default 127.0.0.1)")
@@ -145,15 +163,17 @@ def main(argv: list[str] | None = None) -> None:
     print(f"Data: {settings.data_dir.resolve()}")
     print(f"Log:  {log_file.resolve()}")
 
-    server = uvicorn.Server(
+    app = create_app(settings)
+    server = AppServer(
         uvicorn.Config(
-            create_app(settings),
+            app,
             host=settings.host,
             port=settings.port,
             log_level="info" if args.verbose else "warning",
             # Its records go through ours: to the console and the log file, crashes of a request included
             log_config=None,
-        )
+        ),
+        app,
     )
 
     if not args.no_browser and not os.environ.get("CC_NO_BROWSER"):

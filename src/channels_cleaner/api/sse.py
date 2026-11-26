@@ -8,7 +8,7 @@ from typing import Any
 from fastapi import Request
 from fastapi.responses import StreamingResponse
 
-from channels_cleaner.events import Event, EventBus
+from channels_cleaner.events import CLOSED, Event, EventBus
 from channels_cleaner.services import LAN_SCOPE
 
 #: also how a phone tells the computer went away: no ping for a few seconds
@@ -46,6 +46,9 @@ def sse_response(
         with bus.subscribe(topic) as queue:
             yield format_event("snapshot", snapshot())
 
+            if bus.closed:
+                return
+
             while True:
                 # A device disconnected on the computer loses its open streams too
                 if await request.is_disconnected() or not network.allows(request.scope):
@@ -54,10 +57,15 @@ def sse_response(
                 event = await next_event(queue, network.kicked if lan else None)
 
                 if event is None:
+                    # An event, not an SSE comment: the page sees it, and tells a quiet stream from a dead one
                     if network.allows(request.scope):
-                        yield ": ping\n\n"
+                        yield format_event("ping", {})
 
                     continue
+
+                # The app is stopping
+                if event.type == CLOSED:
+                    return
 
                 yield format_event(event.type, event.data)
 
