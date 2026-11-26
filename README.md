@@ -101,11 +101,13 @@ uv run telegram-channels-cleaner
 
 | Key | Action |
 | --- | --- |
-| <kbd>←</kbd> / <kbd>→</kbd> | Unsubscribe / keep |
+| <kbd>←</kbd> / <kbd>→</kbd> | Unsubscribe / keep (← on a chat you own asks who gets it) |
 | <kbd>↓</kbd> | Later: move to the back of the deck |
 | <kbd>M</kbd> / <kbd>A</kbd> | Mute / archive |
+| <kbd>L</kbd> | Free the public link (chats you own) |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> or <kbd>Backspace</kbd> | Undo the last decision |
 | <kbd>Ctrl</kbd>+<kbd>←</kbd> / <kbd>→</kbd> | Step back / forward through decisions you've made |
+| <kbd>Ctrl</kbd>+<kbd>K</kbd> | Find a chat by name and put it on top |
 | <kbd>Enter</kbd> | Go to the review |
 | <kbd>Ctrl</kbd>+<kbd>Enter</kbd> | Apply (on the review screen) |
 | <kbd>Esc</kbd> | Back to the deck |

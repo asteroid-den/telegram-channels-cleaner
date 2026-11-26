@@ -245,6 +245,15 @@ export default {
     queueLeave: 'Queue: leave without a handover',
     queueDelete: 'Queue: delete',
   },
+  search: {
+    label: 'Find a chat',
+    placeholder: 'Find among {n}',
+    now: 'now',
+    ahead: 'ahead · #{n}',
+    decided: 'decided: {d}',
+    nothing: 'Nothing found',
+    key: 'Find',
+  },
   review: {
     title: 'Review',
     subtitle: 'Nothing has changed in Telegram yet. Double-check, then apply.',

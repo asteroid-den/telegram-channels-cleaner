@@ -247,6 +247,15 @@ const ru: typeof en = {
     queueLeave: 'В очередь: выйти без передачи',
     queueDelete: 'В очередь: удалить',
   },
+  search: {
+    label: 'Найти чат',
+    placeholder: 'Найти среди {n}',
+    now: 'сейчас',
+    ahead: 'впереди · {n}-я',
+    decided: 'решено: {d}',
+    nothing: 'Ничего не нашлось',
+    key: 'Найти',
+  },
   review: {
     title: 'Проверка',
     subtitle: 'В Telegram пока ничего не изменилось. Проверьте и применяйте.',

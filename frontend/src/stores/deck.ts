@@ -381,6 +381,17 @@ export const useDeckStore = defineStore('deck', () => {
     cursor.value = null
   }
 
+  /** A card found by search goes on top: a decided one is rewound to, an undecided one jumps the queue. */
+  function bringToTop(channelId: number) {
+    const decided = trail.value.findIndex((c) => c.id === channelId)
+    if (decided >= 0) return jumpTo(decided)
+    const index = queue.value.findIndex((c) => c.id === channelId)
+    if (index < 0) return
+    toEnd()
+    const [channel] = queue.value.splice(index, 1)
+    queue.value.unshift(channel!)
+  }
+
   function forget(channelId: number) {
     history.value = history.value.filter((h) => h.channel.id !== channelId)
   }
@@ -553,6 +564,7 @@ export const useDeckStore = defineStore('deck', () => {
     stepForward,
     jumpTo,
     toEnd,
+    bringToTop,
     forget,
     watchSync,
     unwatchSync,
