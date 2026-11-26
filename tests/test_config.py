@@ -107,3 +107,13 @@ def test_the_env_file_of_another_project_is_harmless(tmp_path: Path, monkeypatch
 
     # Only its CC_ keys count
     assert settings.port == 9001
+
+
+def test_the_data_dir_is_absolute(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    # A relative one would be read against Kurigram's workdir by its downloads, not the cwd
+    monkeypatch.chdir(tmp_path)
+
+    settings = Settings(data_dir=Path("data"), _env_file=None)  # pyright: ignore[reportCallIssue]
+
+    assert settings.data_dir == tmp_path / "data"
+    assert settings.media_dir.is_absolute()
