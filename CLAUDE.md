@@ -173,9 +173,9 @@ Key behaviours / decisions (agreed with the user):
 - Broadcast channels and supergroups (`channels.kind`, migration 4); plain basic groups are not covered.
   Chats the user owns/admins are included with `channels.role` (member/admin/owner, migration 5) and have
   their own deck: `role=member|managed` next to `kind`/`archive` on every deck query; the settings menu's
-  "Who you are there" block picks it. Leaving a chat the user *owns* is refused (409 on decide, failed item
-  on apply) unless `CC_ALLOW_OWNER_LEAVE=1` / `--allow-owner-leave` (exposed in /api/health); admins may
-  leave, the review screen warns about lost rights. What Telegram does when a creator leaves is untested. Archive included (flagged). One sync pass covers both
+  "Who you are there" block picks it. On an owned chat ← opens the successor picker (hand over and leave,
+  leave without an owner, delete); `--allow-owner-leave` is gone (still parsed, ignored). Admins may leave, the
+  review screen warns about lost rights. What Telegram does when a creator leaves is untested. Archive included (flagged). One sync pass covers both
   kinds (a per-kind sync would mark the other kind `gone`); the deck, trail, stats and export take
   `?kind=`, review/apply are shared across kinds (`counts.pending_other` drives the dot on the
   header switcher). Lists synced before supergroups/roles existed are re-synced once (`synced_scope` setting, bump `SCOPE_VERSION` whenever a sync learns to cover more).
@@ -242,7 +242,7 @@ The user rejected the retro "press" look; wants modern digital but not generic S
 
 - Flood waits on big accounts: the cooldown and the paused prefetch handle them; lower PREFETCH_AHEAD if they
   still come often.
-- What Telegram does when a creator leaves their own chat (`--allow-owner-leave`) is untested.
+- What Telegram does when a creator leaves their own chat without a handover is untested.
 - `deck.counts` runs ~14 small COUNT queries on each decision: fine at a few thousand chats.
 - Base images in the Dockerfile are pinned by tag + digest and CI's Python to 3.12.16: no Dependabot, bump by
   hand (`docker buildx imagetools inspect <image>:<tag>`).
