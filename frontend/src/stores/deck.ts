@@ -140,15 +140,24 @@ export const useDeckStore = defineStore('deck', () => {
     ui.toast(i18n.global.t('login.errors.generic', { msg }))
   }
 
+  /**
+   * Bumped by `clear()` (another account took over): an answer to a request made before it is the last account's,
+   * and must not land in the deck of the new one.
+   */
+  let generation = 0
+
   async function loadPrefs() {
+    const asked = generation
     try {
-      prefs.value = await api.get<Prefs>('/api/prefs')
+      const loadedPrefs = await api.get<Prefs>('/api/prefs')
+      if (asked === generation) prefs.value = loadedPrefs
     } catch {
       /* defaults are fine */
     }
   }
 
   async function load() {
+    const asked = generation
     loading.value = true
     try {
       if (!loaded.value) await loadPrefs()
@@ -168,8 +177,9 @@ export const useDeckStore = defineStore('deck', () => {
           `/api/decisions/trail?kind=${requested}&role=${requestedRole}&archive=${requestedArchive}`,
         ),
       ])
-      // the user switched again while this was loading
+      // the user switched again while this was loading (the deck, or the account)
       if (
+        asked !== generation ||
         requested !== kind.value ||
         requestedRole !== role.value ||
         requestedArchive !== prefs.value.archive
@@ -516,6 +526,7 @@ export const useDeckStore = defineStore('deck', () => {
   }
 
   function clear() {
+    generation += 1
     queue.value = []
     trail.value = []
     cursor.value = null
