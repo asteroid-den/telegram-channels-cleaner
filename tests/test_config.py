@@ -81,13 +81,6 @@ def test_data_dir_is_private(tmp_path: Path) -> None:
         assert stat.S_IMODE(path.stat().st_mode) == 0o700
 
 
-def test_leaving_owned_chats_is_off_unless_asked_for(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("CC_ALLOW_OWNER_LEAVE", raising=False)
-    assert Settings(_env_file=None).allow_owner_leave is False  # pyright: ignore[reportCallIssue]
-    monkeypatch.setenv("CC_ALLOW_OWNER_LEAVE", "1")
-    assert Settings(_env_file=None).allow_owner_leave is True  # pyright: ignore[reportCallIssue]
-
-
 @pytest.mark.parametrize(
     "values",
     [{"apply_delay_min": 5, "apply_delay_max": 1}, {"apply_delay_min": -1}, {"port": 0}, {"mock_channels": -3}],

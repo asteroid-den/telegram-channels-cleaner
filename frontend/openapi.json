@@ -2052,9 +2052,6 @@
                       "$ref": "#/components/schemas/ApplyJobRunningError"
                     },
                     {
-                      "$ref": "#/components/schemas/OwnerLeaveNotEnabledError"
-                    },
-                    {
                       "$ref": "#/components/schemas/NotChatOwnerError"
                     },
                     {
@@ -4974,17 +4971,12 @@
           "mock": {
             "type": "boolean",
             "title": "Mock"
-          },
-          "allow_owner_leave": {
-            "type": "boolean",
-            "title": "Allow Owner Leave"
           }
         },
         "type": "object",
         "required": [
           "version",
-          "mock",
-          "allow_owner_leave"
+          "mock"
         ],
         "title": "HealthResponse"
       },
@@ -5295,29 +5287,6 @@
           "channel_id"
         ],
         "title": "NotChatOwnerError"
-      },
-      "OwnerLeaveNotEnabledError": {
-        "properties": {
-          "ok": {
-            "type": "boolean",
-            "const": false,
-            "title": "Ok",
-            "default": false
-          },
-          "type": {
-            "type": "string",
-            "const": "owner_leave_not_enabled",
-            "title": "Type",
-            "default": "owner_leave_not_enabled"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "Leaving a chat you own is off (start with --allow-owner-leave to allow it)"
-          }
-        },
-        "type": "object",
-        "title": "OwnerLeaveNotEnabledError"
       },
       "PictureNotFoundError": {
         "properties": {

@@ -100,9 +100,6 @@ def settings_from_args(args: argparse.Namespace) -> Settings:
     if args.mock:
         overrides["mock"] = True
 
-    if args.allow_owner_leave:
-        overrides["allow_owner_leave"] = True
-
     try:
         settings = Settings(**overrides)
 
@@ -118,11 +115,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--host", help="bind address (default 127.0.0.1)")
     parser.add_argument("--port", type=int, help="port (default 8765)")
     parser.add_argument("--mock", action="store_true", help="use fake Telegram data")
-    parser.add_argument(
-        "--allow-owner-leave",
-        action="store_true",
-        help="let chats you own be left (off by default: it may orphan the chat)",
-    )
+    # Leaving a chat you own is a choice on its card now; the old switch is still taken, and ignored
+    parser.add_argument("--allow-owner-leave", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--no-browser", action="store_true", help="don't open a browser tab")
     parser.add_argument("--dev", action="store_true", help="API only; open the Vite dev server instead")
     parser.add_argument("-v", "--verbose", action="store_true")
