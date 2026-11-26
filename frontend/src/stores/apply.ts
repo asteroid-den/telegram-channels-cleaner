@@ -47,11 +47,18 @@ export const useApplyStore = defineStore('apply', () => {
         state.value.done = e.done
         state.value.failed = e.failed
       },
-      item_failed: (e: { channel_id: number; error: string; done: number; failed: number }) => {
+      item_failed: (
+        e: Pick<ApplyItem, 'channel_id' | 'error' | 'error_code' | 'retry_after'> & {
+          done: number
+          failed: number
+        },
+      ) => {
         const it = item(e.channel_id)
         if (it) {
           it.status = 'failed'
           it.error = e.error
+          it.error_code = e.error_code
+          it.retry_after = e.retry_after
         }
         state.value.done = e.done
         state.value.failed = e.failed
@@ -70,9 +77,16 @@ export const useApplyStore = defineStore('apply', () => {
     stop = null
   }
 
-  async function start() {
+  /**
+   * `password`: the 2FA password for the transfers, sent once and kept nowhere here; without it they wait.
+   * `confirmDeletions`: without it the deletions wait.
+   */
+  async function start(opts: { password?: string; confirmDeletions?: boolean } = {}) {
     cancelling.value = false
-    state.value = await api.post<ApplyState>('/api/apply')
+    state.value = await api.post<ApplyState>('/api/apply', {
+      password: opts.password || null,
+      confirm_deletions: opts.confirmDeletions ?? false,
+    })
   }
 
   async function cancel() {
