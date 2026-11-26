@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal, Self
+from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, StringConstraints, model_validator
 
 from channels_cleaner.api.errors import ErrorDetail
 from channels_cleaner.database import models
@@ -79,6 +79,19 @@ class ResetDecisionsRequest(BaseModel):
     only: Decision | None = None
     kind: ChatKind = ChatKind.CHANNEL
     role: RoleFilter = RoleFilter.MEMBER
+
+
+class NetworkRequest(BaseModel):
+    enabled: bool
+
+
+class PairingClaimRequest(BaseModel):
+    #: the one-time token from the QR link
+    token: str = Field(max_length=128)
+
+
+class DeviceRequest(BaseModel):
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=64)]
 
 
 class DeckPrefs(BaseModel):
@@ -271,6 +284,30 @@ class ExportRow(BaseModel):
     unsubscribed_at: datetime | None
 
 
+class PairingRequest(BaseModel):
+    """The device that opened the QR link and waits for the user's yes on the computer."""
+
+    name: str
+    ip: str | None
+
+
+class Pairing(BaseModel):
+    #: what the QR code says
+    url: str
+    #: the same code shows on the phone that opened the link
+    code: str
+    expires_at: datetime
+    request: PairingRequest | None
+
+
+class Device(BaseModel):
+    id: int
+    name: str
+    created_at: datetime
+    last_seen_at: datetime
+    last_ip: str | None
+
+
 class OkResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -360,3 +397,23 @@ class StatsResponse(OkResponse):
 
 class AccountsResponse(OkResponse):
     items: list[Account]
+
+
+class NetworkResponse(OkResponse):
+    available: bool
+    #: container (Docker sets the address) or custom_host (started with --host): the toggle can't work there
+    unavailable_reason: Literal["container", "custom_host"] | None
+    enabled: bool
+    #: where the phones open the app, while it lets them in
+    url: str | None
+    #: why the last try to listen in the network failed: no_network, address_in_use or what the system said
+    error: str | None
+    pairing: Pairing | None
+    devices: list[Device]
+
+
+class PairingResponse(OkResponse):
+    #: waiting for the user's yes on the computer, or paired: the app is open to this device now
+    status: Literal["waiting", "paired"]
+    #: to compare with the computer's, while waiting
+    code: str | None

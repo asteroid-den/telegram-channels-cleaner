@@ -64,4 +64,6 @@ def create_app(settings: Settings | None = None, ctx: AppContext | None = None) 
     errors.install(app)
 
     app.add_api_route("/{path:path}", serve_spa, methods=["GET"], include_in_schema=False)
+    # The network listener serves this same app, middlewares included
+    context.network.app = app
     return app

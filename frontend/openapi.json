@@ -50,6 +50,16 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Entity",
             "content": {
@@ -119,6 +129,16 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Entity",
             "content": {
@@ -180,6 +200,16 @@
                     }
                   ],
                   "title": "Response 403 Get Auth Events Api Auth Events Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
                 }
               }
             }
@@ -249,6 +279,16 @@
                     }
                   ],
                   "title": "Response 403 Post Qr Login Api Auth Qr Start Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
                 }
               }
             }
@@ -338,6 +378,16 @@
                     }
                   ],
                   "title": "Response 403 Post Send Code Api Auth Phone Send Code Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
                 }
               }
             }
@@ -461,6 +511,16 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Entity",
             "content": {
@@ -580,6 +640,16 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Entity",
             "content": {
@@ -689,6 +759,16 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Entity",
             "content": {
@@ -764,6 +844,16 @@
                     }
                   ],
                   "title": "Response 403 Post Logout Api Auth Logout Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
                 }
               }
             }
@@ -847,6 +937,16 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Entity",
             "content": {
@@ -922,6 +1022,16 @@
               }
             },
             "description": "Forbidden"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "422": {
             "content": {
@@ -1012,6 +1122,16 @@
               }
             },
             "description": "Forbidden"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "422": {
             "content": {
@@ -1113,6 +1233,16 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Entity",
             "content": {
@@ -1202,6 +1332,24 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Post Sync Api Channels Sync Post"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Entity",
             "content": {
@@ -1218,16 +1366,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpInternalError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
                 }
               }
             }
@@ -1273,6 +1411,16 @@
                     }
                   ],
                   "title": "Response 403 Get Sync Events Api Channels Sync Events Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
                 }
               }
             }
@@ -1415,6 +1563,24 @@
             },
             "description": "Forbidden"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Get Channels Api Channels Get"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -1434,16 +1600,6 @@
               }
             },
             "description": "Internal Server Error"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
-                }
-              }
-            },
-            "description": "Unauthorized"
           }
         }
       }
@@ -1505,6 +1661,24 @@
             },
             "description": "Forbidden"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Get Channel Full Api Channels  Channel Id  Full Get"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -1524,16 +1698,6 @@
               }
             },
             "description": "Internal Server Error"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
-                }
-              }
-            },
-            "description": "Unauthorized"
           },
           "404": {
             "content": {
@@ -1625,6 +1789,24 @@
             },
             "description": "Forbidden"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Get Channel Admins Api Channels  Channel Id  Admins Get"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -1644,16 +1826,6 @@
               }
             },
             "description": "Internal Server Error"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
-                }
-              }
-            },
-            "description": "Unauthorized"
           },
           "404": {
             "content": {
@@ -1751,6 +1923,24 @@
             },
             "description": "Forbidden"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Get Channel Avatar Api Channels  Channel Id  Avatar Get"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -1770,16 +1960,6 @@
               }
             },
             "description": "Internal Server Error"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
-                }
-              }
-            },
-            "description": "Unauthorized"
           },
           "404": {
             "content": {
@@ -1875,6 +2055,24 @@
             },
             "description": "Forbidden"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Get Channel Thumb Api Channels  Channel Id  Thumb Get"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -1894,16 +2092,6 @@
               }
             },
             "description": "Internal Server Error"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
-                }
-              }
-            },
-            "description": "Unauthorized"
           },
           "404": {
             "content": {
@@ -2013,6 +2201,24 @@
             },
             "description": "Forbidden"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Put Decision Api Decisions  Channel Id  Put"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -2032,16 +2238,6 @@
               }
             },
             "description": "Internal Server Error"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
-                }
-              }
-            },
-            "description": "Unauthorized"
           },
           "409": {
             "content": {
@@ -2158,6 +2354,24 @@
             },
             "description": "Forbidden"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Delete Decision Api Decisions  Channel Id  Delete"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -2177,16 +2391,6 @@
               }
             },
             "description": "Internal Server Error"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
-                }
-              }
-            },
-            "description": "Unauthorized"
           },
           "409": {
             "content": {
@@ -2293,6 +2497,24 @@
             },
             "description": "Forbidden"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Get Decisions Trail Api Decisions Trail Get"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -2312,16 +2534,6 @@
               }
             },
             "description": "Internal Server Error"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
-                }
-              }
-            },
-            "description": "Unauthorized"
           }
         }
       }
@@ -2390,6 +2602,24 @@
             },
             "description": "Forbidden"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Get Decisions Api Decisions Get"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -2409,16 +2639,6 @@
               }
             },
             "description": "Internal Server Error"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
-                }
-              }
-            },
-            "description": "Unauthorized"
           }
         }
       }
@@ -2479,6 +2699,24 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Post Reset Decisions Api Decisions Reset Post"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Entity",
             "content": {
@@ -2495,16 +2733,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpInternalError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
                 }
               }
             }
@@ -2588,6 +2816,24 @@
             },
             "description": "Forbidden"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Post Retry Failed Api Decisions Retry Failed Post"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -2607,16 +2853,6 @@
               }
             },
             "description": "Internal Server Error"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
-                }
-              }
-            },
-            "description": "Unauthorized"
           }
         }
       }
@@ -2684,6 +2920,24 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Post Apply Api Apply Post"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Entity",
             "content": {
@@ -2700,16 +2954,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpInternalError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
                 }
               }
             }
@@ -2769,6 +3013,16 @@
                     }
                   ],
                   "title": "Response 403 Post Cancel Apply Api Apply Cancel Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
                 }
               }
             }
@@ -2842,6 +3096,16 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Entity",
             "content": {
@@ -2903,6 +3167,16 @@
                     }
                   ],
                   "title": "Response 403 Get Apply Events Api Apply Events Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
                 }
               }
             }
@@ -2976,6 +3250,24 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Get Prefs Api Prefs Get"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Entity",
             "content": {
@@ -2992,16 +3284,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpInternalError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
                 }
               }
             }
@@ -3063,6 +3345,24 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Put Prefs Api Prefs Put"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Entity",
             "content": {
@@ -3079,16 +3379,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpInternalError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
                 }
               }
             }
@@ -3162,6 +3452,24 @@
             },
             "description": "Forbidden"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Get Stats Api Stats Get"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -3181,16 +3489,6 @@
               }
             },
             "description": "Internal Server Error"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
-                }
-              }
-            },
-            "description": "Unauthorized"
           }
         }
       }
@@ -3280,6 +3578,745 @@
             },
             "description": "Forbidden"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceNotPairedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotAuthorizedError"
+                    }
+                  ],
+                  "title": "Response 401 Get Export Api Export Get"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpInternalError"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/network": {
+      "get": {
+        "tags": [
+          "network"
+        ],
+        "summary": "Get Network",
+        "operationId": "get_network_api_network_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HostNotAllowedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CrossOriginRefusedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ComputerOnlyError"
+                    }
+                  ],
+                  "title": "Response 403 Get Network Api Network Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpInternalError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "network"
+        ],
+        "summary": "Put Network",
+        "description": "Starts or stops listening in the local network; turned off, every device is out until it is on again.",
+        "operationId": "put_network_api_network_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HostNotAllowedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CrossOriginRefusedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ComputerOnlyError"
+                    }
+                  ],
+                  "title": "Response 403 Put Network Api Network Put"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpInternalError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkUnavailableError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/events": {
+      "get": {
+        "tags": [
+          "network"
+        ],
+        "summary": "Get Network Events",
+        "operationId": "get_network_events_api_network_events_get",
+        "responses": {
+          "200": {
+            "description": "Server-sent events: a snapshot first, then changes",
+            "content": {
+              "text/event-stream": {}
+            }
+          },
+          "default": {
+            "description": "An error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HostNotAllowedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CrossOriginRefusedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ComputerOnlyError"
+                    }
+                  ],
+                  "title": "Response 403 Get Network Events Api Network Events Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpInternalError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/pairing": {
+      "post": {
+        "tags": [
+          "network"
+        ],
+        "summary": "Post Pairing",
+        "description": "A new QR link and code, valid for 2 minutes; the one before stops working.",
+        "operationId": "post_pairing_api_network_pairing_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HostNotAllowedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CrossOriginRefusedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ComputerOnlyError"
+                    }
+                  ],
+                  "title": "Response 403 Post Pairing Api Network Pairing Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpInternalError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkAccessOffError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "network"
+        ],
+        "summary": "Delete Pairing",
+        "operationId": "delete_pairing_api_network_pairing_delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HostNotAllowedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CrossOriginRefusedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ComputerOnlyError"
+                    }
+                  ],
+                  "title": "Response 403 Delete Pairing Api Network Pairing Delete"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpInternalError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/pairing/approve": {
+      "post": {
+        "tags": [
+          "network"
+        ],
+        "summary": "Post Approve Pairing",
+        "operationId": "post_approve_pairing_api_network_pairing_approve_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HostNotAllowedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CrossOriginRefusedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ComputerOnlyError"
+                    }
+                  ],
+                  "title": "Response 403 Post Approve Pairing Api Network Pairing Approve Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpInternalError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairingNotFoundError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/pairing/reject": {
+      "post": {
+        "tags": [
+          "network"
+        ],
+        "summary": "Post Reject Pairing",
+        "operationId": "post_reject_pairing_api_network_pairing_reject_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HostNotAllowedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CrossOriginRefusedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ComputerOnlyError"
+                    }
+                  ],
+                  "title": "Response 403 Post Reject Pairing Api Network Pairing Reject Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpInternalError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairingNotFoundError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/devices/{device_id}": {
+      "patch": {
+        "tags": [
+          "network"
+        ],
+        "summary": "Patch Device",
+        "operationId": "patch_device_api_network_devices__device_id__patch",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HostNotAllowedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CrossOriginRefusedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ComputerOnlyError"
+                    }
+                  ],
+                  "title": "Response 403 Patch Device Api Network Devices  Device Id  Patch"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -3300,15 +4337,307 @@
             },
             "description": "Internal Server Error"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotFoundError"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "network"
+        ],
+        "summary": "Delete Device",
+        "description": "Disconnects the device at once: its cookie stops working, its open streams close.",
+        "operationId": "delete_device_api_network_devices__device_id__delete",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HostNotAllowedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CrossOriginRefusedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ComputerOnlyError"
+                    }
+                  ],
+                  "title": "Response 403 Delete Device Api Network Devices  Device Id  Delete"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
           "401": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NotAuthorizedError"
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
                 }
               }
             },
             "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpInternalError"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotFoundError"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/pairing/claim": {
+      "post": {
+        "tags": [
+          "network"
+        ],
+        "summary": "Post Claim Pairing",
+        "description": "The phone opened the QR link: it gets its cookie, which works once the user approves it on the computer.",
+        "operationId": "post_claim_pairing_api_pairing_claim_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PairingClaimRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairingResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HostNotAllowedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CrossOriginRefusedError"
+                    }
+                  ],
+                  "title": "Response 403 Post Claim Pairing Api Pairing Claim Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpInternalError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairingNotFoundError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairingTakenError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pairing": {
+      "get": {
+        "tags": [
+          "network"
+        ],
+        "summary": "Get Pairing",
+        "description": "What the phone's pairing screen polls: still waiting, or let in. Turned away: 401 device_not_paired.",
+        "operationId": "get_pairing_api_pairing_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairingResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HostNotAllowedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CrossOriginRefusedError"
+                    }
+                  ],
+                  "title": "Response 403 Get Pairing Api Pairing Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotPairedError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpInternalError"
+                }
+              }
+            }
           }
         }
       }
@@ -4528,6 +5857,29 @@
         ],
         "title": "CheckPasswordRequest"
       },
+      "ComputerOnlyError": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": false,
+            "title": "Ok",
+            "default": false
+          },
+          "type": {
+            "type": "string",
+            "const": "computer_only",
+            "title": "Type",
+            "default": "computer_only"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Only the computer the app runs on can do that"
+          }
+        },
+        "type": "object",
+        "title": "ComputerOnlyError"
+      },
       "CrossOriginRefusedError": {
         "properties": {
           "ok": {
@@ -4771,6 +6123,116 @@
           "sync"
         ],
         "title": "DeckResponse"
+      },
+      "Device": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Seen At"
+          },
+          "last_ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Ip"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "last_seen_at",
+          "last_ip"
+        ],
+        "title": "Device"
+      },
+      "DeviceNotFoundError": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": false,
+            "title": "Ok",
+            "default": false
+          },
+          "type": {
+            "type": "string",
+            "const": "device_not_found",
+            "title": "Type",
+            "default": "device_not_found"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "No such connected device"
+          },
+          "device_id": {
+            "type": "integer",
+            "title": "Device Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id"
+        ],
+        "title": "DeviceNotFoundError"
+      },
+      "DeviceNotPairedError": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": false,
+            "title": "Ok",
+            "default": false
+          },
+          "type": {
+            "type": "string",
+            "const": "device_not_paired",
+            "title": "Type",
+            "default": "device_not_paired"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Connect this device from the app on your computer first"
+          }
+        },
+        "type": "object",
+        "title": "DeviceNotPairedError"
+      },
+      "DeviceRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "DeviceRequest"
       },
       "ErrorDetail": {
         "properties": {
@@ -5230,6 +6692,155 @@
         ],
         "title": "MediaKind"
       },
+      "NetworkAccessOffError": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": false,
+            "title": "Ok",
+            "default": false
+          },
+          "type": {
+            "type": "string",
+            "const": "network_access_off",
+            "title": "Type",
+            "default": "network_access_off"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Let devices in from the network first"
+          }
+        },
+        "type": "object",
+        "title": "NetworkAccessOffError"
+      },
+      "NetworkRequest": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled"
+        ],
+        "title": "NetworkRequest"
+      },
+      "NetworkResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true,
+            "title": "Ok",
+            "default": true
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "unavailable_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "container",
+                  "custom_host"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable Reason"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "pairing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Pairing"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "devices": {
+            "items": {
+              "$ref": "#/components/schemas/Device"
+            },
+            "type": "array",
+            "title": "Devices"
+          }
+        },
+        "type": "object",
+        "required": [
+          "available",
+          "unavailable_reason",
+          "enabled",
+          "url",
+          "error",
+          "pairing",
+          "devices"
+        ],
+        "title": "NetworkResponse"
+      },
+      "NetworkUnavailableError": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": false,
+            "title": "Ok",
+            "default": false
+          },
+          "type": {
+            "type": "string",
+            "const": "network_unavailable",
+            "title": "Type",
+            "default": "network_unavailable"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "The app can't listen in the local network"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "NetworkUnavailableError"
+      },
       "NoPublicLinkError": {
         "properties": {
           "ok": {
@@ -5312,6 +6923,162 @@
           "channel_id"
         ],
         "title": "NotChatOwnerError"
+      },
+      "Pairing": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "request": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PairingRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "url",
+          "code",
+          "expires_at",
+          "request"
+        ],
+        "title": "Pairing"
+      },
+      "PairingClaimRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 128,
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "PairingClaimRequest"
+      },
+      "PairingNotFoundError": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": false,
+            "title": "Ok",
+            "default": false
+          },
+          "type": {
+            "type": "string",
+            "const": "pairing_not_found",
+            "title": "Type",
+            "default": "pairing_not_found"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "The connection link has expired or was used; show a new QR code on the computer"
+          }
+        },
+        "type": "object",
+        "title": "PairingNotFoundError"
+      },
+      "PairingRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "ip"
+        ],
+        "title": "PairingRequest",
+        "description": "The device that opened the QR link and waits for the user's yes on the computer."
+      },
+      "PairingResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true,
+            "title": "Ok",
+            "default": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "waiting",
+              "paired"
+            ],
+            "title": "Status"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "code"
+        ],
+        "title": "PairingResponse"
+      },
+      "PairingTakenError": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": false,
+            "title": "Ok",
+            "default": false
+          },
+          "type": {
+            "type": "string",
+            "const": "pairing_taken",
+            "title": "Type",
+            "default": "pairing_taken"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Another device already opened this link; show a new QR code on the computer"
+          }
+        },
+        "type": "object",
+        "title": "PairingTakenError"
       },
       "PictureNotFoundError": {
         "properties": {
