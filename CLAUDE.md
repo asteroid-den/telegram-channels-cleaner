@@ -7,10 +7,10 @@ review screen. Runs on the user's own machine only (127.0.0.1, no auth, not a se
 
 Talk to the user in **Russian**. Code, comments, commits and README are in English.
 
-## Repo state (as of 2026-11-21)
+## Repo state (as of 2026-11-26)
 
 - **Released and public** (since 2026-11-17). Repo `asteroid-den/telegram-channels-cleaner` (was
-  `channels-cleaner-userbot`); PyPI `telegram-channels-cleaner` 1.0.2–1.6.0, image
+  `channels-cleaner-userbot`); PyPI `telegram-channels-cleaner` 1.0.2–1.7.0, image
   `ghcr.io/asteroid-den/telegram-channels-cleaner` (amd64+arm64, public). 1.0.0/1.0.1 shipped as
   `channels-cleaner`; that PyPI project is gone. Their user data dir was `channels-cleaner`: `config.py` moves it to
   `telegram-channels-cleaner` on first start. Tag `v0.9.0` = the old generic UI (local only).
@@ -164,7 +164,11 @@ Key behaviours / decisions (agreed with the user):
   halfway is deleted (`forget_session`). Logout clears `session_name` (wipe deletes the account) and hands over to
   the next account, or opens a new session to log in. `/api/accounts` (list with chats/pending, `/{id}/activate`,
   `/add`). Mock mode: one state file and user per session (`MOCK_USERS`), each with chats of its own. The UI drops
-  the deck when the user id changes (App.vue).
+  the deck when the user id changes (App.vue). Checked by the user on real accounts (2026-11-25), as were the raw
+  GetFullChannel cards and the card drag in Firefox.
+  The account's own photo (small size) is fetched after each login into `media/<id>/me.*` (removed when Telegram has
+  none), served at `/api/accounts/{id}/avatar`, listed as `avatar_url` (`?v=` mtime); initials only without one.
+  Mock: the last mock user has no photo.
 - Broadcast channels and supergroups (`channels.kind`, migration 4); plain basic groups are not covered.
   Chats the user owns/admins are included with `channels.role` (member/admin/owner, migration 5) and have
   their own deck: `role=member|managed` next to `kind`/`archive` on every deck query; the settings menu's
@@ -228,7 +232,6 @@ The user rejected the retro "press" look; wants modern digital but not generic S
 
 ## Open items
 
-- Card drag fix (fe87e4c) verified in Chrome only — user to confirm in Firefox.
 - Flood waits on big accounts: the cooldown and the paused prefetch handle them; lower PREFETCH_AHEAD if they
   still come often.
 - What Telegram does when a creator leaves their own chat (`--allow-owner-leave`) is untested.
