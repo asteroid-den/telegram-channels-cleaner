@@ -13,6 +13,7 @@ import { useNarrow } from '@/composables/useNarrow'
 import { useKindI18n } from '@/composables/useKindI18n'
 import { useHotkeys } from '@/composables/useHotkeys'
 import { useApplyStore } from '@/stores/apply'
+import { useConnectionStore } from '@/stores/connection'
 import { type DecisionExtra, useDeckStore } from '@/stores/deck'
 
 const { t, tk } = useKindI18n()
@@ -21,6 +22,7 @@ const apply = useApplyStore()
 const router = useRouter()
 const swiper = useTemplateRef<InstanceType<typeof SwipeDeck>>('swiper')
 const narrow = useNarrow()
+const connection = useConnectionStore()
 
 useChannelColor(computed(() => deck.current))
 
@@ -39,7 +41,8 @@ function flash(key: string) {
 }
 
 function act(decision: Decision) {
-  if (!deck.current) return
+  // Nobody to tell it to: the card stays where it is until the server is back
+  if (!deck.current || connection.offline) return
   flash(decision)
   swiper.value?.fling(decision)
 }
@@ -324,8 +327,10 @@ const ZONES = [
         </template>
       </p>
 
+      <!-- While the server is away nothing can be decided: no swipe, no buttons -->
       <div
-        class="relative w-full flex-1 pt-8 max-md:flex max-md:flex-col max-md:justify-center max-md:pt-3"
+        class="relative w-full flex-1 pt-8 transition-opacity max-md:flex max-md:flex-col max-md:justify-center max-md:pt-3"
+        :class="connection.offline ? 'pointer-events-none opacity-60' : ''"
       >
         <p
           v-if="deck.rewinding && deck.cursor !== null"
@@ -372,7 +377,8 @@ const ZONES = [
 
       <div
         v-if="narrow"
-        class="relative z-10 flex justify-center gap-2.5 px-2 pt-4 pb-[calc(14px+env(safe-area-inset-bottom))]"
+        class="relative z-10 flex justify-center gap-2.5 px-2 pt-4 pb-[calc(14px+env(safe-area-inset-bottom))] transition-opacity"
+        :class="connection.offline ? 'pointer-events-none opacity-35' : ''"
       >
         <button
           v-for="k in KEYS"
@@ -385,7 +391,11 @@ const ZONES = [
           <span class="text-xs text-muted">{{ t(ROUND_SHORT[k.id]!) }}</span>
         </button>
       </div>
-      <div v-else class="relative z-10 flex flex-wrap justify-center gap-2 pt-4 pb-7">
+      <div
+        v-else
+        class="relative z-10 flex flex-wrap justify-center gap-2 pt-4 pb-7 transition-opacity"
+        :class="connection.offline ? 'pointer-events-none opacity-35' : ''"
+      >
         <button
           v-for="k in KEYS"
           :key="k.id"

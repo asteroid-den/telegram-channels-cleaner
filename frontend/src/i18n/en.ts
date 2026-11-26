@@ -74,6 +74,17 @@ export default {
     theme: 'Toggle theme',
     language: 'Language',
   },
+  connection: {
+    computer: {
+      title: 'The computer doesn’t answer',
+      text: 'Checking every 3 s. Decisions are kept on it, nothing is lost.',
+    },
+    app: {
+      title: 'The app doesn’t answer',
+      text: 'Checking every 3 s. Is it still running? Decisions are kept, nothing is lost.',
+    },
+    back: 'Back online',
+  },
   phone: {
     menu: 'Open on your phone',
     title: 'Open on your phone',
