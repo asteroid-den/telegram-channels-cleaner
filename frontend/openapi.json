@@ -1568,6 +1568,136 @@
         }
       }
     },
+    "/api/channels/{channel_id}/admins": {
+      "get": {
+        "tags": [
+          "channels"
+        ],
+        "summary": "Get Channel Admins",
+        "operationId": "get_channel_admins_api_channels__channel_id__admins_get",
+        "parameters": [
+          {
+            "name": "channel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Channel Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminsResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HostNotAllowedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CrossOriginRefusedError"
+                    }
+                  ],
+                  "title": "Response 403 Get Channel Admins Api Channels  Channel Id  Admins Get"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpInternalError"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotAuthorizedError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelNotFoundError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FloodWaitError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelegramError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotChatOwnerError"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        }
+      }
+    },
     "/api/channels/{channel_id}/avatar": {
       "get": {
         "tags": [
@@ -1923,6 +2053,18 @@
                     },
                     {
                       "$ref": "#/components/schemas/OwnerLeaveNotEnabledError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotChatOwnerError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ChatTooLargeToDeleteError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NoPublicLinkError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SuccessorNotAdminError"
                     }
                   ],
                   "title": "Response 409 Put Decision Api Decisions  Channel Id  Put"
@@ -1940,6 +2082,26 @@
               }
             },
             "description": "Not Found"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FloodWaitError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelegramError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
           }
         }
       },
@@ -2469,6 +2631,23 @@
         ],
         "summary": "Post Apply",
         "operationId": "post_apply_api_apply_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ApplyRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3261,6 +3440,28 @@
         ],
         "title": "AccountsResponse"
       },
+      "AdminsResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true,
+            "title": "Ok",
+            "default": true
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ChatAdmin"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "AdminsResponse"
+      },
       "ApplyItem": {
         "properties": {
           "channel_id": {
@@ -3299,6 +3500,34 @@
             ],
             "title": "Error"
           },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "password_invalid",
+                  "password_missing",
+                  "too_fresh",
+                  "too_large"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "retry_after": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retry After"
+          },
           "reverts": {
             "anyOf": [
               {
@@ -3311,6 +3540,17 @@
           },
           "role": {
             "$ref": "#/components/schemas/ChatRole"
+          },
+          "successor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Successor Name"
           }
         },
         "type": "object",
@@ -3321,8 +3561,11 @@
           "has_photo",
           "status",
           "error",
+          "error_code",
+          "retry_after",
           "reverts",
-          "role"
+          "role",
+          "successor_name"
         ],
         "title": "ApplyItem"
       },
@@ -3348,6 +3591,31 @@
         },
         "type": "object",
         "title": "ApplyJobRunningError"
+      },
+      "ApplyRequest": {
+        "properties": {
+          "password": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 256,
+                "format": "password",
+                "writeOnly": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password"
+          },
+          "confirm_deletions": {
+            "type": "boolean",
+            "title": "Confirm Deletions",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "ApplyRequest"
       },
       "ApplyStateResponse": {
         "properties": {
@@ -3414,6 +3682,14 @@
             "type": "array",
             "title": "Items"
           },
+          "held_transfers": {
+            "type": "integer",
+            "title": "Held Transfers"
+          },
+          "held_deletions": {
+            "type": "integer",
+            "title": "Held Deletions"
+          },
           "ok": {
             "type": "boolean",
             "const": true,
@@ -3430,7 +3706,9 @@
           "failed",
           "current",
           "flood_wait_until",
-          "items"
+          "items",
+          "held_transfers",
+          "held_deletions"
         ],
         "title": "ApplyStateResponse"
       },
@@ -3764,6 +4042,28 @@
                 "type": "null"
               }
             ]
+          },
+          "successor_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Successor Id"
+          },
+          "successor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Successor Name"
           }
         },
         "type": "object",
@@ -4037,6 +4337,28 @@
               }
             ]
           },
+          "successor_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Successor Id"
+          },
+          "successor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Successor Name"
+          },
           "ok": {
             "type": "boolean",
             "const": true,
@@ -4070,6 +4392,53 @@
         ],
         "title": "ChannelResponse"
       },
+      "ChatAdmin": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          },
+          "can_promote": {
+            "type": "boolean",
+            "title": "Can Promote"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "username",
+          "can_promote"
+        ],
+        "title": "ChatAdmin"
+      },
       "ChatKind": {
         "type": "string",
         "enum": [
@@ -4086,6 +4455,41 @@
           "owner"
         ],
         "title": "ChatRole"
+      },
+      "ChatTooLargeToDeleteError": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": false,
+            "title": "Ok",
+            "default": false
+          },
+          "type": {
+            "type": "string",
+            "const": "chat_too_large_to_delete",
+            "title": "Type",
+            "default": "chat_too_large_to_delete"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Telegram deletes only chats up to 1000 members; leave or hand it over instead"
+          },
+          "channel_id": {
+            "type": "integer",
+            "title": "Channel Id"
+          },
+          "members_count": {
+            "type": "integer",
+            "title": "Members Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channel_id",
+          "members_count"
+        ],
+        "title": "ChatTooLargeToDeleteError"
       },
       "CheckPasswordRequest": {
         "properties": {
@@ -4132,7 +4536,10 @@
           "unsubscribe",
           "mute",
           "archive",
-          "skip"
+          "skip",
+          "transfer",
+          "delete",
+          "free_link"
         ],
         "title": "Decision"
       },
@@ -4140,6 +4547,17 @@
         "properties": {
           "decision": {
             "$ref": "#/components/schemas/Decision"
+          },
+          "successor_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Successor Id"
           }
         },
         "type": "object",
@@ -4795,6 +5213,36 @@
         ],
         "title": "MediaKind"
       },
+      "NoPublicLinkError": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": false,
+            "title": "Ok",
+            "default": false
+          },
+          "type": {
+            "type": "string",
+            "const": "no_public_link",
+            "title": "Type",
+            "default": "no_public_link"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "The chat has no public link to free"
+          },
+          "channel_id": {
+            "type": "integer",
+            "title": "Channel Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channel_id"
+        ],
+        "title": "NoPublicLinkError"
+      },
       "NotAuthorizedError": {
         "properties": {
           "ok": {
@@ -4817,6 +5265,36 @@
         },
         "type": "object",
         "title": "NotAuthorizedError"
+      },
+      "NotChatOwnerError": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": false,
+            "title": "Ok",
+            "default": false
+          },
+          "type": {
+            "type": "string",
+            "const": "not_chat_owner",
+            "title": "Type",
+            "default": "not_chat_owner"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Only the chat's owner can do that"
+          },
+          "channel_id": {
+            "type": "integer",
+            "title": "Channel Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channel_id"
+        ],
+        "title": "NotChatOwnerError"
       },
       "OwnerLeaveNotEnabledError": {
         "properties": {
@@ -5073,6 +5551,41 @@
           "last_post_age"
         ],
         "title": "StatsResponse"
+      },
+      "SuccessorNotAdminError": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": false,
+            "title": "Ok",
+            "default": false
+          },
+          "type": {
+            "type": "string",
+            "const": "successor_not_admin",
+            "title": "Type",
+            "default": "successor_not_admin"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "The chat can go only to one of its admins"
+          },
+          "channel_id": {
+            "type": "integer",
+            "title": "Channel Id"
+          },
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channel_id",
+          "user_id"
+        ],
+        "title": "SuccessorNotAdminError"
       },
       "SyncState": {
         "properties": {

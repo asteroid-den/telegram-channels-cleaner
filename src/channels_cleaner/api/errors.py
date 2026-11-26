@@ -181,6 +181,36 @@ class OwnerLeaveNotEnabled(Conflict):
 
 
 @dataclass
+class NotChatOwner(Conflict):
+    TYPE = "not_chat_owner"
+    MESSAGE = "Only the chat's owner can do that"
+    channel_id: int
+
+
+@dataclass
+class SuccessorNotAdmin(Conflict):
+    TYPE = "successor_not_admin"
+    MESSAGE = "The chat can go only to one of its admins"
+    channel_id: int
+    user_id: int
+
+
+@dataclass
+class ChatTooLargeToDelete(Conflict):
+    TYPE = "chat_too_large_to_delete"
+    MESSAGE = "Telegram deletes only chats up to 1000 members; leave or hand it over instead"
+    channel_id: int
+    members_count: int
+
+
+@dataclass
+class NoPublicLink(Conflict):
+    TYPE = "no_public_link"
+    MESSAGE = "The chat has no public link to free"
+    channel_id: int
+
+
+@dataclass
 class FloodWait(TooManyRequests):
     TYPE = "flood_wait"
     MESSAGE = "Telegram asks to wait before the next request"

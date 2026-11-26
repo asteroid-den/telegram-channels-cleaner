@@ -3,7 +3,15 @@ from sqlalchemy import ColumnElement, literal_column, true
 from channels_cleaner.database.models import Channel
 from channels_cleaner.enums import ArchiveFilter, ChatRole, Decision, RoleFilter
 
-TRAIL_CODES = {Decision.KEEP: "k", Decision.UNSUBSCRIBE: "u", Decision.MUTE: "m", Decision.ARCHIVE: "a"}
+TRAIL_CODES = {
+    Decision.KEEP: "k",
+    Decision.UNSUBSCRIBE: "u",
+    Decision.MUTE: "m",
+    Decision.ARCHIVE: "a",
+    Decision.TRANSFER: "t",
+    Decision.DELETE: "d",
+    Decision.FREE_LINK: "l",
+}
 
 # Ties on decided_at (same microsecond) keep the order of insertion; decisions has no column of its own for that
 DECISION_ROWID = literal_column("decisions.rowid")

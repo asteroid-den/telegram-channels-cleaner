@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 
 from channels_cleaner.api.errors import ErrorDetail
 from channels_cleaner.database import models
@@ -17,6 +17,7 @@ from channels_cleaner.enums import (
     ChatRole,
     Decision,
     DecisionStatus,
+    ItemErrorCode,
     ItemStatus,
     MediaKind,
     RoleFilter,
@@ -44,6 +45,24 @@ class LogoutRequest(BaseModel):
 
 class DecisionRequest(BaseModel):
     decision: Decision
+    #: who gets the chat: one of its admins, for "transfer" only
+    successor_id: int | None = None
+
+    @model_validator(mode="after")
+    def successor_for_transfer_only(self) -> Self:
+        if (self.decision is Decision.TRANSFER) != (self.successor_id is not None):
+            msg = "successor_id goes with the transfer decision, and only with it"
+            raise ValueError(msg)
+
+        return self
+
+
+class ApplyRequest(BaseModel):
+    #: the cloud password (2FA) for transfers of ownership; kept in memory for the job only. Without it the
+    #: transfers wait in the queue
+    password: SecretStr | None = Field(default=None, max_length=256)
+    #: deletions wait in the queue unless confirmed
+    confirm_deletions: bool = False
 
 
 class ResetDecisionsRequest(BaseModel):
@@ -115,6 +134,8 @@ class Channel(BaseModel):
     error: str | None
     pulse: Pulse | None
     reverts: Decision | None = None
+    successor_id: int | None = None
+    successor_name: str | None = None
 
     @classmethod
     def from_channel(cls, channel: models.Channel) -> Self:
@@ -145,6 +166,8 @@ class Channel(BaseModel):
             error=decision.error if decision else None,
             pulse=Pulse.model_validate(channel.pulse) if channel.pulse else None,
             reverts=decision.reverts if decision else None,
+            successor_id=decision.successor_id if decision else None,
+            successor_name=decision.successor_name if decision else None,
         )
 
 
@@ -172,8 +195,13 @@ class ApplyItem(BaseModel):
     has_photo: bool
     status: ItemStatus
     error: str | None
+    #: why Telegram refused an owner's action, when the UI has more to say about it than ``error``
+    error_code: ItemErrorCode | None
+    #: seconds until Telegram allows the transfer (error_code "too_fresh")
+    retry_after: int | None
     reverts: Decision | None
     role: ChatRole
+    successor_name: str | None
 
 
 class ApplyState(BaseModel):
@@ -188,6 +216,20 @@ class ApplyState(BaseModel):
     #: a Unix time
     flood_wait_until: float | None
     items: list[ApplyItem]
+    #: left in the queue: transfers started without the password, deletions without the confirmation
+    held_transfers: int
+    held_deletions: int
+
+
+class ChatAdmin(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    first_name: str
+    last_name: str | None
+    username: str | None
+    #: may add admins: the one an owner usually hands the chat to
+    can_promote: bool
 
 
 class Account(BaseModel):
@@ -278,6 +320,10 @@ class ResetDecisionsResponse(OkResponse):
 
 class RetryFailedResponse(OkResponse):
     counts: DeckCounts
+
+
+class AdminsResponse(OkResponse):
+    items: list[ChatAdmin]
 
 
 class ApplyStateResponse(OkResponse, ApplyState):

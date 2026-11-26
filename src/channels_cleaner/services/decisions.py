@@ -1,7 +1,36 @@
 from datetime import datetime
 
+from channels_cleaner.api.errors import ChatTooLargeToDelete, NoPublicLink, NotChatOwner, OwnerLeaveNotEnabled
 from channels_cleaner.database import DAO
-from channels_cleaner.enums import ACTION_DECISIONS, REVERSIBLE_ACTIONS, ChatRole, Decision, DecisionStatus
+from channels_cleaner.database.models import Channel
+from channels_cleaner.enums import (
+    ACTION_DECISIONS,
+    OWNER_ACTIONS,
+    REVERSIBLE_ACTIONS,
+    ChatRole,
+    Decision,
+    DecisionStatus,
+)
+from channels_cleaner.telegram import DELETE_LIMIT, ChatAdmin
+
+
+def check_allowed(chat: Channel, decision: Decision, *, allow_owner_leave: bool) -> None:
+    """Refuses a decision the user's place in the chat doesn't allow; Telegram would refuse it on apply anyway."""
+    if leaves_owned_chat(decision, chat.role, allowed=allow_owner_leave):
+        raise OwnerLeaveNotEnabled
+
+    if decision in OWNER_ACTIONS and chat.role is not ChatRole.OWNER:
+        raise NotChatOwner(channel_id=chat.channel_id)
+
+    if decision is Decision.DELETE and chat.members_count is not None and chat.members_count > DELETE_LIMIT:
+        raise ChatTooLargeToDelete(channel_id=chat.channel_id, members_count=chat.members_count)
+
+    if decision is Decision.FREE_LINK and chat.username is None:
+        raise NoPublicLink(channel_id=chat.channel_id)
+
+
+def full_name(user: ChatAdmin) -> str:
+    return f"{user.first_name} {user.last_name or ''}".strip() or (user.username or str(user.id))
 
 
 def leaves_owned_chat(decision: Decision, role: ChatRole, *, allowed: bool) -> bool:
@@ -9,7 +38,14 @@ def leaves_owned_chat(decision: Decision, role: ChatRole, *, allowed: bool) -> b
     return decision is Decision.UNSUBSCRIBE and role is ChatRole.OWNER and not allowed
 
 
-async def decide(dao: DAO, account_id: int, channel_id: int, decision: Decision, now: datetime) -> None:
+async def decide(
+    dao: DAO,
+    account_id: int,
+    channel_id: int,
+    decision: Decision,
+    now: datetime,
+    successor: ChatAdmin | None = None,
+) -> None:
     current = await dao.get_decision(account_id, channel_id)
     # What the app has already done to this chat in Telegram (a later change undoes it)
     in_telegram: Decision | None = None
@@ -53,6 +89,8 @@ async def decide(dao: DAO, account_id: int, channel_id: int, decision: Decision,
         decided_at=decided_at,
         applied_at=applied_at,
         reverts=reverts,
+        successor_id=successor.id if successor is not None else None,
+        successor_name=full_name(successor) if successor is not None else None,
     )
 
 

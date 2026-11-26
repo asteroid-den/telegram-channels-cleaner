@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from channels_cleaner.database import utils
 from channels_cleaner.database.models import Channel, ChannelDecision
-from channels_cleaner.enums import ACTION_DECISIONS, ChatKind, Decision, DecisionStatus, RoleFilter
+from channels_cleaner.enums import ACTION_DECISIONS, LEAVING_ACTIONS, ChatKind, Decision, DecisionStatus, RoleFilter
 
 # An action already done in Telegram is history, not a choice to forget
 APPLIED_ACTION = and_(ChannelDecision.status == DecisionStatus.APPLIED, ChannelDecision.decision.in_(ACTION_DECISIONS))
@@ -25,7 +25,7 @@ class DecisionDAO:
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
-    async def save_decision(
+    async def save_decision(  # noqa: PLR0913 - one keyword per column
         self,
         account_id: int,
         channel_id: int,
@@ -35,6 +35,8 @@ class DecisionDAO:
         decided_at: datetime,
         applied_at: datetime | None,
         reverts: Decision | None,
+        successor_id: int | None = None,
+        successor_name: str | None = None,
     ) -> None:
         statement = insert(ChannelDecision).values(
             account_id=account_id,
@@ -45,6 +47,8 @@ class DecisionDAO:
             applied_at=applied_at,
             error=None,
             reverts=reverts,
+            successor_id=successor_id,
+            successor_name=successor_name,
         )
         statement = statement.on_conflict_do_update(
             index_elements=[ChannelDecision.account_id, ChannelDecision.channel_id],
@@ -55,6 +59,8 @@ class DecisionDAO:
                 "applied_at": statement.excluded.applied_at,
                 "error": None,
                 "reverts": statement.excluded.reverts,
+                "successor_id": statement.excluded.successor_id,
+                "successor_name": statement.excluded.successor_name,
             },
         )
 
@@ -65,7 +71,14 @@ class DecisionDAO:
         statement = (
             update(ChannelDecision)
             .where(ChannelDecision.account_id == account_id, ChannelDecision.channel_id == channel_id)
-            .values(decision=ChannelDecision.reverts, status=DecisionStatus.APPLIED, reverts=None, error=None)
+            .values(
+                decision=ChannelDecision.reverts,
+                status=DecisionStatus.APPLIED,
+                reverts=None,
+                error=None,
+                successor_id=None,
+                successor_name=None,
+            )
             # Read back, not evaluated in Python: there reverts=None can land before decision=reverts reads it
             .execution_options(synchronize_session="fetch")
         )
@@ -143,6 +156,21 @@ class DecisionDAO:
 
         await self.session.execute(statement)
 
+    async def mark_transferred(self, account_id: int, channel_id: int, error: str) -> None:
+        """The chat went to its successor but leaving it failed: what is left to do is a plain leave."""
+        statement = (
+            update(ChannelDecision)
+            .where(
+                ChannelDecision.account_id == account_id,
+                ChannelDecision.channel_id == channel_id,
+                ChannelDecision.decision == Decision.TRANSFER,
+            )
+            .values(decision=Decision.UNSUBSCRIBE, status=DecisionStatus.FAILED, error=error)
+            .execution_options(synchronize_session="fetch")
+        )
+
+        await self.session.execute(statement)
+
     async def reset_failed(self, account_id: int) -> None:
         statement = (
             update(ChannelDecision)
@@ -175,7 +203,7 @@ class DecisionDAO:
                 Channel.account_id == account_id,
                 Channel.kind == kind,
                 utils.role_is(role),
-                ChannelDecision.decision == Decision.UNSUBSCRIBE,
+                ChannelDecision.decision.in_(LEAVING_ACTIONS),
                 ChannelDecision.status == DecisionStatus.APPLIED,
             )
         )

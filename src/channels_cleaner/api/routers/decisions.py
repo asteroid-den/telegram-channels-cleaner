@@ -23,7 +23,17 @@ async def get_chat(dao: DAO, account_id: int, channel_id: int) -> db_models.Chan
 @router.put(
     "/{channel_id}",
     responses=errors.error_responses(
-        errors.NotAuthorized, errors.ApplyJobRunning, errors.ChannelNotFound, errors.OwnerLeaveNotEnabled
+        errors.NotAuthorized,
+        errors.ApplyJobRunning,
+        errors.ChannelNotFound,
+        errors.OwnerLeaveNotEnabled,
+        errors.NotChatOwner,
+        errors.ChatTooLargeToDelete,
+        errors.NoPublicLink,
+        # A transfer looks the successor up among the chat's admins
+        errors.SuccessorNotAdmin,
+        errors.FloodWait,
+        errors.TelegramError,
     ),
 )
 async def put_decision(
@@ -35,10 +45,13 @@ async def put_decision(
 
     chat = await get_chat(dao, account_id, channel_id)
 
-    if decisions.leaves_owned_chat(body.decision, chat.role, allowed=ctx.settings.allow_owner_leave):
-        raise errors.OwnerLeaveNotEnabled
+    decisions.check_allowed(chat, body.decision, allow_owner_leave=ctx.settings.allow_owner_leave)
+    successor = None
 
-    await decisions.decide(dao, account_id, channel_id, body.decision, utc_now())
+    if body.successor_id is not None:
+        successor = await ctx.channels.successor(account_id, channel_id, body.successor_id)
+
+    await decisions.decide(dao, account_id, channel_id, body.decision, utc_now(), successor)
     await dao.commit()
     return models.DecisionResponse(
         counts=await deck.counts(dao, account_id, chat.kind, db_utils.role_filter(chat.role))
