@@ -26,7 +26,6 @@ async def get_chat(dao: DAO, account_id: int, channel_id: int) -> db_models.Chan
         errors.NotAuthorized,
         errors.ApplyJobRunning,
         errors.ChannelNotFound,
-        errors.OwnerLeaveNotEnabled,
         errors.NotChatOwner,
         errors.ChatTooLargeToDelete,
         errors.NoPublicLink,
@@ -45,7 +44,7 @@ async def put_decision(
 
     chat = await get_chat(dao, account_id, channel_id)
 
-    decisions.check_allowed(chat, body.decision, allow_owner_leave=ctx.settings.allow_owner_leave)
+    decisions.check_allowed(chat, body.decision)
     successor = None
 
     if body.successor_id is not None:

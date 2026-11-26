@@ -1141,8 +1141,6 @@ export interface components {
             version: string;
             /** Mock */
             mock: boolean;
-            /** Allow Owner Leave */
-            allow_owner_leave: boolean;
         };
         /** HostNotAllowedError */
         HostNotAllowedError: {
@@ -1370,26 +1368,6 @@ export interface components {
             message: string;
             /** Channel Id */
             channel_id: number;
-        };
-        /** OwnerLeaveNotEnabledError */
-        OwnerLeaveNotEnabledError: {
-            /**
-             * Ok
-             * @default false
-             * @constant
-             */
-            ok: false;
-            /**
-             * Type
-             * @default owner_leave_not_enabled
-             * @constant
-             */
-            type: "owner_leave_not_enabled";
-            /**
-             * Message
-             * @default Leaving a chat you own is off (start with --allow-owner-leave to allow it)
-             */
-            message: string;
         };
         /** PictureNotFoundError */
         PictureNotFoundError: {
@@ -3176,7 +3154,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApplyJobRunningError"] | components["schemas"]["OwnerLeaveNotEnabledError"] | components["schemas"]["NotChatOwnerError"] | components["schemas"]["ChatTooLargeToDeleteError"] | components["schemas"]["NoPublicLinkError"] | components["schemas"]["SuccessorNotAdminError"];
+                    "application/json": components["schemas"]["ApplyJobRunningError"] | components["schemas"]["NotChatOwnerError"] | components["schemas"]["ChatTooLargeToDeleteError"] | components["schemas"]["NoPublicLinkError"] | components["schemas"]["SuccessorNotAdminError"];
                 };
             };
             /** @description Unprocessable Entity */

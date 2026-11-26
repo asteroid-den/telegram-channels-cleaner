@@ -273,7 +273,6 @@ class ErrorResponse(BaseModel):
 class HealthResponse(OkResponse):
     version: str
     mock: bool
-    allow_owner_leave: bool
 
 
 class AuthStateResponse(OkResponse):

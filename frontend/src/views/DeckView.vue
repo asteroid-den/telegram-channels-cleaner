@@ -1,21 +1,20 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-import type { Decision } from '@/api/types'
+import type { ChatAdmin, Decision } from '@/api/types'
 import AppIcon from '@/components/AppIcon.vue'
 import DeckProgress from '@/components/DeckProgress.vue'
+import SuccessorPicker from '@/components/SuccessorPicker.vue'
 import SwipeDeck from '@/components/SwipeDeck.vue'
 import { useChannelColor } from '@/composables/useChannelColor'
 import { useKindI18n } from '@/composables/useKindI18n'
 import { useHotkeys } from '@/composables/useHotkeys'
 import { useApplyStore } from '@/stores/apply'
-import { useDeckStore } from '@/stores/deck'
-import { useUiStore } from '@/stores/ui'
+import { type DecisionExtra, useDeckStore } from '@/stores/deck'
 
 const { t, tk } = useKindI18n()
 const deck = useDeckStore()
-const ui = useUiStore()
 const apply = useApplyStore()
 const router = useRouter()
 const swiper = useTemplateRef<InstanceType<typeof SwipeDeck>>('swiper')
@@ -52,12 +51,48 @@ function review() {
   if (deck.counts.pending > 0) void router.push('/review')
 }
 
+/** A chat the user owns: leaving it means choosing what becomes of it first. */
+const owned = computed(() => deck.current?.role === 'owner')
+const canFreeLink = computed(() => owned.value && !!deck.current?.username)
+
+// Its admins show on the card, and are ready when the picker opens
+watch(
+  () => deck.current,
+  (channel) => {
+    if (channel?.role === 'owner') void deck.loadAdmins(channel.id)
+  },
+  { immediate: true },
+)
+
+const picking = ref(false)
+// What the next decision carries: the successor picked for a transfer
+let extra: DecisionExtra = {}
+
+function onPick() {
+  if (!deck.current) return
+  void deck.loadAdmins(deck.current.id)
+  picking.value = true
+}
+function picked(decision: Decision, with_: DecisionExtra = {}) {
+  picking.value = false
+  extra = with_
+  flash(decision === 'skip' ? 'skip' : 'unsubscribe')
+  if (!swiper.value?.fling(decision, true)) extra = {}
+}
+const pickedAdmin = (admin: ChatAdmin) => picked('transfer', { successor_id: admin.id })
+function onDecide(decision: Decision) {
+  const carried = extra
+  extra = {}
+  void deck.decide(decision, carried)
+}
+
 useHotkeys({
   ArrowLeft: () => act('unsubscribe'),
   ArrowRight: () => act('keep'),
   ArrowDown: () => act('skip'),
   m: () => act('mute'),
   a: () => act('archive'),
+  l: () => canFreeLink.value && act('free_link'),
   'mod+z': () => void undo(),
   Backspace: () => void undo(),
   Enter: review,
@@ -121,38 +156,44 @@ function zoneMove(e: PointerEvent) {
   el.style.setProperty('--my', `${e.clientY - r.top}px`)
 }
 function zoneEnter(decision: 'keep' | 'unsubscribe') {
-  if (decision === 'unsubscribe' && !canLeave.value) return
   if (swiper.value && !swiper.value.busy) swiper.value.preview = decision
 }
 function zoneLeave() {
   if (swiper.value) swiper.value.preview = null
 }
 
-// Leaving a chat the user owns is off unless the app was started with --allow-owner-leave
-const canLeave = computed(() => deck.current?.role !== 'owner' || ui.allowOwnerLeave)
-function onRefused() {
-  ui.toast(t('deck.ownerLeaveOff'), 'info')
-}
-
 const showSync = computed(() => deck.syncing && deck.items.length === 0)
 const empty = computed(() => deck.loaded && !deck.syncing && deck.items.length === 0)
 
-const KEYS: {
+interface Key {
   id: Decision
   kbd: string
   shortcut: string
   label: string
   cls?: string
   kbdAfter?: boolean
-}[] = [
+}
+
+/** The left key leaves; what that means depends on the user's place in the chat. */
+const leaveLabel = computed(() =>
+  owned.value
+    ? 'actions.transfer'
+    : deck.current?.role === 'admin'
+      ? 'actions.leave'
+      : 'actions.unsubscribe',
+)
+const KEYS = computed<Key[]>(() => [
   {
     id: 'unsubscribe',
     kbd: '←',
     shortcut: 'ArrowLeft',
-    label: 'actions.unsubscribe',
+    label: leaveLabel.value,
     cls: 'text-danger',
   },
   { id: 'skip', kbd: '↓', shortcut: 'ArrowDown', label: 'actions.skip' },
+  ...(canFreeLink.value
+    ? [{ id: 'free_link' as const, kbd: 'L', shortcut: 'L', label: 'actions.freeLink' }]
+    : []),
   { id: 'mute', kbd: 'M', shortcut: 'M', label: 'actions.mute' },
   { id: 'archive', kbd: 'A', shortcut: 'A', label: 'actions.archive' },
   {
@@ -163,11 +204,20 @@ const KEYS: {
     cls: 'text-success',
     kbdAfter: true,
   },
-]
+])
+
+const zoneLabel = (id: 'keep' | 'unsubscribe') =>
+  id === 'keep'
+    ? 'deck.zoneKeep'
+    : owned.value
+      ? 'deck.zoneTransfer'
+      : leaveLabel.value === 'actions.leave'
+        ? 'actions.leave'
+        : 'deck.zoneLeave'
 
 const ZONES = [
-  { id: 'unsubscribe', label: 'deck.zoneLeave', cls: 'zone-l left-0', hint: 'right-9' },
-  { id: 'keep', label: 'deck.zoneKeep', cls: 'zone-r right-0', hint: 'left-9' },
+  { id: 'unsubscribe', cls: 'zone-l left-0', hint: 'right-9' },
+  { id: 'keep', cls: 'zone-r right-0', hint: 'left-9' },
 ] as const
 </script>
 
@@ -262,7 +312,7 @@ const ZONES = [
           @click="act(z.id)"
         >
           <span class="zone-hint" :class="z.hint">
-            <kbd v-if="z.id === 'unsubscribe'">←</kbd>{{ t(z.label)
+            <kbd v-if="z.id === 'unsubscribe'">←</kbd>{{ t(zoneLabel(z.id))
             }}<kbd v-if="z.id === 'keep'">→</kbd>
           </span>
         </button>
@@ -272,10 +322,10 @@ const ZONES = [
             ref="swiper"
             :items="deck.items"
             :returning="deck.returning"
-            :can-leave="canLeave"
-            @decide="deck.decide"
+            :pick-on-left="owned"
+            @decide="onDecide"
             @flinging="onFlinging"
-            @refused="onRefused"
+            @pick="onPick"
           />
         </div>
       </div>
@@ -285,11 +335,7 @@ const ZONES = [
           v-for="k in KEYS"
           :key="k.id"
           class="key"
-          :class="[
-            k.cls,
-            pressed === k.id ? 'pressed' : '',
-            k.id === 'unsubscribe' && !canLeave ? 'opacity-40' : '',
-          ]"
+          :class="[k.cls, pressed === k.id ? 'pressed' : '']"
           :aria-keyshortcuts="k.shortcut"
           @click="act(k.id)"
         >
@@ -318,6 +364,17 @@ const ZONES = [
     <div v-else class="flex flex-1 items-center justify-center">
       <div class="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-text" />
     </div>
+
+    <SuccessorPicker
+      v-if="picking && deck.current"
+      :channel="deck.current"
+      :admins="deck.admins[deck.current.id]"
+      @transfer="pickedAdmin"
+      @leave="picked('unsubscribe')"
+      @delete="picked('delete')"
+      @later="picked('skip')"
+      @cancel="picking = false"
+    />
   </div>
 </template>
 

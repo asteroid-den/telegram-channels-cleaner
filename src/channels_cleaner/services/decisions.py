@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from channels_cleaner.api.errors import ChatTooLargeToDelete, NoPublicLink, NotChatOwner, OwnerLeaveNotEnabled
+from channels_cleaner.api.errors import ChatTooLargeToDelete, NoPublicLink, NotChatOwner
 from channels_cleaner.database import DAO
 from channels_cleaner.database.models import Channel
 from channels_cleaner.enums import (
@@ -14,11 +14,8 @@ from channels_cleaner.enums import (
 from channels_cleaner.telegram import DELETE_LIMIT, ChatAdmin
 
 
-def check_allowed(chat: Channel, decision: Decision, *, allow_owner_leave: bool) -> None:
+def check_allowed(chat: Channel, decision: Decision) -> None:
     """Refuses a decision the user's place in the chat doesn't allow; Telegram would refuse it on apply anyway."""
-    if leaves_owned_chat(decision, chat.role, allowed=allow_owner_leave):
-        raise OwnerLeaveNotEnabled
-
     if decision in OWNER_ACTIONS and chat.role is not ChatRole.OWNER:
         raise NotChatOwner(channel_id=chat.channel_id)
 
@@ -31,11 +28,6 @@ def check_allowed(chat: Channel, decision: Decision, *, allow_owner_leave: bool)
 
 def full_name(user: ChatAdmin) -> str:
     return f"{user.first_name} {user.last_name or ''}".strip() or (user.username or str(user.id))
-
-
-def leaves_owned_chat(decision: Decision, role: ChatRole, *, allowed: bool) -> bool:
-    """Whether the decision leaves a chat the user created while --allow-owner-leave is off (checked again on apply)."""
-    return decision is Decision.UNSUBSCRIBE and role is ChatRole.OWNER and not allowed
 
 
 async def decide(

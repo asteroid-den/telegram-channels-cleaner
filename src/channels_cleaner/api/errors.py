@@ -175,12 +175,6 @@ class ApplyJobRunning(Conflict):
 
 
 @dataclass
-class OwnerLeaveNotEnabled(Conflict):
-    TYPE = "owner_leave_not_enabled"
-    MESSAGE = "Leaving a chat you own is off (start with --allow-owner-leave to allow it)"
-
-
-@dataclass
 class NotChatOwner(Conflict):
     TYPE = "not_chat_owner"
     MESSAGE = "Only the chat's owner can do that"

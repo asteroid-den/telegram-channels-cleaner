@@ -298,24 +298,10 @@ async def owned_chat_id(client: httpx.AsyncClient) -> int:
     return next(i["id"] for i in items if i["role"] == "owner")
 
 
-async def test_leaving_an_owned_chat_is_off_by_default(client: httpx.AsyncClient, ctx: AppContext) -> None:
+async def test_an_owner_may_leave_without_a_transfer(client: httpx.AsyncClient, ctx: AppContext) -> None:
     await login(client, ctx)
     owned = await owned_chat_id(client)
-    refused = await client.put(f"/api/decisions/{owned}", json={"decision": "unsubscribe"})
-    assert refused.status_code == 409
-    assert (await client.put(f"/api/decisions/{owned}", json={"decision": "mute"})).status_code == 200
 
-    # an admin may leave: only the creator is protected
-    items = (await get_json(client, "/api/channels", params={"role": "managed"}))["items"]
-    admin = next(i["id"] for i in items if i["role"] == "admin")
-    assert (await client.put(f"/api/decisions/{admin}", json={"decision": "unsubscribe"})).status_code == 200
-    assert (await get_json(client, "/api/health"))["allow_owner_leave"] is False
-
-
-async def test_owner_leave_flag_allows_it(client: httpx.AsyncClient, ctx: AppContext) -> None:
-    await login(client, ctx)
-    ctx.settings.allow_owner_leave = True
-    owned = await owned_chat_id(client)
     assert (await client.put(f"/api/decisions/{owned}", json={"decision": "unsubscribe"})).status_code == 200
 
     async def finished() -> bool:
@@ -324,29 +310,7 @@ async def test_owner_leave_flag_allows_it(client: httpx.AsyncClient, ctx: AppCon
     await client.post("/api/apply")
     await wait_for(finished, timeout=30)
     state = await get_json(client, "/api/apply/state")
-    assert state["done"] + state["failed"] == 1
-    assert (
-        state["failed"] == 0
-        or state["items"][0]["error"] != "Leaving a chat you own is off (start with --allow-owner-leave)"
-    )
-
-
-async def test_queued_owner_leave_fails_when_the_flag_is_off(client: httpx.AsyncClient, ctx: AppContext) -> None:
-    await login(client, ctx)
-    ctx.settings.allow_owner_leave = True
-    owned = await owned_chat_id(client)
-    await client.put(f"/api/decisions/{owned}", json={"decision": "unsubscribe"})
-    ctx.settings.allow_owner_leave = False  # e.g. the app was restarted without the flag
-
-    await client.post("/api/apply")
-
-    async def finished() -> bool:
-        return bool((await get_json(client, "/api/apply/state"))["status"] == "finished")
-
-    await wait_for(finished, timeout=30)
-    state = await get_json(client, "/api/apply/state")
-    assert state["failed"] == 1
-    assert "off" in state["items"][0]["error"]
+    assert [i["channel_id"] for i in state["items"]] == [owned]
 
 
 async def test_reset_and_undo_tell_what_they_removed(client: httpx.AsyncClient, ctx: AppContext) -> None:
