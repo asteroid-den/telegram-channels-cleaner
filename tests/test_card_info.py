@@ -5,7 +5,14 @@ import pytest
 
 from channels_cleaner.api.models import telegram_url
 from channels_cleaner.context import AppContext
-from channels_cleaner.telegram import ChannelFull, FloodWaitError, GatewayError, MockGateway, RequestRefusedError
+from channels_cleaner.telegram import (
+    ChannelFull,
+    FloodWaitError,
+    GatewayError,
+    MockGateway,
+    RequestRefusedError,
+    color_index,
+)
 from tests.conftest import get_json, login, open_dao
 
 
@@ -146,3 +153,10 @@ def test_a_card_opens_its_chat_in_telegram_at_the_last_post() -> None:
     assert telegram_url(-1001234567890, "rust_news", None) == "tg://resolve?domain=rust_news"
     # A private one by its own id, without the -100 of the Bot API form
     assert telegram_url(-1001234567890, None, 7) == "tg://privatepost?channel=1234567890&post=7"
+
+
+def test_a_chat_has_telegrams_colour() -> None:
+    # Telegram Desktop: the channel's own id (no -100) modulo 7, unless its owner picked a colour
+    assert color_index(-1001234567890, None) == 1234567890 % 7
+    assert color_index(-1001234567890, 5) == 5
+    assert color_index(-1001234567890, 13) == 6  # an extended palette falls back to a basic colour

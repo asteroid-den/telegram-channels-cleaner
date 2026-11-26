@@ -642,6 +642,8 @@ export interface components {
             retry_after: number | null;
             reverts: components["schemas"]["Decision"] | null;
             role: components["schemas"]["ChatRole"];
+            /** Color Index */
+            color_index: number;
             /** Successor Name */
             successor_name: string | null;
         };
@@ -773,6 +775,8 @@ export interface components {
             link: string | null;
             /** Telegram Url */
             telegram_url: string;
+            /** Color Index */
+            color_index: number;
             /** About */
             about: string | null;
             /** Members Count */
@@ -854,6 +858,8 @@ export interface components {
             link: string | null;
             /** Telegram Url */
             telegram_url: string;
+            /** Color Index */
+            color_index: number;
             /** About */
             about: string | null;
             /** Members Count */

@@ -24,6 +24,7 @@ from channels_cleaner.telegram import ChannelFull, ChannelInfo
 # Refreshed by every sync; the rest (about, pulse, full_fetched_at, gone…) is the app's own
 SYNCED_COLUMNS = (
     "title",
+    "color",
     "username",
     "unread_count",
     "is_muted",
@@ -63,6 +64,7 @@ class ChannelDAO:
                 "synced_at": synced_at,
                 "kind": channel.kind,
                 "role": channel.role,
+                "color": channel.color,
                 "gone": False,
             }
             for channel in channels

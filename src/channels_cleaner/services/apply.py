@@ -30,6 +30,7 @@ from channels_cleaner.telegram import (
     PasswordMissingError,
     TelegramGateway,
     TooFreshError,
+    color_index,
 )
 
 log = logging.getLogger(__name__)
@@ -58,6 +59,8 @@ class ApplyItem:
     error: str | None = None
     reverts: Decision | None = None
     role: ChatRole = ChatRole.MEMBER
+    #: Telegram's colour of the chat, for its avatar without a photo
+    color_index: int = 0
     successor_id: int | None = None
     successor_name: str | None = None
     error_code: ItemErrorCode | None = None
@@ -151,6 +154,7 @@ class ApplyService:
                     has_photo=channel.photo_file_id is not None,
                     reverts=decision.reverts,
                     role=channel.role,
+                    color_index=color_index(channel.channel_id, channel.color),
                     successor_id=decision.successor_id,
                     successor_name=decision.successor_name,
                 )
