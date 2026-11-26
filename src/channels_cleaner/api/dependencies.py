@@ -5,8 +5,10 @@ from typing import Annotated
 
 from fastapi import Depends, Request
 
+from channels_cleaner.api.errors import ComputerOnly
 from channels_cleaner.context import AppContext
 from channels_cleaner.database import DAO
+from channels_cleaner.services import LAN_SCOPE
 
 
 def get_context(request: Request) -> AppContext:
@@ -30,3 +32,12 @@ async def get_dao(ctx: ContextDep) -> AsyncIterator[DAO]:
 
 
 DAODep = Annotated[DAO, Depends(get_dao)]
+
+
+def computer_only(request: Request) -> None:
+    """Pairing and the list of devices are managed on the computer the app runs on, never from a phone."""
+    if LAN_SCOPE in request.scope:
+        raise ComputerOnly
+
+
+ComputerOnlyDep = Depends(computer_only)

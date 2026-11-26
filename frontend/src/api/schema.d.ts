@@ -553,6 +553,160 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/network": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Network */
+        get: operations["get_network_api_network_get"];
+        /**
+         * Put Network
+         * @description Starts or stops listening in the local network; turned off, every device is out until it is on again.
+         */
+        put: operations["put_network_api_network_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/network/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Network Events */
+        get: operations["get_network_events_api_network_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/network/pairing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Pairing
+         * @description A new QR link and code, valid for 2 minutes; the one before stops working.
+         */
+        post: operations["post_pairing_api_network_pairing_post"];
+        /** Delete Pairing */
+        delete: operations["delete_pairing_api_network_pairing_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/network/pairing/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Approve Pairing */
+        post: operations["post_approve_pairing_api_network_pairing_approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/network/pairing/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Reject Pairing */
+        post: operations["post_reject_pairing_api_network_pairing_reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/network/devices/{device_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Device
+         * @description Disconnects the device at once: its cookie stops working, its open streams close.
+         */
+        delete: operations["delete_device_api_network_devices__device_id__delete"];
+        options?: never;
+        head?: never;
+        /** Patch Device */
+        patch: operations["patch_device_api_network_devices__device_id__patch"];
+        trace?: never;
+    };
+    "/api/pairing/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Claim Pairing
+         * @description The phone opened the QR link: it gets its cookie, which works once the user approves it on the computer.
+         */
+        post: operations["post_claim_pairing_api_pairing_claim_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pairing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Pairing
+         * @description What the phone's pairing screen polls: still waiting, or let in. Turned away: 401 device_not_paired.
+         */
+        get: operations["get_pairing_api_pairing_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -952,6 +1106,26 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** ComputerOnlyError */
+        ComputerOnlyError: {
+            /**
+             * Ok
+             * @default false
+             * @constant
+             */
+            ok: false;
+            /**
+             * Type
+             * @default computer_only
+             * @constant
+             */
+            type: "computer_only";
+            /**
+             * Message
+             * @default Only the computer the app runs on can do that
+             */
+            message: string;
+        };
         /** CrossOriginRefusedError */
         CrossOriginRefusedError: {
             /**
@@ -1071,6 +1245,72 @@ export interface components {
             items: components["schemas"]["Channel"][];
             counts: components["schemas"]["DeckCounts"];
             sync: components["schemas"]["SyncState"];
+        };
+        /** Device */
+        Device: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Last Seen At
+             * Format: date-time
+             */
+            last_seen_at: string;
+            /** Last Ip */
+            last_ip: string | null;
+        };
+        /** DeviceNotFoundError */
+        DeviceNotFoundError: {
+            /**
+             * Ok
+             * @default false
+             * @constant
+             */
+            ok: false;
+            /**
+             * Type
+             * @default device_not_found
+             * @constant
+             */
+            type: "device_not_found";
+            /**
+             * Message
+             * @default No such connected device
+             */
+            message: string;
+            /** Device Id */
+            device_id: number;
+        };
+        /** DeviceNotPairedError */
+        DeviceNotPairedError: {
+            /**
+             * Ok
+             * @default false
+             * @constant
+             */
+            ok: false;
+            /**
+             * Type
+             * @default device_not_paired
+             * @constant
+             */
+            type: "device_not_paired";
+            /**
+             * Message
+             * @default Connect this device from the app on your computer first
+             */
+            message: string;
+        };
+        /** DeviceRequest */
+        DeviceRequest: {
+            /** Name */
+            name: string;
         };
         /** ErrorDetail */
         ErrorDetail: {
@@ -1315,6 +1555,75 @@ export interface components {
          * @enum {string}
          */
         MediaKind: "photo" | "video" | "animation" | "document" | "audio" | "voice" | "poll" | "sticker" | "other";
+        /** NetworkAccessOffError */
+        NetworkAccessOffError: {
+            /**
+             * Ok
+             * @default false
+             * @constant
+             */
+            ok: false;
+            /**
+             * Type
+             * @default network_access_off
+             * @constant
+             */
+            type: "network_access_off";
+            /**
+             * Message
+             * @default Let devices in from the network first
+             */
+            message: string;
+        };
+        /** NetworkRequest */
+        NetworkRequest: {
+            /** Enabled */
+            enabled: boolean;
+        };
+        /** NetworkResponse */
+        NetworkResponse: {
+            /**
+             * Ok
+             * @default true
+             * @constant
+             */
+            ok: true;
+            /** Available */
+            available: boolean;
+            /** Unavailable Reason */
+            unavailable_reason: ("container" | "custom_host") | null;
+            /** Enabled */
+            enabled: boolean;
+            /** Url */
+            url: string | null;
+            /** Error */
+            error: string | null;
+            pairing: components["schemas"]["Pairing"] | null;
+            /** Devices */
+            devices: components["schemas"]["Device"][];
+        };
+        /** NetworkUnavailableError */
+        NetworkUnavailableError: {
+            /**
+             * Ok
+             * @default false
+             * @constant
+             */
+            ok: false;
+            /**
+             * Type
+             * @default network_unavailable
+             * @constant
+             */
+            type: "network_unavailable";
+            /**
+             * Message
+             * @default The app can't listen in the local network
+             */
+            message: string;
+            /** Reason */
+            reason: string;
+        };
         /** NoPublicLinkError */
         NoPublicLinkError: {
             /**
@@ -1378,6 +1687,90 @@ export interface components {
             message: string;
             /** Channel Id */
             channel_id: number;
+        };
+        /** Pairing */
+        Pairing: {
+            /** Url */
+            url: string;
+            /** Code */
+            code: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            request: components["schemas"]["PairingRequest"] | null;
+        };
+        /** PairingClaimRequest */
+        PairingClaimRequest: {
+            /** Token */
+            token: string;
+        };
+        /** PairingNotFoundError */
+        PairingNotFoundError: {
+            /**
+             * Ok
+             * @default false
+             * @constant
+             */
+            ok: false;
+            /**
+             * Type
+             * @default pairing_not_found
+             * @constant
+             */
+            type: "pairing_not_found";
+            /**
+             * Message
+             * @default The connection link has expired or was used; show a new QR code on the computer
+             */
+            message: string;
+        };
+        /**
+         * PairingRequest
+         * @description The device that opened the QR link and waits for the user's yes on the computer.
+         */
+        PairingRequest: {
+            /** Name */
+            name: string;
+            /** Ip */
+            ip: string | null;
+        };
+        /** PairingResponse */
+        PairingResponse: {
+            /**
+             * Ok
+             * @default true
+             * @constant
+             */
+            ok: true;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "waiting" | "paired";
+            /** Code */
+            code: string | null;
+        };
+        /** PairingTakenError */
+        PairingTakenError: {
+            /**
+             * Ok
+             * @default false
+             * @constant
+             */
+            ok: false;
+            /**
+             * Type
+             * @default pairing_taken
+             * @constant
+             */
+            type: "pairing_taken";
+            /**
+             * Message
+             * @default Another device already opened this link; show a new QR code on the computer
+             */
+            message: string;
         };
         /** PictureNotFoundError */
         PictureNotFoundError: {
@@ -1619,6 +2012,15 @@ export interface operations {
                     "application/json": components["schemas"]["HealthResponse"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
             /** @description Forbidden */
             403: {
                 headers: {
@@ -1673,6 +2075,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuthStateResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
                 };
             };
             /** @description Forbidden */
@@ -1731,6 +2142,15 @@ export interface operations {
                     "text/event-stream": unknown;
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
             /** @description Forbidden */
             403: {
                 headers: {
@@ -1785,6 +2205,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuthStateResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
                 };
             };
             /** @description Forbidden */
@@ -1863,6 +2292,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvalidPhoneError"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
                 };
             };
             /** @description Forbidden */
@@ -1961,6 +2399,15 @@ export interface operations {
                     "application/json": components["schemas"]["InvalidCodeError"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
             /** @description Forbidden */
             403: {
                 headers: {
@@ -2057,6 +2504,15 @@ export interface operations {
                     "application/json": components["schemas"]["InvalidPasswordError"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
             /** @description Forbidden */
             403: {
                 headers: {
@@ -2140,6 +2596,15 @@ export interface operations {
                     "application/json": components["schemas"]["AuthStateResponse"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
             /** @description Forbidden */
             403: {
                 headers: {
@@ -2198,6 +2663,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuthStateResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
                 };
             };
             /** @description Forbidden */
@@ -2265,6 +2739,15 @@ export interface operations {
                     "application/json": components["schemas"]["AccountsResponse"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
             /** @description Forbidden */
             403: {
                 headers: {
@@ -2321,6 +2804,15 @@ export interface operations {
                 };
                 content: {
                     "image/*": unknown;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
                 };
             };
             /** @description Forbidden */
@@ -2388,6 +2880,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuthStateResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
                 };
             };
             /** @description Forbidden */
@@ -2473,6 +2974,15 @@ export interface operations {
                     "application/json": components["schemas"]["AuthStateResponse"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
             /** @description Forbidden */
             403: {
                 headers: {
@@ -2553,7 +3063,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -2610,6 +3120,15 @@ export interface operations {
                 };
                 content: {
                     "text/event-stream": unknown;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
                 };
             };
             /** @description Forbidden */
@@ -2681,7 +3200,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -2748,7 +3267,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -2842,7 +3361,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -2945,7 +3464,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -3039,7 +3558,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -3137,7 +3656,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -3240,7 +3759,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -3327,7 +3846,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -3394,7 +3913,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -3463,7 +3982,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -3540,7 +4059,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -3609,7 +4128,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -3677,6 +4196,15 @@ export interface operations {
                     "application/json": components["schemas"]["ApplyStateResponse"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
             /** @description Forbidden */
             403: {
                 headers: {
@@ -3733,6 +4261,15 @@ export interface operations {
                     "application/json": components["schemas"]["ApplyStateResponse"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
             /** @description Forbidden */
             403: {
                 headers: {
@@ -3787,6 +4324,15 @@ export interface operations {
                 };
                 content: {
                     "text/event-stream": unknown;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
                 };
             };
             /** @description Forbidden */
@@ -3851,7 +4397,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -3920,7 +4466,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -3988,7 +4534,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
                 };
             };
             /** @description Forbidden */
@@ -4058,7 +4604,810 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotAuthorizedError"];
+                    "application/json": components["schemas"]["DeviceNotPairedError"] | components["schemas"]["NotAuthorizedError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostNotAllowedError"] | components["schemas"]["CrossOriginRefusedError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HttpInternalError"];
+                };
+            };
+            /** @description An error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_network_api_network_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostNotAllowedError"] | components["schemas"]["CrossOriginRefusedError"] | components["schemas"]["ComputerOnlyError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HttpInternalError"];
+                };
+            };
+            /** @description An error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    put_network_api_network_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NetworkRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostNotAllowedError"] | components["schemas"]["CrossOriginRefusedError"] | components["schemas"]["ComputerOnlyError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkUnavailableError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HttpInternalError"];
+                };
+            };
+            /** @description An error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_network_events_api_network_events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Server-sent events: a snapshot first, then changes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": unknown;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostNotAllowedError"] | components["schemas"]["CrossOriginRefusedError"] | components["schemas"]["ComputerOnlyError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HttpInternalError"];
+                };
+            };
+            /** @description An error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    post_pairing_api_network_pairing_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostNotAllowedError"] | components["schemas"]["CrossOriginRefusedError"] | components["schemas"]["ComputerOnlyError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkAccessOffError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HttpInternalError"];
+                };
+            };
+            /** @description An error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_pairing_api_network_pairing_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostNotAllowedError"] | components["schemas"]["CrossOriginRefusedError"] | components["schemas"]["ComputerOnlyError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HttpInternalError"];
+                };
+            };
+            /** @description An error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    post_approve_pairing_api_network_pairing_approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostNotAllowedError"] | components["schemas"]["CrossOriginRefusedError"] | components["schemas"]["ComputerOnlyError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PairingNotFoundError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HttpInternalError"];
+                };
+            };
+            /** @description An error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    post_reject_pairing_api_network_pairing_reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostNotAllowedError"] | components["schemas"]["CrossOriginRefusedError"] | components["schemas"]["ComputerOnlyError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PairingNotFoundError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HttpInternalError"];
+                };
+            };
+            /** @description An error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_device_api_network_devices__device_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                device_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostNotAllowedError"] | components["schemas"]["CrossOriginRefusedError"] | components["schemas"]["ComputerOnlyError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotFoundError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HttpInternalError"];
+                };
+            };
+            /** @description An error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    patch_device_api_network_devices__device_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                device_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostNotAllowedError"] | components["schemas"]["CrossOriginRefusedError"] | components["schemas"]["ComputerOnlyError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotFoundError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HttpInternalError"];
+                };
+            };
+            /** @description An error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    post_claim_pairing_api_pairing_claim_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PairingClaimRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PairingResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostNotAllowedError"] | components["schemas"]["CrossOriginRefusedError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PairingNotFoundError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PairingTakenError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HttpInternalError"];
+                };
+            };
+            /** @description An error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_pairing_api_pairing_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PairingResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceNotPairedError"];
                 };
             };
             /** @description Forbidden */

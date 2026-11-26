@@ -15,6 +15,7 @@ from channels_cleaner.services import (
     ApplyService,
     AuthService,
     ChannelsService,
+    NetworkService,
     SyncService,
 )
 from channels_cleaner.telegram import (
@@ -51,6 +52,7 @@ class AppContext:
     sync: SyncService
     channels: ChannelsService
     apply: ApplyService
+    network: NetworkService
     boot_task: asyncio.Task[None] | None = field(default=None, repr=False)
 
     @classmethod
@@ -68,6 +70,7 @@ class AppContext:
             sync=SyncService(gw, database, bus),
             channels=ChannelsService(gw, database, settings),
             apply=ApplyService(gw, database, bus, settings),
+            network=NetworkService(database, bus, settings),
         )
 
     async def startup(self) -> None:
@@ -80,6 +83,7 @@ class AppContext:
             await dao.clear_skips()
             await dao.commit()
 
+        await self.network.startup()
         self.auth.on_login(self.after_login)
         self.boot_task = asyncio.create_task(self.boot(), name="boot")
 
@@ -157,6 +161,7 @@ class AppContext:
         if self.boot_task is not None and not self.boot_task.done():
             self.boot_task.cancel()
 
+        await self.network.stop()
         await self.apply.stop()
         await self.sync.stop()
         await self.auth.stop()

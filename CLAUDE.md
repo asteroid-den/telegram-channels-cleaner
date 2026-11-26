@@ -3,7 +3,8 @@
 Local tool: Kurigram userbot + FastAPI + Vue UI. The user logs in to Telegram (QR or phone, 2FA),
 the app pulls every broadcast channel they're subscribed to, shows them as Tinder-like cards
 (swipe/keys: keep, unsubscribe, later, mute, archive), and applies the queued actions after a
-review screen. Runs on the user's own machine only (127.0.0.1, no auth, not a server/VPS app).
+review screen. Runs on the user's own machine only (127.0.0.1, no auth, not a server/VPS app); phones in the same
+network can be let in on demand (paired by QR, see Safety).
 
 Talk to the user in **Russian**. Code, comments, commits and README are in English.
 
@@ -88,7 +89,7 @@ src/channels_cleaner/
     gateway.py    Protocol; kurigram_gateway.py (real) and mock_gateway.py (generated channels)
     device_profiles.json  36 TDesktop-like profiles (user's 24 + 12 added); picked once per
                   session and persisted as data/sessions/<session>.device.json — never re-rolled
-  services/       auth (state machine), sync, channels (lazy full info + pulse + media cache),
+  services/       auth (state machine), sync, channels (lazy full info + pulse + media cache), network (phone access),
                   apply (sequential job, 1.5–3 s jitter, FloodWait sleep+retry, cancel), stats,
                   deck (prefs + the deck's counters, COUNT queries), decisions (decide/undo, owner-leave rule)
   api/routers/    /api endpoints, a module per area (health, auth, channels, decisions, apply, results =
@@ -133,7 +134,20 @@ Safety (2026-11-20, after an audit run from the mercury session):
 - `api/middlewares.py` LocalOnlyMiddleware: Host must be localhost/127.0.0.1/::1 (or the host given by name with
   --host); POST/PUT/DELETE need `Origin == http://<Host>` and `Sec-Fetch-Site` same-origin/none when present.
   Requests without them (curl, tests) pass. Tests use `base_url="http://localhost"`. Vite proxies with
-  changeOrigin: false so Host and Origin stay the dev server's. Phone access will need real auth on top.
+  changeOrigin: false so Host and Origin stay the dev server's.
+- Phone access (`services/network.py`, `/api/network` + `/api/pairing`): off by default. Turned on, a second uvicorn
+  server (`LanServer`, no signal handlers, lifespan off) runs in the same loop on this machine's LAN address
+  (`lan_address()`: the outgoing interface) and the same port, serving the same app wrapped by `mark_lan`, which puts
+  the served address into the scope (`LAN_SCOPE`). The 127.0.0.1 listener is untouched and stays trusted, so Docker
+  (bridge IPs) is unaffected; the toggle is unavailable when `--host` isn't loopback (`container`/`custom_host`).
+  On the LAN listener the guard wants Host == that address and the `cc_device` cookie of a paired device (sha256 in
+  `devices`, kept in memory, last visit written at most once a minute); strangers get only the SPA's GETs,
+  `/api/health`, `GET /api/pairing`, `POST /api/pairing/claim` (else 401 `device_not_paired`). `/api/network/*` is
+  `computer_only` (403 from the LAN). Pairing: the computer shows a QR link (2 min, one claim) + 4-digit code; the
+  phone that claims it gets its cookie at once, valid only after the user approves it *on the computer* with the
+  same code on both screens (a second claim: 409 `pairing_taken`). The enabled flag is an app-wide setting
+  (`settings.account_id = 0`) and comes back on start. Disconnecting a device or turning access off kicks their
+  open SSE streams at once (`network.kicked`); SSE pings every 3 s so a phone notices the computer went away.
 - Apply: `start()` holds a lock from the check to the task (`running` is true meanwhile); `PUT /decisions` is
   409 while applying, like DELETE and reset; before each action the job re-reads the decision and skips it
   (failed, nothing written) if it changed; `mark_decision(expected=…)` updates only that pending decision.

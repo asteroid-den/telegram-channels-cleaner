@@ -107,6 +107,18 @@ class CrossOriginRefused(Forbidden):
 
 
 @dataclass
+class DeviceNotPaired(Unauthorized):
+    TYPE = "device_not_paired"
+    MESSAGE = "Connect this device from the app on your computer first"
+
+
+@dataclass
+class ComputerOnly(Forbidden):
+    TYPE = "computer_only"
+    MESSAGE = "Only the computer the app runs on can do that"
+
+
+@dataclass
 class NotAuthorized(Unauthorized):
     TYPE = "not_authorized"
     MESSAGE = "Log in to Telegram first"
@@ -205,6 +217,39 @@ class NoPublicLink(Conflict):
 
 
 @dataclass
+class DeviceNotFound(NotFound):
+    TYPE = "device_not_found"
+    MESSAGE = "No such connected device"
+    device_id: int
+
+
+@dataclass
+class PairingNotFound(NotFound):
+    TYPE = "pairing_not_found"
+    MESSAGE = "The connection link has expired or was used; show a new QR code on the computer"
+
+
+@dataclass
+class PairingTaken(Conflict):
+    TYPE = "pairing_taken"
+    MESSAGE = "Another device already opened this link; show a new QR code on the computer"
+
+
+@dataclass
+class NetworkAccessOff(Conflict):
+    TYPE = "network_access_off"
+    MESSAGE = "Let devices in from the network first"
+
+
+@dataclass
+class NetworkUnavailable(Conflict):
+    TYPE = "network_unavailable"
+    MESSAGE = "The app can't listen in the local network"
+    # container (the address is set by Docker), no_network, address_in_use or what the OS said
+    reason: str
+
+
+@dataclass
 class FloodWait(TooManyRequests):
     TYPE = "flood_wait"
     MESSAGE = "Telegram asks to wait before the next request"
@@ -218,7 +263,14 @@ class TelegramError(BadGateway):
     reason: str
 
 
-COMMON_ERRORS: tuple[type[BaseError], ...] = (HostNotAllowed, CrossOriginRefused, InvalidRequest, HttpInternalError)
+# The guard's answers: any route may get them before it runs
+COMMON_ERRORS: tuple[type[BaseError], ...] = (
+    HostNotAllowed,
+    CrossOriginRefused,
+    DeviceNotPaired,
+    InvalidRequest,
+    HttpInternalError,
+)
 
 
 @cache
