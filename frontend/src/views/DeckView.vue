@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import type { ChatAdmin, Decision } from '@/api/types'
 import AppIcon from '@/components/AppIcon.vue'
 import DeckProgress from '@/components/DeckProgress.vue'
+import DeckSearch from '@/components/DeckSearch.vue'
 import SuccessorPicker from '@/components/SuccessorPicker.vue'
 import SwipeDeck from '@/components/SwipeDeck.vue'
 import { useChannelColor } from '@/composables/useChannelColor'
@@ -65,6 +66,8 @@ watch(
 )
 
 const picking = ref(false)
+const modKey = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'
+const searching = ref(false)
 // What the next decision carries: the successor picked for a transfer
 let extra: DecisionExtra = {}
 
@@ -93,6 +96,8 @@ useHotkeys({
   m: () => act('mute'),
   a: () => act('archive'),
   l: () => canFreeLink.value && act('free_link'),
+  // Find a card by name and put it on top; Ctrl+K is what the browser would use for its own search otherwise
+  'mod+k': () => (searching.value = !swiper.value?.busy),
   'mod+z': () => void undo(),
   Backspace: () => void undo(),
   Enter: review,
@@ -342,6 +347,9 @@ const ZONES = [
           <kbd v-if="!k.kbdAfter">{{ k.kbd }}</kbd>{{ t(k.label)
           }}<kbd v-if="k.kbdAfter">{{ k.kbd }}</kbd>
         </button>
+        <button class="key ml-3 text-muted" aria-keyshortcuts="Control+K" @click="searching = true">
+          <kbd>{{ modKey }} K</kbd>{{ t('search.key') }}
+        </button>
       </div>
       <!-- like "back to top" on a long page: back to where the undecided channels start -->
       <Transition
@@ -365,6 +373,7 @@ const ZONES = [
       <div class="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-text" />
     </div>
 
+    <DeckSearch v-if="searching" @close="searching = false" />
     <SuccessorPicker
       v-if="picking && deck.current"
       :channel="deck.current"
