@@ -178,6 +178,7 @@ export default {
       free_link: 'Free the link',
     },
     zoneTransfer: 'Hand over and leave',
+    openInTelegram: 'Open in Telegram · O',
     otherAdmins: '{n} other admin | {n} other admins',
     noOtherAdmins: 'no other admins',
     position: '{pos} of {total}',

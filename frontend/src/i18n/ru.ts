@@ -180,6 +180,7 @@ const ru: typeof en = {
       free_link: 'Освободить ссылку',
     },
     zoneTransfer: 'Передать и выйти',
+    openInTelegram: 'Открыть в Telegram · O',
     otherAdmins: '{n} другой админ | {n} других админа | {n} других админов',
     noOtherAdmins: 'других админов нет',
     position: '{pos} из {total}',

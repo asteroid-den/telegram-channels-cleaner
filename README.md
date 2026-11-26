@@ -107,6 +107,7 @@ uv run telegram-channels-cleaner
 | <kbd>↓</kbd> | Later: move to the back of the deck |
 | <kbd>M</kbd> / <kbd>A</kbd> | Mute / archive |
 | <kbd>L</kbd> | Free the public link (chats you own) |
+| <kbd>O</kbd> | Open the chat in the Telegram app, at its last post (also the ↗ on the card) |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> or <kbd>Backspace</kbd> | Undo the last decision |
 | <kbd>Ctrl</kbd>+<kbd>←</kbd> / <kbd>→</kbd> | Step back / forward through decisions you've made |
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> | Find a chat by name and put it on top |

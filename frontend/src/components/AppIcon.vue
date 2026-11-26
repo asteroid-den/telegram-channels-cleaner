@@ -13,6 +13,7 @@ const PATHS = {
   moon: 'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z',
   arrows: 'm3 16 4 4 4-4M7 20V4m14 4-4-4-4 4m4-4v16',
   chevron: 'm6 9 6 6 6-6',
+  external: 'M7 17 17 7M8 7h9v9',
   arrowRight: 'M5 12h14m-6-6 6 6-6 6',
   arrowLeft: 'M19 12H5m6 6-6-6 6-6',
   user: 'M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
