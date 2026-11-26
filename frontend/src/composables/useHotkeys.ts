@@ -24,6 +24,9 @@ export function hotkeyName(e: KeyInfo): string {
  */
 export function useHotkeys(map: HotkeyMap) {
   function onKey(e: KeyboardEvent) {
+    // A dialog already acted on it (Enter in the picker): by now the dialog may be gone, Vue having updated
+    // the page between the two listeners, so `data-hotkeys-off` below can't be relied on for this
+    if (e.defaultPrevented) return
     const target = e.target
     if (
       target instanceof Element &&
