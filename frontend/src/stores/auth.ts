@@ -30,6 +30,8 @@ export const useAuthStore = defineStore('auth', () => {
   function set(next: AuthState) {
     state.value = next
     ready.value = next.status !== 'starting'
+    // The menu button shows the active account's photo, which arrives after the login
+    if (next.status === 'authorized') void loadAccounts().catch(() => undefined)
   }
 
   function connect() {

@@ -25,6 +25,7 @@ onClickOutside(root, () => (open.value = false))
 
 const user = computed(() => auth.state.user)
 const name = computed(() => user.value?.first_name ?? '')
+const avatar = computed(() => auth.accounts.find((account) => account.active)?.avatar_url ?? null)
 
 // Fresh counts each time the menu opens: decisions were made since
 watch(open, (isOpen) => {
@@ -86,7 +87,7 @@ async function logout(wipe: boolean) {
       :aria-expanded="open"
       @click="open = !open"
     >
-      <ChannelAvatar v-if="user" :id="user.id" :title="name" :src="null" :size="22" />
+      <ChannelAvatar v-if="user" :id="user.id" :title="name" :src="avatar" :size="22" />
       <span class="max-w-32 truncate">{{ name }}</span>
       <AppIcon name="chevron" :size="12" class="opacity-70" />
     </button>
@@ -115,7 +116,12 @@ async function logout(wipe: boolean) {
           class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-surface-2"
           @click="switchTo(account)"
         >
-          <ChannelAvatar :id="account.id" :title="fullName(account)" :src="null" :size="30" />
+          <ChannelAvatar
+            :id="account.id"
+            :title="fullName(account)"
+            :src="account.avatar_url"
+            :size="30"
+          />
           <span class="min-w-0 flex-1">
             <span class="block truncate text-sm">{{ fullName(account) }}</span>
             <span class="block truncate text-xs text-faint">
