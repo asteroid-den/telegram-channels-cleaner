@@ -438,6 +438,10 @@ const ZONES = [
 .zone:hover::before {
   opacity: 1;
 }
+/* A click zone, not a control to tab to: a click after using the keys must not leave a focus ring on it */
+.zone:focus-visible {
+  outline: none;
+}
 .zone-hint {
   position: absolute;
   top: 42%;

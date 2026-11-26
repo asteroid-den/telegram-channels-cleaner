@@ -265,7 +265,7 @@ export default {
     transferHint: 'the handover first, then the leave',
     password: '2FA password',
     passwordHint:
-      'Telegram confirms a handover with your two-step verification password. It is asked once for the {n} handover and kept nowhere. | Telegram confirms a handover with your two-step verification password. It is asked once for all {n} handovers and kept nowhere.',
+      'Telegram confirms a handover with your two-step verification password. It is asked for this handover only and kept nowhere. | Telegram confirms a handover with your two-step verification password. It is asked once for all {n} handovers and kept nowhere.',
     transfersWait: 'Without the password the handovers stay queued',
     leaveOwned: 'Leave without a handover',
     leaveOwnedHint: 'left without an owner',
