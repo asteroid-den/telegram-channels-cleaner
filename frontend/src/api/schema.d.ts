@@ -174,6 +174,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/accounts/{account_id}/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Account Avatar */
+        get: operations["get_account_avatar_api_accounts__account_id__avatar_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/accounts/{account_id}/activate": {
         parameters: {
             query?: never;
@@ -533,6 +550,8 @@ export interface components {
             last_name: string | null;
             /** Username */
             username: string | null;
+            /** Avatar Url */
+            avatar_url: string | null;
             /** Active */
             active: boolean;
             /** Chats */
@@ -669,6 +688,28 @@ export interface components {
             phone: string | null;
             /** Error */
             error: string | null;
+        };
+        /** AvatarNotFoundError */
+        AvatarNotFoundError: {
+            /**
+             * Ok
+             * @default false
+             * @constant
+             */
+            ok: false;
+            /**
+             * Type
+             * @default avatar_not_found
+             * @constant
+             */
+            type: "avatar_not_found";
+            /**
+             * Message
+             * @default The account has no profile photo
+             */
+            message: string;
+            /** Account Id */
+            account_id: number;
         };
         /** Channel */
         Channel: {
@@ -2080,6 +2121,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HostNotAllowedError"] | components["schemas"]["CrossOriginRefusedError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HttpInternalError"];
+                };
+            };
+            /** @description An error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_account_avatar_api_accounts__account_id__avatar_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The picture, cached by Telegram's file id */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/*": unknown;
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostNotAllowedError"] | components["schemas"]["CrossOriginRefusedError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvatarNotFoundError"];
                 };
             };
             /** @description Unprocessable Entity */

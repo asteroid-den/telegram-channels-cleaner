@@ -141,6 +141,20 @@ class ChannelsService:
 
         return None
 
+    def own_photo(self, account_id: int) -> Path | None:
+        # Read only: asking about an unknown account doesn't make a folder for it
+        return next((self.settings.media_dir / str(account_id)).glob("me.*"), None)
+
+    async def refresh_own_photo(self, account_id: int) -> None:
+        """Fetches the user's photo after a login; one removed in Telegram goes here too."""
+        directory = self.media_dir(account_id)
+        before = list(directory.glob("me.*"))
+        path = await self.download(self.gateway.download_own_photo(directory / "me.jpg"))
+
+        for old in before:
+            if old != path:
+                old.unlink(missing_ok=True)
+
     async def avatar(self, account_id: int, channel_id: int) -> Path | None:
         row = await self.get_row(account_id, channel_id)
 

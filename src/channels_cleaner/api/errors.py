@@ -155,6 +155,13 @@ class AccountNotFound(NotFound):
 
 
 @dataclass
+class AvatarNotFound(NotFound):
+    TYPE = "avatar_not_found"
+    MESSAGE = "The account has no profile photo"
+    account_id: int
+
+
+@dataclass
 class PictureNotFound(NotFound):
     TYPE = "picture_not_found"
     MESSAGE = "The chat has no such picture"

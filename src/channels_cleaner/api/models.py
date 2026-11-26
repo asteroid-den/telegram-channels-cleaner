@@ -195,6 +195,7 @@ class Account(BaseModel):
     first_name: str
     last_name: str | None
     username: str | None
+    avatar_url: str | None
     active: bool
     chats: int
     #: decisions waiting for the apply job in that account

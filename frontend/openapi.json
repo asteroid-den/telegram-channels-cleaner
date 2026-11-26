@@ -870,6 +870,92 @@
         }
       }
     },
+    "/api/accounts/{account_id}/avatar": {
+      "get": {
+        "tags": [
+          "accounts"
+        ],
+        "summary": "Get Account Avatar",
+        "operationId": "get_account_avatar_api_accounts__account_id__avatar_get",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The picture, cached by Telegram's file id",
+            "content": {
+              "image/*": {}
+            }
+          },
+          "default": {
+            "description": "An error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HostNotAllowedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CrossOriginRefusedError"
+                    }
+                  ],
+                  "title": "Response 403 Get Account Avatar Api Accounts  Account Id  Avatar Get"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpInternalError"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvatarNotFoundError"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/api/accounts/{account_id}/activate": {
       "post": {
         "tags": [
@@ -3086,6 +3172,17 @@
             ],
             "title": "Username"
           },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
           "active": {
             "type": "boolean",
             "title": "Active"
@@ -3105,6 +3202,7 @@
           "first_name",
           "last_name",
           "username",
+          "avatar_url",
           "active",
           "chats",
           "pending"
@@ -3443,6 +3541,36 @@
           "error"
         ],
         "title": "AuthStateResponse"
+      },
+      "AvatarNotFoundError": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": false,
+            "title": "Ok",
+            "default": false
+          },
+          "type": {
+            "type": "string",
+            "const": "avatar_not_found",
+            "title": "Type",
+            "default": "avatar_not_found"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "The account has no profile photo"
+          },
+          "account_id": {
+            "type": "integer",
+            "title": "Account Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id"
+        ],
+        "title": "AvatarNotFoundError"
       },
       "Channel": {
         "properties": {

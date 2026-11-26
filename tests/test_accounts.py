@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import httpx
+import pytest
 
 from channels_cleaner.app import create_app
 from channels_cleaner.context import AppContext
@@ -124,3 +125,47 @@ async def test_the_last_active_account_comes_back_on_start(client: httpx.AsyncCl
         await wait_for(connected)
         assert restarted.auth.state.user is not None
         assert restarted.auth.state.user.id == WORK.id
+
+
+async def test_an_accounts_photo_is_served_and_listed(client: httpx.AsyncClient, ctx: AppContext) -> None:
+    await login(client, ctx)
+
+    # Fetched after the login, next to the sync
+    await wait_for(lambda: has_photo(ctx, MOCK_USER.id))
+    url = (await get_json(client, "/api/accounts"))["items"][0]["avatar_url"]
+    r = await client.get(url)
+
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("image/")
+
+
+async def test_an_account_without_a_photo_gets_none(client: httpx.AsyncClient, ctx: AppContext) -> None:
+    await login(client, ctx)
+    await add_second(client, ctx)
+    await client.post("/api/accounts/add")
+    await login(client, ctx)  # the third mock user has no photo
+
+    third = (await get_json(client, "/api/accounts"))["items"][-1]
+    r = await client.get(f"/api/accounts/{third['id']}/avatar")
+
+    assert third["avatar_url"] is None
+    assert (r.status_code, r.json()["type"]) == (404, "avatar_not_found")
+
+
+async def test_a_photo_removed_in_telegram_goes_here_too(
+    client: httpx.AsyncClient, ctx: AppContext, gateway: MockGateway, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    await login(client, ctx)
+    await wait_for(lambda: has_photo(ctx, MOCK_USER.id))
+
+    async def none(_: object) -> None:
+        return None
+
+    monkeypatch.setattr(gateway, "download_own_photo", none)
+    await ctx.channels.refresh_own_photo(MOCK_USER.id)
+
+    assert ctx.channels.own_photo(MOCK_USER.id) is None
+
+
+async def has_photo(ctx: AppContext, account_id: int) -> bool:
+    return ctx.channels.own_photo(account_id) is not None

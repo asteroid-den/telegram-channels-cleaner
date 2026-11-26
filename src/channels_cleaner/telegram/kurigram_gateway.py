@@ -456,6 +456,27 @@ class KurigramGateway:
 
         return Path(result) if isinstance(result, str) else None
 
+    async def download_own_photo(self, dest: Path) -> Path | None:
+        photo = getattr(self.client.me, "photo", None)
+
+        if photo is None:
+            return None
+
+        try:
+            result = await self.client.download_media(photo.small_file_id, file_name=str(dest))
+
+        except errors.FloodWait as exc:
+            raise FloodWaitError(int(exc.value or 0)) from exc
+
+        except errors.RPCError as exc:
+            log.info("Profile photo download failed: %s", exc)
+            return None
+
+        except (OSError, TimeoutError) as exc:
+            raise offline_error(exc) from exc
+
+        return Path(result) if isinstance(result, str) else None
+
     async def download_post_thumb(self, channel_id: int, message_id: int, dest: Path) -> Path | None:
         try:
             message = await self.client.get_messages(channel_id, message_id)

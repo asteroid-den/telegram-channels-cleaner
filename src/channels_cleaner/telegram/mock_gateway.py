@@ -229,6 +229,18 @@ def avatar_svg(title: str, color: str) -> str:
     )
 
 
+def portrait_svg(color: str) -> str:
+    """A head and shoulders on a gradient: a stand-in photo that looks unlike the initials fallback."""
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">'
+        f'<defs><linearGradient id="g" x2="0" y2="1"><stop offset="0" stop-color="{color}"/>'
+        '<stop offset="1" stop-color="#1e2027"/></linearGradient></defs>'
+        '<rect width="160" height="160" fill="url(#g)"/>'
+        '<circle cx="80" cy="64" r="28" fill="#f1d3b6"/>'
+        '<path d="M28 160c4-34 26-52 52-52s48 18 52 52z" fill="#2e313b"/></svg>'
+    )
+
+
 def thumb_svg(seed: int) -> str:
     rng = random.Random(seed)
     a, b = rng.sample(COLORS, 2)
@@ -454,6 +466,17 @@ class MockGateway:
         path = dest.with_suffix(".svg")
         color = COLORS[abs(channel_id) % len(COLORS)]
         path.write_text(avatar_svg(entry[0].title, color), "utf-8")
+        return path
+
+    async def download_own_photo(self, dest: Path) -> Path | None:
+        self.require_auth()
+
+        # The last mock user has no photo, so the initials fallback can be seen too
+        if self.user is None or self.user.id == MOCK_USERS[-1].id:
+            return None
+
+        path = dest.with_suffix(".svg")
+        path.write_text(portrait_svg(COLORS[self.user.id % len(COLORS)]), "utf-8")
         return path
 
     async def download_post_thumb(self, channel_id: int, message_id: int, dest: Path) -> Path | None:

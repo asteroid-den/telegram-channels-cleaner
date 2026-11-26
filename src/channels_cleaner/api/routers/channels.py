@@ -12,7 +12,6 @@ from channels_cleaner.services import SYNC_TOPIC, deck
 router = APIRouter(prefix="/channels", tags=["channels"])
 
 FROM_TELEGRAM = (errors.NotAuthorized, errors.ChannelNotFound, errors.FloodWait, errors.TelegramError)
-IMMUTABLE = {"Cache-Control": "private, max-age=604800, immutable"}
 
 
 @router.post("/sync", responses=errors.error_responses(errors.NotAuthorized))
@@ -74,7 +73,7 @@ async def get_channel_avatar(channel_id: int, ctx: ContextDep, account_id: Accou
     if path is None:
         raise errors.PictureNotFound(channel_id=channel_id)
 
-    return FileResponse(path, headers=IMMUTABLE)
+    return FileResponse(path, headers=utils.IMMUTABLE)
 
 
 @router.get(
@@ -88,4 +87,4 @@ async def get_channel_thumb(channel_id: int, ctx: ContextDep, account_id: Accoun
     if path is None:
         raise errors.PictureNotFound(channel_id=channel_id)
 
-    return FileResponse(path, headers=IMMUTABLE)
+    return FileResponse(path, headers=utils.IMMUTABLE)
