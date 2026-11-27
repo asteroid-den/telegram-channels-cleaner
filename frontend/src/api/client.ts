@@ -64,6 +64,11 @@ export function subscribe(url: string, handlers: SseHandlers): () => void {
   const source = new EventSource(url)
   // The server pings every 3 s even when nothing happens
   source.addEventListener('ping', () => (heard.at = Date.now()))
+  // This phone was disconnected on the computer: back to the pairing screen at once
+  source.addEventListener('revoked', () => {
+    source.close()
+    location.replace('/pair')
+  })
   for (const [event, handler] of Object.entries(handlers)) {
     source.addEventListener(event, (e) => {
       // A server's "error" event shares its name with the browser's own one (a failed reconnect), which has no data

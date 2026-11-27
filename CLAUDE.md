@@ -154,7 +154,8 @@ Safety (2026-11-20, after an audit run from the mercury session):
   phone that claims it gets its cookie at once, valid only after the user approves it *on the computer* with the
   same code on both screens (a second claim: 409 `pairing_taken`). The enabled flag is an app-wide setting
   (`settings.account_id = 0`) and comes back on start. Disconnecting a device or turning access off kicks their
-  open SSE streams at once (`network.kicked`). SSE pings every 3 s as a real `ping` event (a comment line never
+  open SSE streams at once (`network.kicked`); a disconnected device's streams send `revoked` first, and the phone
+  goes to `/pair` at once (turning access off sends none: the device stays paired, the phone shows it offline). SSE pings every 3 s as a real `ping` event (a comment line never
   reaches EventSource); `stores/connection.ts` asks the server directly after 7 s without any event, every 3 s while
   offline and on `visibilitychange`, shows `ConnectionBanner` ("the computer/app doesn't answer", then "back online"),
   holds the deck's buttons and swipe meanwhile and reopens the auth stream; a phone asks `/api/pairing`, so one

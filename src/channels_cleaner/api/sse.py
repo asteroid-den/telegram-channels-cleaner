@@ -50,8 +50,15 @@ def sse_response(
                 return
 
             while True:
-                # A device disconnected on the computer loses its open streams too
-                if await request.is_disconnected() or not network.allows(request.scope):
+                if await request.is_disconnected():
+                    return
+
+                # A device disconnected on the computer loses its open streams too. It hears why first, and goes to
+                # the pairing screen at once instead of after the silence it would otherwise have to notice
+                if not network.allows(request.scope):
+                    if network.revoked(request.scope):
+                        yield format_event("revoked", {})
+
                     return
 
                 event = await next_event(queue, network.kicked if lan else None)

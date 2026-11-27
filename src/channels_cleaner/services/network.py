@@ -467,6 +467,14 @@ class NetworkService:
 
         return self.enabled and not self.closing and any(device.id == device_id for device in self.devices.values())
 
+    def revoked(self, scope: Scope) -> bool:
+        """A device in the network disconnected on the computer, while access is still on (not when it was turned off,
+        or the app is stopping: the device stays paired then)."""
+        if LAN_SCOPE not in scope:
+            return False
+
+        return self.enabled and not self.closing and not self.allows(scope)
+
     def kick(self) -> None:
         self.kicked.set()
         self.kicked = asyncio.Event()
