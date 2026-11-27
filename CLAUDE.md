@@ -265,9 +265,11 @@ header in one row (logo mark, deck settings with kind + filter, a search button 
 the pending count, avatar; language and theme move into the account menu), a small undo button at the end of the
 progress row (DeckProgress's `end` slot; a pop-up "Undo" toast was rejected: noisy when deciding dozens in a row), the card with 24 px margins and at most 500 px tall, the next one peeking out below it (no side fan), round 52 px buttons with short labels
 (`actions.*Short`) instead of the keycaps, no side zones; deck settings and the summary open as bottom
-sheets (`.sheet-narrow` in style.css); nothing with a text field is fixed to the bottom (Firefox on Android puts the
-keyboard over the page and leaves fixed, blurred parts unpainted once it goes): the review's footer is part of the page
-there (`max-md:static`, `mt-auto`); the loupe opens on a long press of the progress bar (a tap there does nothing)
+sheets (`.sheet-narrow` in style.css); the keyboard shrinks the page (`interactive-widget=resizes-content` in index.html):
+covered by it, Firefox on Android painted only what was above it and, once it went, left the rest unpainted until a
+scroll (the review's Apply button, changed by typing the 2FA password, stayed blank on a page too short to scroll;
+redrawing the footer didn't help). Nothing with a text field is fixed to the bottom either: the review's footer is part
+of the page on a phone (`max-md:static`, `mt-auto`); the loupe opens on a long press of the progress bar (a tap there does nothing)
 and stays until a tap elsewhere or on an avatar.
 
 The user rejected the retro "press" look; wants modern digital but not generic SaaS.
