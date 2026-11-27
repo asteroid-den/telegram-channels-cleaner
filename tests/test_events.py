@@ -75,3 +75,24 @@ def test_close_reaches_every_subscriber() -> None:
         bus.close()
 
         assert (first.get_nowait().type, second.get_nowait().type) == (CLOSED, CLOSED)
+
+
+async def test_a_stream_cancelled_mid_wait_leaves_no_task_behind() -> None:
+    # A tab closed or a phone gone: the stream is cancelled while it waits for the next event. Its waiters must go
+    # with it, else they stay pending until the garbage collector logs "Task was destroyed but it is pending!"
+    bus = EventBus()
+
+    async with stream(bus) as body:
+        await anext(body)
+        waiting = asyncio.ensure_future(anext(body))
+        await asyncio.sleep(0.01)
+
+        waiting.cancel()
+
+        with pytest.raises(asyncio.CancelledError):
+            await waiting
+
+        await asyncio.sleep(0)
+
+    current = asyncio.current_task()
+    assert [task for task in asyncio.all_tasks() if task is not current and not task.done()] == []
