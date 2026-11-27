@@ -27,12 +27,19 @@ async def next_event(queue: asyncio.Queue[Event], kicked: asyncio.Event | None) 
     if kicked is not None:
         waiters.add(asyncio.ensure_future(kicked.wait()))
 
-    done, pending = await asyncio.wait(waiters, timeout=PING_INTERVAL, return_when=asyncio.FIRST_COMPLETED)
+    try:
+        await asyncio.wait(waiters, timeout=PING_INTERVAL, return_when=asyncio.FIRST_COMPLETED)
 
-    for waiter in pending:
-        waiter.cancel()
+    finally:
+        # Also when the stream itself is cancelled here (a tab closed, a phone gone): a waiter left pending outlives its
+        # queue, and the garbage collector logs "Task was destroyed but it is pending!" for it
+        for waiter in waiters:
+            waiter.cancel()
 
-    return getter.result() if getter in done else None
+        await asyncio.gather(*waiters, return_exceptions=True)
+
+    # The getter got its event in time, or just as the wait ended: then the cancel came too late, and it still counts
+    return None if getter.cancelled() else getter.result()
 
 
 def sse_response(
