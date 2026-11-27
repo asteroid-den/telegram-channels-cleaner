@@ -163,44 +163,20 @@ async function sendCode() {
       <p class="mt-5 text-sm leading-relaxed text-muted">{{ t('pair.unpairedHow') }}</p>
     </template>
 
-    <button
-      v-if="view.kind !== 'loading' && view.kind !== 'waiting'"
-      class="mt-7 w-full rounded-xl bg-text py-3.5 text-[15px] font-semibold text-bg"
-      @click="openCode"
-    >
-      {{ t('pair.enterCode') }}
-    </button>
-
-    <p v-if="offline" class="mt-6 text-[13px] text-warn">{{ t('pair.offline') }}</p>
-
-    <Transition
-      enter-from-class="opacity-0"
-      enter-active-class="transition duration-200"
-      leave-to-class="opacity-0"
-      leave-active-class="transition duration-150"
-    >
-      <div v-if="entering" class="fixed inset-0 z-50 bg-black/55" @click="entering = false" />
-    </Transition>
-    <Transition
-      enter-from-class="translate-y-full"
-      enter-active-class="transition duration-250 ease-out"
-      leave-to-class="translate-y-full"
-      leave-active-class="transition duration-200 ease-in"
-    >
+    <template v-if="view.kind !== 'loading' && view.kind !== 'waiting'">
+      <!-- In the page itself, not a sheet at the bottom: a phone's keyboard comes up over the bottom of the screen
+           (Firefox doesn't shrink the page for it), and a fixed sheet ended up behind it, half painted -->
       <form
         v-if="entering"
-        role="dialog"
-        aria-modal="true"
-        :aria-label="t('pair.codeTitle')"
-        class="fixed inset-x-0 bottom-0 z-50 rounded-t-[20px] border-t border-border-2 bg-surface px-[22px] pt-2.5 pb-7 text-left"
+        class="mt-7 w-full text-left"
         @submit.prevent="sendCode"
         @keydown.esc="entering = false"
       >
-        <div class="mx-auto mb-4 h-1 w-10 rounded-full bg-border-2" />
-        <h2 class="font-display text-[19px] font-semibold">{{ t('pair.codeTitle') }}</h2>
-        <p class="mt-1.5 mb-4 text-[13.5px] leading-normal text-muted">{{ t('pair.codeHint') }}</p>
+        <label for="pair-code" class="text-[15px] font-semibold">{{ t('pair.codeTitle') }}</label>
+        <p class="mt-1 mb-2.5 text-[13px] leading-snug text-muted">{{ t('pair.codeHint') }}</p>
         <!-- its border shows focus and errors: the global focus ring would be a second frame -->
         <input
+          id="pair-code"
           ref="codeInput"
           v-model="entered"
           maxlength="9"
@@ -209,7 +185,6 @@ async function sendCode() {
           autocorrect="off"
           spellcheck="false"
           enterkeyhint="go"
-          :aria-label="t('pair.codeTitle')"
           :aria-invalid="!!wrong"
           class="w-full rounded-xl border-[1.5px] bg-bg px-3.5 py-3 font-mono text-[22px] font-semibold tracking-[0.12em]"
           style="outline: none"
@@ -217,15 +192,33 @@ async function sendCode() {
           @input="wrong = null"
         />
         <p v-if="wrong" class="mt-2 text-[13px] text-danger">{{ wrong }}</p>
-        <button
-          type="submit"
-          class="mt-4 w-full rounded-xl bg-text py-3.5 text-[15px] font-semibold text-bg transition-opacity disabled:opacity-45"
-          :disabled="typedToken().length !== 8 || sending"
-        >
-          {{ t('pair.connect') }}
-        </button>
+        <div class="mt-3 flex gap-2.5">
+          <button
+            type="button"
+            class="flex-1 rounded-xl border border-border-2 py-3.5 text-[15px] font-semibold"
+            @click="entering = false"
+          >
+            {{ t('common.cancel') }}
+          </button>
+          <button
+            type="submit"
+            class="flex-[2] rounded-xl bg-text py-3.5 text-[15px] font-semibold text-bg transition-opacity disabled:opacity-45"
+            :disabled="typedToken().length !== 8 || sending"
+          >
+            {{ t('pair.connect') }}
+          </button>
+        </div>
       </form>
-    </Transition>
+      <button
+        v-else
+        class="mt-7 w-full rounded-xl bg-text py-3.5 text-[15px] font-semibold text-bg"
+        @click="openCode"
+      >
+        {{ t('pair.enterCode') }}
+      </button>
+    </template>
+
+    <p v-if="offline" class="mt-6 text-[13px] text-warn">{{ t('pair.offline') }}</p>
   </div>
 </template>
 
