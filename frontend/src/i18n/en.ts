@@ -224,7 +224,7 @@ export default {
     was: 'Was',
     loupePosition: '#{n} of {total}',
     loupeClick: 'click to go back here',
-    loupeTap: 'tap a chat to go back to it; long-press the bar elsewhere to look there',
+    loupeTap: 'slide to look through, tap a chat to go back to it',
     loupeWheel: 'scroll to browse',
     appliedMark: 'applied',
     pulseTitle: 'Activity · 26 weeks',
