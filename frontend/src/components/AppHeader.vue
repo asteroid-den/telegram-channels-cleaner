@@ -39,6 +39,15 @@ const onDeck = computed(() => auth.authorized && route.name === 'deck' && deck.l
     <DeckSettings v-if="onDeck" />
 
     <div class="flex-1" />
+    <!-- A phone has no Ctrl+K -->
+    <button
+      v-if="onDeck"
+      class="hidden h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg border border-border-2 text-muted hover:text-text max-md:flex"
+      :aria-label="t('search.label')"
+      @click="ui.searching = true"
+    >
+      <AppIcon name="search" :size="17" />
+    </button>
     <SummaryPill v-if="onDeck" />
 
     <!-- On a phone these two live in the account menu -->

@@ -157,6 +157,10 @@ Safety (2026-11-20, after an audit run from the mercury session):
   holds the deck's buttons and swipe meanwhile and reopens the auth stream; a phone asks `/api/pairing`, so one
   disconnected on the computer lands on the pairing screen. Only MessageEvents count: the browser's own `error` on a
   failed reconnect shares its name with the sync stream's `error` event.
+- PWA: `manifest.webmanifest` (standalone, icons rendered from the favicon) + `theme-color` following the theme.
+  Standalone needs a secure origin: installable on the computer (localhost), a plain home-screen shortcut over the LAN's
+  http. iOS home-screen apps keep their own cookies: untested whether the pairing cookie carries over.
+  `cli.AppServer.startup` prints `Phones: <url>` when phone access comes back on with the app.
 - Stopping: `cli.AppServer.shutdown` first closes the event bus (`EventBus.close` → a `closed` event ends every
   stream), else uvicorn waited for the open tabs' streams forever and Ctrl+C hung until pressed twice.
   UI: account menu → `PhoneAccessDialog` (computer only: `onComputer` = the page's host is loopback; QR, the
@@ -251,9 +255,10 @@ bar → TrailLoupe (15 fanned avatars), click to jump; Ctrl+←/→ step through
 trail[cursor:] + undecided; edits are in place (decided_at kept); "Back to undecided" button.
 Changing an applied mute/archive sets decisions.reverts → apply job unmutes/unarchives first.
 Phone layout (below 768 px, Tailwind `max-md:` + `useNarrow()` where the script needs it; `mockups/phone.html`):
-header in one row (logo mark, deck settings with kind + filter, the pending count, avatar; language and theme move
-into the account menu), the card with 24 px margins and at most 500 px tall, the next one peeking out below it (no side fan), round 52 px buttons with short labels
-(`actions.*Short`) instead of the keycaps, no side zones or Ctrl+K; deck settings and the summary open as bottom
+header in one row (logo mark, deck settings with kind + filter, a search button for the missing Ctrl+K (`ui.searching`),
+the pending count, avatar; language and theme move into the account menu), a small undo button at the end of the
+progress row (DeckProgress's `end` slot; a pop-up "Undo" toast was rejected: noisy when deciding dozens in a row), the card with 24 px margins and at most 500 px tall, the next one peeking out below it (no side fan), round 52 px buttons with short labels
+(`actions.*Short`) instead of the keycaps, no side zones; deck settings and the summary open as bottom
 sheets (`.sheet-narrow` in style.css); the loupe opens on a long press of the progress bar (a tap there does nothing)
 and stays until a tap elsewhere or on an avatar.
 

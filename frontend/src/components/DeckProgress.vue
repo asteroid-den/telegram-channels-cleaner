@@ -171,7 +171,7 @@ const runs = computed(() => {
 <template>
   <!-- the bar sits in the middle column, so it is centred over the deck; the count hangs off its left -->
   <div
-    class="grid w-full grid-cols-[1fr_minmax(140px,460px)_1fr] items-center gap-3.5 max-md:grid-cols-[auto_1fr] max-md:gap-2.5"
+    class="grid w-full grid-cols-[1fr_minmax(140px,460px)_1fr] items-center gap-3.5 max-md:grid-cols-[auto_1fr_auto] max-md:gap-2.5"
   >
     <span
       class="origin-right justify-self-end text-right font-mono text-[15px] font-bold tabular-nums max-md:text-[13px]"
@@ -269,6 +269,8 @@ const runs = computed(() => {
         </div>
       </Transition>
     </div>
+    <!-- what sits after the bar: on a phone, undo -->
+    <slot name="end" />
   </div>
 </template>
 

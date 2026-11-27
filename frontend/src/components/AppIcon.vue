@@ -4,6 +4,7 @@ const PATHS = {
   x: 'M18 6 6 18M6 6l12 12',
   check: 'M20 6 9 17l-5-5',
   plus: 'M12 5v14M5 12h14',
+  search: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14m9 2-3.6-3.6',
   undo: 'M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11',
   skip: 'm5 4 10 8-10 8V4zM19 5v14',
   bellOff:

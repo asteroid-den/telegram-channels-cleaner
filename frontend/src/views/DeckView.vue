@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -15,6 +16,7 @@ import { useHotkeys } from '@/composables/useHotkeys'
 import { useApplyStore } from '@/stores/apply'
 import { useConnectionStore } from '@/stores/connection'
 import { type DecisionExtra, useDeckStore } from '@/stores/deck'
+import { useUiStore } from '@/stores/ui'
 
 const { t, tk } = useKindI18n()
 const deck = useDeckStore()
@@ -23,6 +25,7 @@ const router = useRouter()
 const swiper = useTemplateRef<InstanceType<typeof SwipeDeck>>('swiper')
 const narrow = useNarrow()
 const connection = useConnectionStore()
+const ui = useUiStore()
 
 useChannelColor(computed(() => deck.current))
 
@@ -72,7 +75,7 @@ watch(
 
 const picking = ref(false)
 const modKey = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'
-const searching = ref(false)
+const { searching } = storeToRefs(ui)
 // What the next decision carries: the successor picked for a transfer
 let extra: DecisionExtra = {}
 
@@ -262,7 +265,21 @@ const ZONES = [
       v-if="deck.loaded && !showSync"
       class="relative z-20 flex justify-center px-6 pt-4 max-md:px-4 max-md:pt-2.5"
     >
-      <div class="w-full max-w-[760px]"><DeckProgress /></div>
+      <div class="w-full max-w-[760px]">
+        <DeckProgress>
+          <!-- A phone has no Backspace: undo is a small button by the bar, there when needed, never in the way -->
+          <template v-if="narrow" #end>
+            <button
+              class="flex h-[30px] w-[30px] items-center justify-center rounded-lg border border-border-2 text-muted transition-opacity disabled:opacity-35"
+              :aria-label="t('actions.undo')"
+              :disabled="!deck.history.length || connection.offline"
+              @click="undo"
+            >
+              <AppIcon name="undo" :size="15" />
+            </button>
+          </template>
+        </DeckProgress>
+      </div>
     </div>
 
     <section
