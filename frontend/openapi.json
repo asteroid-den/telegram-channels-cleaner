@@ -6930,6 +6930,10 @@
             "type": "string",
             "title": "Url"
           },
+          "qr": {
+            "type": "string",
+            "title": "Qr"
+          },
           "code": {
             "type": "string",
             "title": "Code"
@@ -6953,6 +6957,7 @@
         "type": "object",
         "required": [
           "url",
+          "qr",
           "code",
           "expires_at",
           "request"

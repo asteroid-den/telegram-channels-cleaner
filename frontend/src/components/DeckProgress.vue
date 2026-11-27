@@ -57,8 +57,12 @@ const focus = ref(0)
 const loupeLeft = ref(0)
 let hideTimer: ReturnType<typeof setTimeout> | undefined
 const loupeWidth = () => Math.min(560, window.innerWidth - 24)
-/** A long press on a touch screen opened it: it stays open until a tap elsewhere or on an avatar. */
+/**
+ * A long press on a touch screen opened it: it stays open until a tap elsewhere or on an avatar.
+ * Until the finger lifts, sliding it along the bar moves the loupe, as hovering does with a mouse.
+ */
 const held = ref(false)
+let scrubbing = false
 let pressTimer: ReturnType<typeof setTimeout> | undefined
 let pressAt: { x: number; y: number } | null = null
 let lastPointer = 'mouse'
@@ -68,13 +72,14 @@ const step = computed(() => (shown.value.total ? 100 / shown.value.total : 0))
 const windowLo = computed(() => Math.max(0, Math.min(deck.trail.length - 15, center.value - 7)))
 const windowHi = computed(() => Math.min(deck.trail.length, windowLo.value + 15))
 
-function indexAt(clientX: number): number | null {
+/** `clamp`: past the decided part counts as its last decision (a finger sliding along the bar). */
+function indexAt(clientX: number, clamp = false): number | null {
   const el = hit.value
   if (!el || !deck.trail.length || !shown.value.total) return null
   const r = el.getBoundingClientRect()
   const x = clientX - r.left
   const filled = (deck.trail.length / shown.value.total) * r.width
-  if (x > filled + 8) return null // past the decided part
+  if (x > filled + 8 && !clamp) return null // past the decided part
   return Math.max(0, Math.min(deck.trail.length - 1, Math.floor((x / r.width) * shown.value.total)))
 }
 
@@ -90,6 +95,11 @@ function openAt(i: number, clientX: number) {
 function onBarMove(e: PointerEvent) {
   // A finger has no hover: the loupe opens on a long press instead
   if (e.pointerType === 'touch') {
+    if (scrubbing) {
+      const i = indexAt(e.clientX, true)
+      if (i !== null) center.value = focus.value = i
+      return
+    }
     if (pressAt && Math.hypot(e.clientX - pressAt.x, e.clientY - pressAt.y) > 10) cancelPress()
     return
   }
@@ -106,7 +116,7 @@ function onBarDown(e: PointerEvent) {
   if (i === null) return
   pressAt = { x: e.clientX, y: e.clientY }
   pressTimer = setTimeout(() => {
-    held.value = true
+    held.value = scrubbing = true
     openAt(i, e.clientX)
     navigator.vibrate?.(10)
   }, LONG_PRESS)
@@ -114,6 +124,7 @@ function onBarDown(e: PointerEvent) {
 function cancelPress() {
   clearTimeout(pressTimer)
   pressAt = null
+  scrubbing = false
 }
 onClickOutside(hit, () => {
   if (held.value) open.value = held.value = inLoupe.value = false
@@ -172,7 +183,7 @@ const runs = computed(() => {
 
     <div
       ref="hit"
-      class="relative flex h-7 items-center select-none [-webkit-touch-callout:none]"
+      class="relative flex h-7 touch-none items-center select-none [-webkit-touch-callout:none]"
       :class="deck.trail.length ? 'cursor-pointer' : ''"
       @pointerdown="onBarDown"
       @pointerup="cancelPress"
@@ -252,6 +263,7 @@ const runs = computed(() => {
             :center="center"
             :focus="focus"
             @focus="(i) => (focus = i)"
+            @scrub="(i) => (center = focus = i)"
             @pick="pick"
           />
         </div>

@@ -292,8 +292,10 @@ class PairingRequest(BaseModel):
 
 
 class Pairing(BaseModel):
-    #: what the QR code says
+    #: the app's own pairing link, short enough to type in when the camera can't open the QR
     url: str
+    #: what the QR code says: the same link through the pairing page, or the link itself
+    qr: str
     #: the same code shows on the phone that opened the link
     code: str
     expires_at: datetime

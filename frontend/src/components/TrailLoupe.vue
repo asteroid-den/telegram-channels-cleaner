@@ -15,7 +15,11 @@ import ChannelAvatar from './ChannelAvatar.vue'
  * under the pointer doesn't slide away as it gets focus.
  */
 const props = defineProps<{ trail: Channel[]; center: number; focus: number }>()
-const emit = defineEmits<{ focus: [index: number]; pick: [index: number] }>()
+const emit = defineEmits<{
+  focus: [index: number]
+  scrub: [index: number]
+  pick: [index: number]
+}>()
 const { t, locale } = useI18n()
 // On a phone the 15 avatars sit closer, so the loupe fits the screen
 const narrow = useNarrow()
@@ -52,12 +56,47 @@ const TAG: Record<Exclude<Decision, 'skip'>, string> = {
 }
 const kind = (c: Channel) => (c.decision && c.decision !== 'skip' ? c.decision : 'keep')
 
+const slotPx = () => (narrow.value ? 20 : 34)
+
+/**
+ * Picking. A mouse picks on press. A finger slides through the trail first (one avatar per slot of
+ * movement) and picks only on a tap: a swipe must not land on whatever was under it when it started.
+ */
+let touch: { id: number; x: number; from: number; tapped: number; moved: boolean } | null = null
+function onDown(e: PointerEvent) {
+  e.preventDefault()
+  if (e.pointerType !== 'touch') return emit('pick', props.focus)
+  const el = (e.target as Element).closest<HTMLElement>('[data-i]')
+  ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  touch = {
+    id: e.pointerId,
+    x: e.clientX,
+    from: props.focus,
+    tapped: el ? Number(el.dataset.i) : -1,
+    moved: false,
+  }
+}
+function onMove(e: PointerEvent) {
+  if (touch?.id !== e.pointerId) return
+  const dx = e.clientX - touch.x
+  if (!touch.moved && Math.abs(dx) < 8) return
+  touch.moved = true
+  const i = Math.max(0, Math.min(props.trail.length - 1, touch.from - Math.round(dx / slotPx())))
+  if (i !== props.focus) emit('scrub', i)
+}
+function onUp(e: PointerEvent) {
+  if (touch?.id !== e.pointerId) return
+  const { moved, tapped } = touch
+  touch = null
+  if (!moved && tapped >= 0) emit('pick', tapped)
+}
+
 function place(i: number) {
   const k = i - props.focus
   const slot = i - (lo.value + HALF)
   return {
     outer: {
-      transform: `translateX(calc(-50% + ${slot * (narrow.value ? 20 : 34) + Math.sign(k) * (narrow.value ? 10 : 14)}px))`,
+      transform: `translateX(calc(-50% + ${slot * slotPx() + Math.sign(k) * (narrow.value ? 10 : 14)}px))`,
     },
     inner: {
       transform:
@@ -73,14 +112,21 @@ function place(i: number) {
   <div
     class="w-[560px] rounded-2xl border border-border-2 bg-surface p-4 pb-3 shadow-card max-md:w-[calc(100vw-24px)]"
   >
-    <div class="relative h-[92px]" @pointerdown.prevent="emit('pick', focus)">
+    <div
+      class="relative h-[92px] touch-none"
+      @pointerdown="onDown"
+      @pointermove="onMove"
+      @pointerup="onUp"
+      @pointercancel="touch = null"
+    >
       <div
         v-for="{ i, channel } in shown"
         :key="channel.id"
+        :data-i="i"
         class="absolute top-3 left-1/2 cursor-pointer transition-[transform,opacity] duration-300 ease-out"
         :class="place(i).dim ? 'opacity-55' : ''"
         :style="{ ...place(i).outer, zIndex: place(i).z }"
-        @pointerenter="i !== focus && emit('focus', i)"
+        @pointerenter="(e) => e.pointerType !== 'touch' && i !== focus && emit('focus', i)"
       >
         <div class="relative transition-transform duration-300 ease-out" :style="place(i).inner">
           <div

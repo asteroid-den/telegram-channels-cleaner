@@ -52,6 +52,11 @@ COOKIE = "cc_device"
 #: the longest a browser keeps a cookie (Chrome caps it at 400 days)
 COOKIE_MAX_AGE = 400 * 24 * 3600
 PAIRING_TTL = timedelta(minutes=2)
+# The link's secret is short enough to type in on a phone: lowercase, no look-alikes (0/o, 1/l). It lives two minutes,
+# takes one claim, and the device it lets in still needs the user's yes on the computer.
+TOKEN_ALPHABET = "abcdefghijkmnpqrstuvwxyz23456789"  # noqa: S105 - characters, not a secret
+TOKEN_LENGTH = 8
+
 #: how often a device's last visit is written down: every request would be a write
 SEEN_EVERY = timedelta(minutes=1)
 NAME_LENGTH = 64
@@ -207,6 +212,11 @@ class NetworkService:
             "pairing": pairing
             and {
                 "url": f"{self.url}/pair/{pairing.token}",
+                "qr": (
+                    f"{self.settings.pairing_page}#{self.address}/{pairing.token}"
+                    if self.settings.pairing_page
+                    else f"{self.url}/pair/{pairing.token}"
+                ),
                 "code": pairing.code,
                 "expires_at": pairing.expires_at.isoformat(),
                 "request": pairing.request and {"name": pairing.request.name, "ip": pairing.request.ip},
@@ -343,7 +353,7 @@ class NetworkService:
             raise NetworkAccessOff
 
         self.pairing = Pairing(
-            token=secrets.token_urlsafe(24),
+            token="".join(secrets.choice(TOKEN_ALPHABET) for _ in range(TOKEN_LENGTH)),
             code=f"{secrets.randbelow(10_000):04d}",
             expires_at=utc_now() + PAIRING_TTL,
         )

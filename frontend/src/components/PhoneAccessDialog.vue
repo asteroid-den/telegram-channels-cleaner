@@ -37,6 +37,12 @@ const countdown = computed(() => {
   const s = secondsLeft.value
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 })
+/** The pairing link as it is typed on the phone: no scheme, the one-time part stands out. */
+const typed = computed(() => {
+  const url = pairing.value?.url.replace(/^http:\/\//, '')
+  const at = url ? url.lastIndexOf('/') + 1 : 0
+  return url ? { base: url.slice(0, at), token: url.slice(at) } : null
+})
 const host = computed(() => state.value?.url?.replace(/^http:\/\//, '') ?? '')
 
 /** What stands in the way: the app's own setup, or the last try to listen in the network. */
@@ -217,8 +223,14 @@ function onKey(e: KeyboardEvent) {
           class="flex flex-col items-center justify-center gap-3 border-t border-border bg-surface-2 p-6 md:border-t-0 md:border-l"
         >
           <template v-if="state?.enabled">
-            <QrCode :value="pairing?.url ?? null" :size="196" plain />
-            <span class="font-mono text-xs text-muted">{{ host }}/pair/…</span>
+            <QrCode :value="pairing?.qr ?? null" :size="196" plain />
+            <!-- When the camera won't open it, or the page it goes through doesn't load: typed by hand -->
+            <span v-if="typed" class="font-mono text-[13px] font-medium select-all">
+              {{ typed.base }}<b class="font-bold text-accent">{{ typed.token }}</b>
+            </span>
+            <span class="-mt-1.5 max-w-[230px] text-center text-xs leading-snug text-faint">{{
+              t('phone.typeIt')
+            }}</span>
             <span class="text-xs text-faint">{{ t('phone.expiresIn', { time: countdown }) }}</span>
           </template>
           <p v-else class="max-w-[200px] text-center text-[13px] text-faint">

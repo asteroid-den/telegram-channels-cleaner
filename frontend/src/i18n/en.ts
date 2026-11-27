@@ -101,6 +101,7 @@ export default {
     publicNetwork:
       'An open or public network (a café, a hotel)? Better not: there other devices see the app too, though they can’t get in.',
     qrOff: 'Turn on access from the network to get a QR code',
+    typeIt: "Didn't open? Type this address in the phone's browser",
     expiresIn: 'One-time link · {time} left',
     showDevices: 'Connected devices: {n}',
     requestTitle: 'Connect {name}?',
@@ -224,7 +225,7 @@ export default {
     was: 'Was',
     loupePosition: '#{n} of {total}',
     loupeClick: 'click to go back here',
-    loupeTap: 'tap a chat to go back to it; long-press the bar elsewhere to look there',
+    loupeTap: 'slide to look through, tap a chat to go back to it',
     loupeWheel: 'scroll to browse',
     appliedMark: 'applied',
     pulseTitle: 'Activity · 26 weeks',

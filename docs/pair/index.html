@@ -1,0 +1,77 @@
+<!doctype html>
+<!--
+  The pairing QR of Telegram Channels Cleaner points here: phone cameras open a scanned link only when it has a
+  domain, and the app on the computer has a bare IP. This page sends the phone on to the address after `#`, which
+  browsers never send to a server, so GitHub sees neither the address nor the one-time token.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Channels Cleaner</title>
+    <link rel="icon" href="../media/logo.svg" type="image/svg+xml" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        box-sizing: border-box;
+        font: 15px/1.5 system-ui, sans-serif;
+        text-align: center;
+        background: #0b0c0f;
+        color: #e8e9ee;
+      }
+      @media (prefers-color-scheme: light) {
+        body {
+          background: #f6f6f8;
+          color: #15161a;
+        }
+      }
+      main {
+        max-width: 360px;
+      }
+      img {
+        width: 52px;
+        height: 52px;
+      }
+      p {
+        opacity: 0.7;
+      }
+      a {
+        color: #ff8a4c;
+        word-break: break-all;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="../media/logo.svg" alt="" />
+      <h1 id="title" style="font-size: 20px">Opening the app on your computer…</h1>
+      <p id="text"></p>
+    </main>
+    <script>
+      // "#192.168.1.23:8765/k3m9x2qa" → the app's own pairing link. Nothing else is followed: this is no open redirect.
+      const match = /^#(\d{1,3}(?:\.\d{1,3}){3}):(\d{1,5})\/([A-Za-z0-9_-]{4,64})$/.exec(location.hash)
+      const ru = navigator.language.toLowerCase().startsWith('ru')
+      if (match) {
+        const target = `http://${match[1]}:${match[2]}/pair/${match[3]}`
+        const link = `<a href="${target}">${target}</a>`
+        document.getElementById('text').innerHTML = ru
+          ? `Если ничего не происходит, откройте ${link}. Телефон должен быть в той же Wi‑Fi сети, что и компьютер.`
+          : `If nothing happens, open ${link}. The phone must be on the same Wi‑Fi as the computer.`
+        if (ru) document.getElementById('title').textContent = 'Открываем приложение на компьютере…'
+        location.replace(target)
+      } else {
+        document.getElementById('title').textContent = ru ? 'Ссылка неполная' : 'This link is incomplete'
+        document.getElementById('text').textContent = ru
+          ? 'Отсканируйте QR-код в окне «Открыть на телефоне» на компьютере ещё раз.'
+          : 'Scan the QR code in the "Open on your phone" window on the computer again.'
+      }
+    </script>
+  </body>
+</html>
