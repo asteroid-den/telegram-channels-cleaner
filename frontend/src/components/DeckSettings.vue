@@ -37,7 +37,8 @@ function reset() {
 </script>
 
 <template>
-  <div class="relative shrink-0">
+  <!-- On a phone it gives way first: "Channels · I run it · All" is wider than the room the header has -->
+  <div class="relative shrink-0 max-md:min-w-0 max-md:shrink">
     <!-- While the menu is open a click anywhere else only closes it: this catches the pointer
          before the deck (swipe, side zones) can read it as a decision -->
     <div
@@ -48,22 +49,25 @@ function reset() {
     />
 
     <button
-      class="relative z-40 flex h-[30px] items-center gap-2 rounded-lg border border-border-2 px-3 text-[12.5px] transition-colors hover:bg-surface-2"
+      class="relative z-40 flex h-[30px] max-w-full items-center gap-2 rounded-lg border border-border-2 px-3 text-[12.5px] transition-colors hover:bg-surface-2"
       :class="open ? 'bg-surface-3' : ''"
       :aria-label="t('settings.title')"
       :aria-expanded="open"
       aria-haspopup="true"
       @click="open = !open"
     >
-      <span class="font-semibold">{{ t(`settings.kind.${deck.kind}`) }}</span>
-      <span class="text-faint">·</span>
-      <template v-if="deck.role === 'managed'">
-        <span>{{ t('settings.role.managed') }}</span>
-        <span class="text-faint">·</span>
-      </template>
-      <span>{{ t(`settings.archiveShort.${deck.prefs.archive}`) }}</span>
-      <span class="text-faint max-md:hidden">·</span>
-      <span class="max-md:hidden">{{ t(`settings.sort.${deck.prefs.sort}`) }}</span>
+      <!-- one line of text, so a phone can cut it short with an ellipsis; there the default "All" goes unsaid -->
+      <span class="min-w-0 truncate"
+        ><b class="font-semibold">{{ t(`settings.kind.${deck.kind}`) }}</b
+        ><span v-if="deck.role === 'managed'"
+          ><span class="mx-1.5 text-faint">·</span>{{ t('settings.role.managed') }}</span
+        ><span :class="deck.prefs.archive === 'all' ? 'max-md:hidden' : ''"
+          ><span class="mx-1.5 text-faint">·</span
+          >{{ t(`settings.archiveShort.${deck.prefs.archive}`) }}</span
+        ><span class="max-md:hidden"
+          ><span class="mx-1.5 text-faint">·</span>{{ t(`settings.sort.${deck.prefs.sort}`) }}</span
+        ></span
+      >
       <AppIcon
         v-if="deck.prefs.reverse"
         name="arrows"
@@ -73,7 +77,7 @@ function reset() {
       <AppIcon
         name="chevron"
         :size="12"
-        class="text-faint transition-transform"
+        class="shrink-0 text-faint transition-transform"
         :class="open ? 'rotate-180' : ''"
       />
       <span
