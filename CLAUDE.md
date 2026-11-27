@@ -148,8 +148,9 @@ Safety (2026-11-20, after an audit run from the mercury session):
   the app's own link): the address and token ride after `#`, never sent to GitHub, and the page follows only
   `http://<IPv4>:<port>/pair/<token>`, or the app itself without a token (`open_qr`: the device list's QR,
   which opens the app on a phone paired already). The token is 8 typeable characters, shown in cells under the
-  QR: an unpaired phone on the app's address gets "This phone isn't connected" with **Enter the code** (a field in
-  the page: a bottom sheet ended up behind the keyboard in Firefox), which claims it like the link would.
+  QR: an unpaired phone on the app's address gets "This phone isn't connected" with the code's field right on the
+  page (no button, not focused on its own; a bottom sheet ended up behind the keyboard in Firefox); the eighth
+  character claims it like the link would, Enter again.
   Pairing: the computer shows a QR link (2 min, one claim) + 4-digit code; the
   phone that claims it gets its cookie at once, valid only after the user approves it *on the computer* with the
   same code on both screens (a second claim: 409 `pairing_taken`). The enabled flag is an app-wide setting
@@ -213,7 +214,8 @@ Key behaviours / decisions (agreed with the user):
   their own deck: `role=member|managed` next to `kind`/`archive` on every deck query; the settings menu's
   "Who you are there" block picks it. On an owned chat ← opens the successor picker (hand over and leave,
   leave without an owner, delete); `--allow-owner-leave` is gone (still parsed, ignored). Admins may leave, the
-  review screen warns about lost rights. What Telegram does when a creator leaves is untested. Archive included (flagged). One sync pass covers both
+  review screen warns about lost rights. Telegram lets a creator leave without a handover (checked on a real
+  account, 2026-11-26). Archive included (flagged). One sync pass covers both
   kinds (a per-kind sync would mark the other kind `gone`); the deck, trail, stats and export take
   `?kind=`, review/apply are shared across kinds (`counts.pending_other` drives the dot on the
   header switcher). Lists synced before supergroups/roles existed are re-synced once (`synced_scope` setting, bump `SCOPE_VERSION` whenever a sync learns to cover more).
@@ -263,7 +265,9 @@ header in one row (logo mark, deck settings with kind + filter, a search button 
 the pending count, avatar; language and theme move into the account menu), a small undo button at the end of the
 progress row (DeckProgress's `end` slot; a pop-up "Undo" toast was rejected: noisy when deciding dozens in a row), the card with 24 px margins and at most 500 px tall, the next one peeking out below it (no side fan), round 52 px buttons with short labels
 (`actions.*Short`) instead of the keycaps, no side zones; deck settings and the summary open as bottom
-sheets (`.sheet-narrow` in style.css); the loupe opens on a long press of the progress bar (a tap there does nothing)
+sheets (`.sheet-narrow` in style.css); nothing with a text field is fixed to the bottom (Firefox on Android puts the
+keyboard over the page and leaves fixed, blurred parts unpainted once it goes): the review's footer is part of the page
+there (`max-md:static`, `mt-auto`); the loupe opens on a long press of the progress bar (a tap there does nothing)
 and stays until a tap elsewhere or on an avatar.
 
 The user rejected the retro "press" look; wants modern digital but not generic SaaS.
@@ -287,7 +291,6 @@ The user rejected the retro "press" look; wants modern digital but not generic S
 
 - Flood waits on big accounts: the cooldown and the paused prefetch handle them; lower PREFETCH_AHEAD if they
   still come often.
-- What Telegram does when a creator leaves their own chat without a handover is untested.
 - `deck.counts` runs ~14 small COUNT queries on each decision: fine at a few thousand chats.
 - Base images in the Dockerfile are pinned by tag + digest and CI's Python to 3.12.16: no Dependabot, bump by
   hand (`docker buildx imagetools inspect <image>:<tag>`).
