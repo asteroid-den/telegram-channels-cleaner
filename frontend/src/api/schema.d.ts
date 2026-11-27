@@ -1596,6 +1596,8 @@ export interface components {
             enabled: boolean;
             /** Url */
             url: string | null;
+            /** Open Qr */
+            open_qr: string | null;
             /** Error */
             error: string | null;
             pairing: components["schemas"]["Pairing"] | null;

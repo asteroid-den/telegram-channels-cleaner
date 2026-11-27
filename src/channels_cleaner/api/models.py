@@ -408,6 +408,9 @@ class NetworkResponse(OkResponse):
     enabled: bool
     #: where the phones open the app, while it lets them in
     url: str | None
+    #: what the device list's QR says, to open the app on a phone already paired: that address through the pairing
+    #: page, or the address itself
+    open_qr: str | None
     #: why the last try to listen in the network failed: no_network, address_in_use or what the system said
     error: str | None
     pairing: Pairing | None

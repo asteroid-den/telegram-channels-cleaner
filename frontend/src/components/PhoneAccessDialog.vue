@@ -37,12 +37,12 @@ const countdown = computed(() => {
   const s = secondsLeft.value
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 })
-/** The pairing link as it is typed on the phone: no scheme, the one-time part stands out. */
-const typed = computed(() => {
-  const url = pairing.value?.url.replace(/^http:\/\//, '')
-  const at = url ? url.lastIndexOf('/') + 1 : 0
-  return url ? { base: url.slice(0, at), token: url.slice(at) } : null
-})
+/** The pairing link's one-time part: typed in on the phone when its camera won't open the QR. */
+const token = computed(() => pairing.value?.url.split('/').pop() ?? null)
+/** Opens the app on a phone paired already: shown by the device list while access is on. */
+const openQr = computed(() =>
+  state.value?.enabled && state.value.devices.length ? state.value.open_qr : null,
+)
 const host = computed(() => state.value?.url?.replace(/^http:\/\//, '') ?? '')
 
 /** What stands in the way: the app's own setup, or the last try to listen in the network. */
@@ -224,13 +224,23 @@ function onKey(e: KeyboardEvent) {
         >
           <template v-if="state?.enabled">
             <QrCode :value="pairing?.qr ?? null" :size="196" plain />
-            <!-- When the camera won't open it, or the page it goes through doesn't load: typed by hand -->
-            <span v-if="typed" class="font-mono text-[13px] font-medium select-all">
-              {{ typed.base }}<b class="font-bold text-accent">{{ typed.token }}</b>
+            <!-- When the camera won't open it, or the page it goes through doesn't load: the phone opens the app's
+                 address and types this in on the pairing screen -->
+            <span v-if="token" class="flex gap-1" :aria-label="token">
+              <b
+                v-for="(c, i) in token"
+                :key="i"
+                class="flex h-[30px] w-[22px] items-center justify-center rounded-md border border-border-2 bg-surface font-mono text-[15px] font-bold"
+                >{{ c }}</b
+              >
             </span>
-            <span class="-mt-1.5 max-w-[230px] text-center text-xs leading-snug text-faint">{{
-              t('phone.typeIt')
-            }}</span>
+            <span class="-mt-1 max-w-[230px] text-center text-xs leading-snug text-faint">
+              <i18n-t keypath="phone.typeCode" tag="span">
+                <template #host>
+                  <span class="font-mono text-muted">{{ host }}</span>
+                </template>
+              </i18n-t>
+            </span>
             <span class="text-xs text-faint">{{ t('phone.expiresIn', { time: countdown }) }}</span>
           </template>
           <p v-else class="max-w-[200px] text-center text-[13px] text-faint">
@@ -246,89 +256,100 @@ function onKey(e: KeyboardEvent) {
         </div>
       </div>
 
-      <!-- Paired devices -->
+      <!-- Paired devices; with access on, a QR on the right opens the app on one of them -->
       <div
         v-else-if="ready"
         role="dialog"
         aria-modal="true"
         :aria-label="t('phone.devices')"
-        class="w-full max-w-[560px] rounded-2xl border border-border-2 bg-surface px-6 py-6 shadow-card"
+        class="grid w-full overflow-hidden rounded-2xl border border-border-2 bg-surface shadow-card"
+        :class="openQr ? 'max-w-[820px] md:grid-cols-[1fr_260px]' : 'max-w-[560px]'"
       >
-        <h2 class="font-display text-xl font-semibold">
-          <template v-if="justPaired">
-            <span class="text-success">✓</span> {{ t('phone.paired', { name: justPaired }) }}
-          </template>
-          <template v-else>{{ t('phone.title') }}</template>
-        </h2>
-        <p class="mt-1.5 mb-4 text-[13.5px] text-muted">{{ t('phone.shared') }}</p>
+        <div class="px-6 py-6">
+          <h2 class="font-display text-xl font-semibold">
+            <template v-if="justPaired">
+              <span class="text-success">✓</span> {{ t('phone.paired', { name: justPaired }) }}
+            </template>
+            <template v-else>{{ t('phone.title') }}</template>
+          </h2>
+          <p class="mt-1.5 mb-4 text-[13.5px] text-muted">{{ t('phone.shared') }}</p>
 
-        <div class="flex items-center gap-3 rounded-xl border border-border-2 px-3.5 py-3">
-          <span class="flex-1 text-[13.5px]">
-            {{ t('phone.toggle') }}
-            <small class="mt-0.5 block font-mono text-xs text-faint">
-              {{ state?.enabled ? state.url : t('phone.toggleOffPaired') }}
-            </small>
-          </span>
-          <button
-            role="switch"
-            :aria-checked="!!state?.enabled"
-            :aria-label="t('phone.toggle')"
-            :disabled="!state?.available || busy"
-            class="switch"
-            @click="toggle"
-          />
-        </div>
-        <p v-if="problem" class="mt-3 text-[13px] text-danger">{{ problem }}</p>
-
-        <h3 class="mt-5 mb-1 text-[11px] font-semibold tracking-[0.07em] text-faint uppercase">
-          {{ t('phone.devices') }}
-        </h3>
-        <p v-if="!state?.devices.length" class="py-3 text-[13px] text-faint">
-          {{ t('phone.noDevices') }}
-        </p>
-        <div
-          v-for="device in state?.devices ?? []"
-          :key="device.id"
-          class="flex items-center gap-3 border-t border-border py-3 text-[13.5px] first-of-type:border-t-0"
-        >
-          <AppIcon name="smartphone" :size="22" class="shrink-0 text-muted" />
-          <span class="min-w-0 flex-1">
-            <input
-              v-if="editing === device.id"
-              ref="nameInput"
-              v-model="draft"
-              maxlength="64"
-              class="w-full rounded-md border border-border-2 bg-bg px-2 py-0.5 outline-none focus:border-accent"
-              @keydown.enter.prevent="saveRename"
-              @keydown.esc.prevent.stop="editing = null"
-              @blur="saveRename"
-            />
+          <div class="flex items-center gap-3 rounded-xl border border-border-2 px-3.5 py-3">
+            <span class="flex-1 text-[13.5px]">
+              {{ t('phone.toggle') }}
+              <small class="mt-0.5 block font-mono text-xs text-faint">
+                {{ state?.enabled ? state.url : t('phone.toggleOffPaired') }}
+              </small>
+            </span>
             <button
-              v-else
-              class="block max-w-full truncate text-left hover:underline"
-              :title="t('phone.rename')"
-              @click="startRename(device)"
-            >
-              {{ device.name }}
-            </button>
-            <small class="block text-xs text-faint">
-              {{ relativeTime(device.last_seen_at, locale, now.getTime()) }}
-              <template v-if="device.last_ip"> · {{ device.last_ip }}</template>
-            </small>
-          </span>
-          <button
-            class="shrink-0 rounded-lg border border-danger/35 px-2.5 py-1 text-[12.5px] text-danger hover:bg-danger-soft"
-            @click="act(() => network.forget(device.id))"
-          >
-            {{ t('phone.disconnect') }}
-          </button>
-        </div>
+              role="switch"
+              :aria-checked="!!state?.enabled"
+              :aria-label="t('phone.toggle')"
+              :disabled="!state?.available || busy"
+              class="switch"
+              @click="toggle"
+            />
+          </div>
+          <p v-if="problem" class="mt-3 text-[13px] text-danger">{{ problem }}</p>
 
-        <div class="mt-4 flex justify-end gap-2">
-          <button class="btn" :disabled="!state?.enabled" @click="pairAnother">
-            {{ state?.devices.length ? t('phone.pairAnother') : t('phone.pairFirst') }}
-          </button>
-          <button class="btn primary" @click="close">{{ t('common.done') }}</button>
+          <h3 class="mt-5 mb-1 text-[11px] font-semibold tracking-[0.07em] text-faint uppercase">
+            {{ t('phone.devices') }}
+          </h3>
+          <p v-if="!state?.devices.length" class="py-3 text-[13px] text-faint">
+            {{ t('phone.noDevices') }}
+          </p>
+          <div
+            v-for="device in state?.devices ?? []"
+            :key="device.id"
+            class="flex items-center gap-3 border-t border-border py-3 text-[13.5px] first-of-type:border-t-0"
+          >
+            <AppIcon name="smartphone" :size="22" class="shrink-0 text-muted" />
+            <span class="min-w-0 flex-1">
+              <input
+                v-if="editing === device.id"
+                ref="nameInput"
+                v-model="draft"
+                maxlength="64"
+                class="w-full rounded-md border border-border-2 bg-bg px-2 py-0.5 outline-none focus:border-accent"
+                @keydown.enter.prevent="saveRename"
+                @keydown.esc.prevent.stop="editing = null"
+                @blur="saveRename"
+              />
+              <button
+                v-else
+                class="block max-w-full truncate text-left hover:underline"
+                :title="t('phone.rename')"
+                @click="startRename(device)"
+              >
+                {{ device.name }}
+              </button>
+              <small class="block text-xs text-faint">
+                {{ relativeTime(device.last_seen_at, locale, now.getTime()) }}
+                <template v-if="device.last_ip"> · {{ device.last_ip }}</template>
+              </small>
+            </span>
+            <button
+              class="shrink-0 rounded-lg border border-danger/35 px-2.5 py-1 text-[12.5px] text-danger hover:bg-danger-soft"
+              @click="act(() => network.forget(device.id))"
+            >
+              {{ t('phone.disconnect') }}
+            </button>
+          </div>
+
+          <div class="mt-4 flex justify-end gap-2">
+            <button class="btn" :disabled="!state?.enabled" @click="pairAnother">
+              {{ state?.devices.length ? t('phone.pairAnother') : t('phone.pairFirst') }}
+            </button>
+            <button class="btn primary" @click="close">{{ t('common.done') }}</button>
+          </div>
+        </div>
+        <div
+          v-if="openQr"
+          class="flex flex-col items-center justify-center gap-3 border-t border-border bg-surface-2 p-6 text-center md:border-t-0 md:border-l"
+        >
+          <QrCode :value="openQr" :size="160" plain />
+          <span class="font-mono text-[13px] font-medium select-all">{{ host }}</span>
+          <span class="max-w-[200px] text-xs leading-snug text-faint">{{ t('phone.openQr') }}</span>
         </div>
       </div>
     </Transition>

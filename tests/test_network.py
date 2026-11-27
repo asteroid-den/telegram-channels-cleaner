@@ -126,6 +126,9 @@ async def test_a_phone_is_let_in_only_after_the_yes_on_the_computer(setup: Setup
     assert len(token) == 8
     # Cameras open links with a domain only: the QR goes through the pairing page, the address stays after `#`
     assert pairing["qr"] == f"{setup.ctx.settings.pairing_page}#{setup.address}/{token}"
+    # A phone paired already opens the app through the same page, the address alone after `#`
+    state = await get_json(setup.computer, "/api/network")
+    assert state["open_qr"] == f"{setup.ctx.settings.pairing_page}#{setup.address}"
     assert len(pairing["code"]) == 4
 
     async with setup.phone() as phone:
@@ -308,3 +311,4 @@ async def test_without_a_pairing_page_the_qr_holds_the_link_itself(
     pairing = (await setup.computer.post("/api/network/pairing")).json()["pairing"]
 
     assert pairing["qr"] == pairing["url"]
+    assert (await get_json(setup.computer, "/api/network"))["open_qr"] == f"http://{setup.address}"
