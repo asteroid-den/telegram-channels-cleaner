@@ -20,9 +20,10 @@ export function hotkeyName(e: KeyInfo): string {
 /**
  * Global hotkeys. Keys are `KeyboardEvent.key` values (letters by physical position),
  * optionally prefixed with `mod+` (Ctrl on Linux/Windows, Cmd on macOS).
- * Ignored while typing in form fields.
+ * Ignored while typing in form fields. A held key acts once, unless its name is in `repeat`: a decision a second
+ * from a key left down is a deck sorted by accident.
  */
-export function useHotkeys(map: HotkeyMap) {
+export function useHotkeys(map: HotkeyMap, opts: { repeat?: string[] } = {}) {
   function onKey(e: KeyboardEvent) {
     // A dialog already acted on it (Enter in the picker): by now the dialog may be gone, Vue having updated
     // the page between the two listeners, so `data-hotkeys-off` below can't be relied on for this
@@ -43,9 +44,11 @@ export function useHotkeys(map: HotkeyMap) {
       return
     // An open menu or dialog owns the keyboard.
     if (document.querySelector('[data-hotkeys-off]')) return
-    const handler = map[hotkeyName(e)]
+    const name = hotkeyName(e)
+    const handler = map[name]
     if (!handler) return
     e.preventDefault()
+    if (e.repeat && !opts.repeat?.includes(name)) return
     handler(e)
   }
   onMounted(() => window.addEventListener('keydown', onKey))

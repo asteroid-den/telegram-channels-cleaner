@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { mount } from '@vue/test-utils'
+import { describe, expect, it, vi } from 'vitest'
+import { defineComponent } from 'vue'
 
-import { hotkeyName } from './useHotkeys'
+import { hotkeyName, useHotkeys } from './useHotkeys'
 
 const press = (key: string, code: string, mod = false) => ({
   key,
@@ -24,5 +26,29 @@ describe('hotkeyName', () => {
 
   it('lowercases latin letters', () => {
     expect(hotkeyName(press('M', 'KeyM'))).toBe('m')
+  })
+})
+
+describe('useHotkeys', () => {
+  it('acts once for a held key, unless the key may repeat', () => {
+    const decide = vi.fn()
+    const step = vi.fn()
+    const wrapper = mount(
+      defineComponent({
+        setup() {
+          useHotkeys({ ArrowRight: decide, 'mod+ArrowLeft': step }, { repeat: ['mod+ArrowLeft'] })
+          return () => null
+        },
+      }),
+    )
+    const hold = (init: KeyboardEventInit) => {
+      window.dispatchEvent(new KeyboardEvent('keydown', init))
+      window.dispatchEvent(new KeyboardEvent('keydown', { ...init, repeat: true }))
+    }
+    hold({ key: 'ArrowRight', code: 'ArrowRight' })
+    hold({ key: 'ArrowLeft', code: 'ArrowLeft', ctrlKey: true })
+    expect(decide).toHaveBeenCalledTimes(1)
+    expect(step).toHaveBeenCalledTimes(2)
+    wrapper.unmount()
   })
 })
