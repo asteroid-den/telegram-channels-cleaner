@@ -1,20 +1,29 @@
 from __future__ import annotations
 
+import asyncio
 import socket
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
+from types import SimpleNamespace
+from typing import TYPE_CHECKING, Any, cast
 
 import httpx
 import pytest
 from fastapi import FastAPI
 
+from channels_cleaner.api import sse
 from channels_cleaner.config import Settings
 from channels_cleaner.context import AppContext
 from channels_cleaner.database import utc_now
 from channels_cleaner.services import DEVICE_SCOPE, LAN_SCOPE, network
 from channels_cleaner.services.network import device_name, mark_lan
 from tests.conftest import check_error_is_declared, get_json
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
+    from fastapi import Request
 
 IPHONE = (
     "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) "
@@ -240,6 +249,67 @@ async def test_a_disconnected_device_is_out_at_once(setup: Setup) -> None:
         assert not setup.ctx.network.allows(streaming)
         r = await setup.computer.delete(f"/api/network/devices/{device['id']}")
         assert (r.status_code, r.json()["type"]) == (404, "device_not_found")
+
+
+def phone_stream(setup: Setup, device_id: int) -> AsyncGenerator[Any]:
+    """An event stream opened by a paired phone, as sse_response sees it."""
+
+    async def is_disconnected() -> bool:
+        return False
+
+    request = SimpleNamespace(
+        app=setup.app,
+        scope={LAN_SCOPE: setup.address, DEVICE_SCOPE: device_id},
+        is_disconnected=is_disconnected,
+    )
+    response = sse.sse_response(cast("Request", request), setup.ctx.bus, "topic", dict)
+    return cast("AsyncGenerator[Any]", response.body_iterator)
+
+
+async def test_a_disconnected_phone_hears_it_at_once(setup: Setup) -> None:
+    await turn_on(setup.computer)
+
+    async with setup.phone() as phone:
+        await pair(setup, phone)
+
+    device = (await get_json(setup.computer, "/api/network"))["devices"][0]
+    body = phone_stream(setup, device["id"])
+
+    try:
+        await anext(body)  # the snapshot
+        await setup.computer.delete(f"/api/network/devices/{device['id']}")
+
+        # Not the silence it would notice after seconds: an event that sends it to the pairing screen, then the end
+        async with asyncio.timeout(1):
+            assert await anext(body) == "event: revoked\ndata: {}\n\n"
+
+            with pytest.raises(StopAsyncIteration):
+                await anext(body)
+
+    finally:
+        await body.aclose()
+
+
+async def test_turning_access_off_ends_streams_without_revoking(setup: Setup) -> None:
+    await turn_on(setup.computer)
+
+    async with setup.phone() as phone:
+        await pair(setup, phone)
+
+    device = (await get_json(setup.computer, "/api/network"))["devices"][0]
+    body = phone_stream(setup, device["id"])
+
+    try:
+        await anext(body)
+        await setup.computer.put("/api/network", json={"enabled": False})
+
+        # Still paired: the phone shows the computer as unreachable, not the pairing screen
+        async with asyncio.timeout(2):
+            with pytest.raises(StopAsyncIteration):
+                await anext(body)
+
+    finally:
+        await body.aclose()
 
 
 async def test_the_network_listener_checks_host_and_origin(setup: Setup) -> None:

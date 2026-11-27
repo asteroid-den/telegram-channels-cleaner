@@ -23,7 +23,7 @@ def request() -> Request:
         return False
 
     # No app context: nothing here may open the database, whose threads would outlive the test's loop
-    network = SimpleNamespace(allows=lambda _: True, kicked=asyncio.Event())
+    network = SimpleNamespace(allows=lambda _: True, revoked=lambda _: False, kicked=asyncio.Event())
     app = SimpleNamespace(state=SimpleNamespace(ctx=SimpleNamespace(network=network)))
     return cast("Request", SimpleNamespace(app=app, scope={}, is_disconnected=is_disconnected))
 
