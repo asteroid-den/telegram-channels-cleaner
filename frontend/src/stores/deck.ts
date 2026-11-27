@@ -324,11 +324,22 @@ export const useDeckStore = defineStore('deck', () => {
     }
   }
 
+  /**
+   * Takes the last decision back. The card comes back at once, as a decision leaves at once: waiting for the
+   * server first was a pause you could see on a phone. A refusal puts everything where it was.
+   */
   async function undo() {
     const entry = history.value.pop()
     if (!entry) return
+    const before = snapshot()
+    const cursorBefore = cursor.value
     // A changed decision goes back to what it was, and the card comes back on top.
     if (entry.previous !== undefined && entry.index !== undefined) {
+      const index = entry.index
+      const changed = trail.value[index]
+      trail.value[index] = { ...entry.channel, decision: entry.previous }
+      cursor.value = index
+      returning.value = entry
       try {
         // A transfer goes back to the same successor
         const successor = entry.previous === 'transfer' ? entry.channel.successor_id : null
@@ -338,32 +349,38 @@ export const useDeckStore = defineStore('deck', () => {
         })
         counts.value = res.counts
       } catch (err) {
+        if (changed) trail.value[index] = changed
+        cursor.value = cursorBefore
+        counts.value = before
         history.value.push(entry)
         report(err)
-        return
       }
-      trail.value[entry.index] = { ...entry.channel, decision: entry.previous }
-      cursor.value = entry.index
-      returning.value = entry
       return
     }
-    try {
-      const res = await api.del<{ counts: DeckCounts }>(`/api/decisions/${entry.channel.id}`)
-      counts.value = res.counts
-    } catch (err) {
-      history.value.push(entry)
-      report(err)
-      return
-    }
-    if (entry.decision === 'skip') {
-      const idx = queue.value.findIndex((c) => c.id === entry.channel.id)
-      if (idx >= 0) queue.value.splice(idx, 1)
-    } else {
-      trail.value = trail.value.filter((c) => c.id !== entry.channel.id)
-    }
+    const id = entry.channel.id
+    const skippedAt = entry.decision === 'skip' ? queue.value.findIndex((c) => c.id === id) : -1
+    const trailAt = entry.decision === 'skip' ? -1 : trail.value.findIndex((c) => c.id === id)
+    // What a refusal puts back: the very items, decision and all
+    const skipped = queue.value[skippedAt]
+    const decided = trail.value[trailAt]
+    if (skippedAt >= 0) queue.value.splice(skippedAt, 1)
+    if (trailAt >= 0) trail.value = trail.value.filter((c) => c.id !== id)
     cursor.value = null
     queue.value.unshift({ ...entry.channel, decision: null })
     returning.value = entry
+    try {
+      const res = await api.del<{ counts: DeckCounts }>(`/api/decisions/${id}`)
+      counts.value = res.counts
+    } catch (err) {
+      const back = queue.value.findIndex((c) => c.id === id)
+      if (back >= 0) queue.value.splice(back, 1)
+      if (skipped) queue.value.splice(skippedAt, 0, skipped)
+      if (decided) trail.value.splice(trailAt, 0, decided)
+      cursor.value = cursorBefore
+      counts.value = before
+      history.value.push(entry)
+      report(err)
+    }
   }
 
   /** One card back (Ctrl+←): the previous decision comes back on top. */

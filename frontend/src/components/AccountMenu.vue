@@ -89,7 +89,7 @@ async function logout(wipe: boolean) {
 <template>
   <div ref="root" class="relative">
     <button
-      class="flex h-[30px] items-center gap-2 rounded-lg border border-border-2 pr-2 pl-1 text-[12.5px] text-muted hover:text-text"
+      class="flex h-[30px] shrink-0 items-center gap-2 rounded-lg border border-border-2 pr-2 pl-1 text-[12.5px] text-muted hover:text-text max-md:px-1"
       :aria-label="t('account.menu')"
       :aria-expanded="open"
       @click="open = !open"
