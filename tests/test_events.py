@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
 
@@ -10,58 +11,61 @@ from channels_cleaner.api import sse
 from channels_cleaner.events import CLOSED, EventBus
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncGenerator, AsyncIterator
 
     from fastapi import Request
 
-    from channels_cleaner.context import AppContext
 
-
-def request_for(ctx: AppContext) -> Request:
-    """What sse_response reads of a request: the app's context, the scope, whether the client went away."""
+def request() -> Request:
+    """What sse_response reads of a request: the network service, the scope, whether the client went away."""
 
     async def is_disconnected() -> bool:
         return False
 
-    fake = SimpleNamespace(
-        app=SimpleNamespace(state=SimpleNamespace(ctx=ctx)), scope={}, is_disconnected=is_disconnected
-    )
-    return cast("Request", fake)
+    # No app context: nothing here may open the database, whose threads would outlive the test's loop
+    network = SimpleNamespace(allows=lambda _: True, kicked=asyncio.Event())
+    app = SimpleNamespace(state=SimpleNamespace(ctx=SimpleNamespace(network=network)))
+    return cast("Request", SimpleNamespace(app=app, scope={}, is_disconnected=is_disconnected))
 
 
-def stream(ctx: AppContext, bus: EventBus) -> AsyncIterator[Any]:
-    response = sse.sse_response(request_for(ctx), bus, "topic", lambda: {"x": 1})
-    return cast("AsyncIterator[Any]", response.body_iterator)
+@contextlib.asynccontextmanager
+async def stream(bus: EventBus) -> AsyncIterator[AsyncGenerator[Any]]:
+    body = cast("AsyncGenerator[Any]", sse.sse_response(request(), bus, "topic", lambda: {"x": 1}).body_iterator)
+
+    try:
+        yield body
+
+    finally:
+        await body.aclose()
 
 
-async def test_quiet_streams_ping_with_an_event_the_page_can_see(
-    ctx: AppContext, monkeypatch: pytest.MonkeyPatch
-) -> None:
+async def test_quiet_streams_ping_with_an_event_the_page_can_see(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sse, "PING_INTERVAL", 0.01)
-    body = stream(ctx, EventBus())
 
-    assert (await anext(body)).startswith("event: snapshot")
-    # A comment line would never reach the page's EventSource
-    assert await anext(body) == "event: ping\ndata: {}\n\n"
+    async with stream(EventBus()) as body:
+        assert (await anext(body)).startswith("event: snapshot")
+        # A comment line would never reach the page's EventSource
+        assert await anext(body) == "event: ping\ndata: {}\n\n"
 
 
-async def test_closing_the_bus_ends_every_open_stream(ctx: AppContext) -> None:
+async def test_closing_the_bus_ends_every_open_stream() -> None:
     bus = EventBus()
-    body = stream(ctx, bus)
-    await anext(body)
 
-    bus.close()
+    async with stream(bus) as body:
+        await anext(body)
 
-    async with asyncio.timeout(1):
-        with pytest.raises(StopAsyncIteration):
-            await anext(body)
+        bus.close()
+
+        async with asyncio.timeout(1):
+            with pytest.raises(StopAsyncIteration):
+                await anext(body)
 
     # One opened while the app stops gets its snapshot and ends there
-    late = stream(ctx, bus)
-    await anext(late)
-
-    with pytest.raises(StopAsyncIteration):
+    async with stream(bus) as late:
         await anext(late)
+
+        with pytest.raises(StopAsyncIteration):
+            await anext(late)
 
 
 def test_close_reaches_every_subscriber() -> None:
