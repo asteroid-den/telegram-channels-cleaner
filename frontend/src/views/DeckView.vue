@@ -394,8 +394,11 @@ const ZONES = [
 
       <div
         v-if="narrow"
-        class="relative z-10 flex justify-center gap-2.5 px-2 pt-4 pb-[calc(14px+env(safe-area-inset-bottom))] transition-opacity"
-        :class="connection.offline ? 'pointer-events-none opacity-35' : ''"
+        class="relative z-10 flex w-full justify-center px-2 pt-4 pb-[calc(14px+env(safe-area-inset-bottom))] transition-opacity"
+        :class="[
+          connection.offline ? 'pointer-events-none opacity-35' : '',
+          KEYS.length > 5 ? 'six' : 'gap-2.5',
+        ]"
       >
         <button
           v-for="k in KEYS"
@@ -484,11 +487,25 @@ const ZONES = [
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
+}
+/* Six of them (a chat you own) share the width: each label gets its whole column, the discs shrink to fit */
+.six {
+  gap: 4px;
+}
+.six .round {
+  width: auto;
+  max-width: 68px;
+  min-width: 0;
+  flex: 1 1 0;
+}
+.six .round > span:last-child {
+  font-size: 11px;
 }
 .round .disc {
   display: flex;
-  width: 52px;
-  height: 52px;
+  width: min(52px, 100%);
+  aspect-ratio: 1;
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
