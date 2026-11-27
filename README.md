@@ -9,7 +9,8 @@ ones you stopped reading years ago. Swipe left to leave, right to keep, or mute 
 Nothing changes in Telegram until you've reviewed the whole batch.
 
 It runs on your own computer: a small Python server (a [Kurigram](https://github.com/KurimuzonAkuma/pyrogram)
-userbot + FastAPI) and a web UI that opens in your browser. No hosted service, no accounts.
+userbot + FastAPI) and a web UI that opens in your browser. No hosted service, no accounts. Prefer the
+couch? Let your phone in over the home Wi-Fi and go through the deck there.
 
 ![Swiping through channels in mock mode](docs/media/demo.gif)
 
@@ -34,6 +35,8 @@ userbot + FastAPI) and a web UI that opens in your browser. No hosted service, n
   of what you left, with `t.me` links for the public ones.
 - **Several accounts**: add another Telegram account from the account menu and switch between
   them; each keeps its own chats, decisions and session.
+- **On your phone, too**: scan a QR code, confirm the same code on the computer, and the phone
+  gets the deck laid out for a small screen. The Telegram session never leaves the computer.
 - QR or phone login with two-step verification, English and Russian, dark and light themes.
 
 | Deck (light theme) | History loupe |
@@ -43,6 +46,8 @@ userbot + FastAPI) and a web UI that opens in your browser. No hosted service, n
 | ![Review screen grouping the queued actions](docs/media/review.png) | ![Actions being applied one by one](docs/media/apply.png) |
 | **A chat you own: who gets it** | **Ctrl+K: find a chat** |
 | ![Picking an admin to hand an owned channel to](docs/media/owner.png) | ![Searching the deck by name](docs/media/search.png) |
+| **Letting a phone in** | **The deck on a phone, and pairing** |
+| ![The "Open on your phone" window with its QR code](docs/media/phone-dialog.png) | ![The deck on a phone next to the pairing screen](docs/media/phone.png) |
 
 ## Quick start
 
@@ -99,6 +104,47 @@ npm --prefix frontend ci && npm --prefix frontend run build   # Node.js 22.18+
 uv run telegram-channels-cleaner
 ```
 
+## On your phone
+
+The app still runs on the computer; a phone on the same Wi-Fi becomes a second screen for it.
+
+1. In the account menu, choose **Open on your phone** and turn on **Let devices in from this
+   network**. The app starts answering at the computer's address in the network as well, for
+   instance `http://192.168.1.23:8765`, and the console prints it.
+2. Scan the QR code with the phone's camera. Or open that address on the phone, tap **Enter the
+   code from the computer** and type in the eight characters shown under the QR code.
+3. The phone shows a four-digit code, and so does the computer. If they match, press
+   **Connect** on the computer.
+
+That phone stays connected: next time open the address, scan the QR code in the list of connected
+devices, or put the app on the home screen. Cards
+and decisions are shared, so you can start on one screen and carry on on the other. The same
+window lists the connected devices, renames them and disconnects them, at once.
+
+On the phone the card fills the screen and the keys become buttons: leave, later, mute, archive,
+keep. Undo is the small button by the progress bar, the magnifier in the header finds a chat, and
+a long press on the progress bar opens the history loupe (slide through it, tap a chat to go back
+to it).
+
+Good to know:
+
+- **Use it at home, not on public Wi-Fi.** Other devices in a café or hotel network can see that
+  the app is there, even though they can't get in.
+- **The QR code goes through a small page on GitHub Pages**
+  ([`docs/pair`](docs/pair/index.html)), because phone cameras open a scanned link only when it has
+  a domain, not a bare IP. The page just sends the phone on to the computer's address, which sits
+  after the `#` in the link: browsers never send that part to the server, so GitHub sees neither
+  the address nor the one-time code. Without internet on the phone, open the address and enter
+  the code instead. `CC_PAIRING_PAGE=` (empty) puts the plain link in the QR code.
+- **If the computer gets another address** from the router, the phone has to be connected again.
+  Giving the computer a fixed address in the router's settings avoids it.
+- **Turning access off** closes the door at once; connected devices stay on the list and come back
+  in when it's turned on again.
+- **"Add to Home screen"** gives the app its own icon. Over plain http the phone opens it in the
+  browser rather than as a separate app.
+- **Not available in Docker** or with `--host` other than localhost: the app already listens
+  beyond the computer there, so the toggle is off. Keep those setups on `127.0.0.1`.
+
 ## Keyboard
 
 | Key | Action |
@@ -130,6 +176,11 @@ Letter keys work on any keyboard layout. On macOS, <kbd>Cmd</kbd> works in place
   Telegram directly and nowhere else. There is no telemetry.
 - **The UI has no password**, because it's meant for one person on their own computer. Don't
   expose it to a network (`--host 0.0.0.0`) you don't fully control.
+- **Phone access is off until you turn it on.** Then the app also answers on the computer's
+  network address, but only devices you connected get past the pairing screen: each holds a
+  random key in a cookie (only its hash is stored), and a new one gets in only after you confirm
+  its code on the computer. Pairing links and codes work once and for two minutes. Connected devices can't
+  turn access on or off or connect others; that is done on the computer only.
 - **Other websites can't use it.** Listening on `127.0.0.1` doesn't stop a page open in your
   browser from sending requests to it. The app answers only requests addressed to `localhost`
   (against DNS rebinding) and takes changes only from its own page (against cross-site
@@ -205,6 +256,7 @@ Everything is optional. Use environment variables or a `.env` file in the workin
 | | `CC_API_ID`, `CC_API_HASH` | Telegram Desktop | Your own Telegram API credentials |
 | | `CC_APPLY_DELAY_MIN`, `CC_APPLY_DELAY_MAX` | `1.5`, `3.0` | Pause between actions, seconds |
 | | `CC_FULL_INFO_TTL_HOURS` | `72` | How long channel details stay cached |
+| | `CC_PAIRING_PAGE` | GitHub Pages | The page the phone pairing QR goes through; empty = the plain link |
 | `-v` | | off | Debug logging |
 
 ## Development
@@ -234,7 +286,7 @@ cd frontend && npm run lint && npm run format:check && npm run test && npm run b
 ```
 src/channels_cleaner/
   telegram/    gateway protocol; Kurigram and mock implementations; device profiles
-  services/    auth state machine, sync, lazy channel info + activity, apply job, stats
+  services/    auth state machine, sync, lazy channel info + activity, apply job, stats, phone access
   api/         FastAPI routes: REST + Server-Sent Events
   database/    SQLAlchemy models, DAO (one class per model, combined in DAO), session manager
   migrations/  Alembic revisions, applied by the app itself on every start

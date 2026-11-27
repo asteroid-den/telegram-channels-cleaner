@@ -101,7 +101,8 @@ export default {
     publicNetwork:
       'An open or public network (a café, a hotel)? Better not: there other devices see the app too, though they can’t get in.',
     qrOff: 'Turn on access from the network to get a QR code',
-    typeIt: "Didn't open? Type this address in the phone's browser",
+    openQr: 'A phone connected already: point its camera here and the app opens',
+    typeCode: "The camera didn't open it? Open {host} on the phone and enter this code",
     expiresIn: 'One-time link · {time} left',
     showDevices: 'Connected devices: {n}',
     requestTitle: 'Connect {name}?',
@@ -137,8 +138,15 @@ export default {
     otherCode: 'Is the code on the computer different? It isn’t your computer: close this page.',
     deniedTitle: 'Not connected',
     deniedText: 'The computer turned it down, or the link ran out (2 minutes).',
-    again:
-      'On the computer, open the account menu → “Open on your phone” and point the camera at the new QR code.',
+    unpairedTitle: 'This phone isn’t connected',
+    unpairedText: 'To open Channels Cleaner here, connect the phone on the computer.',
+    unpairedHow:
+      'Account menu → “Open on your phone”: point the camera at the QR code, or enter the code shown under it.',
+    enterCode: 'Enter the code from the computer',
+    codeTitle: 'Code from the computer',
+    codeHint: '8 letters and digits under the QR code in the “Open on your phone” window.',
+    connect: 'Connect',
+    codeWrong: 'No such code, or it ran out. Check the window on the computer.',
     takenTitle: 'This link was already used',
     takenText: 'Another device opened it. If it wasn’t you, press “Not my phone” on the computer.',
     takenAgain: 'Then show a new QR code and point the camera at it again.',

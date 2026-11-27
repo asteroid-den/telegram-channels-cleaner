@@ -6770,6 +6770,17 @@
             ],
             "title": "Url"
           },
+          "open_qr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open Qr"
+          },
           "error": {
             "anyOf": [
               {
@@ -6805,6 +6816,7 @@
           "unavailable_reason",
           "enabled",
           "url",
+          "open_qr",
           "error",
           "pairing",
           "devices"

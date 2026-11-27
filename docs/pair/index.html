@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  The pairing QR of Telegram Channels Cleaner points here: phone cameras open a scanned link only when it has a
+  The QR codes of Telegram Channels Cleaner (pairing a phone, opening the app on one) point here: phone cameras open a scanned link only when it has a
   domain, and the app on the computer has a bare IP. This page sends the phone on to the address after `#`, which
   browsers never send to a server, so GitHub sees neither the address nor the one-time token.
 -->
@@ -55,11 +55,12 @@
       <p id="text"></p>
     </main>
     <script>
-      // "#192.168.1.23:8765/k3m9x2qa" → the app's own pairing link. Nothing else is followed: this is no open redirect.
-      const match = /^#(\d{1,3}(?:\.\d{1,3}){3}):(\d{1,5})\/([A-Za-z0-9_-]{4,64})$/.exec(location.hash)
+      // "#192.168.1.23:8765/k3m9x2qa" → the app's own pairing link; "#192.168.1.23:8765" → the app itself, for a phone
+      // paired already. Nothing else is followed: this is no open redirect.
+      const match = /^#(\d{1,3}(?:\.\d{1,3}){3}):(\d{1,5})(?:\/([A-Za-z0-9_-]{4,64}))?$/.exec(location.hash)
       const ru = navigator.language.toLowerCase().startsWith('ru')
       if (match) {
-        const target = `http://${match[1]}:${match[2]}/pair/${match[3]}`
+        const target = `http://${match[1]}:${match[2]}/${match[3] ? `pair/${match[3]}` : ''}`
         const link = `<a href="${target}">${target}</a>`
         document.getElementById('text').innerHTML = ru
           ? `Если ничего не происходит, откройте ${link}. Телефон должен быть в той же Wi‑Fi сети, что и компьютер.`

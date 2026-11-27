@@ -201,6 +201,19 @@ class NetworkService:
     def url(self) -> str | None:
         return f"http://{self.address}" if self.address else None
 
+    def qr_link(self, token: str | None = None) -> str | None:
+        """What a QR code says. Phone cameras open a link only when it has a domain, so it goes through the pairing
+        page, with the address (and the pairing token) after `#`. Without a token: the app, for a paired phone."""
+        if not self.address:
+            return None
+
+        path = f"/{token}" if token else ""
+
+        if self.settings.pairing_page:
+            return f"{self.settings.pairing_page}#{self.address}{path}"
+
+        return f"{self.url}/pair/{token}" if token else self.url
+
     def snapshot(self) -> dict[str, Any]:
         pairing = self.pairing if self.pairing and not self.pairing.expired else None
         return {
@@ -208,15 +221,12 @@ class NetworkService:
             "unavailable_reason": self.unavailable,
             "enabled": self.enabled,
             "url": self.url,
+            "open_qr": self.qr_link(),
             "error": self.error,
             "pairing": pairing
             and {
                 "url": f"{self.url}/pair/{pairing.token}",
-                "qr": (
-                    f"{self.settings.pairing_page}#{self.address}/{pairing.token}"
-                    if self.settings.pairing_page
-                    else f"{self.url}/pair/{pairing.token}"
-                ),
+                "qr": self.qr_link(pairing.token),
                 "code": pairing.code,
                 "expires_at": pairing.expires_at.isoformat(),
                 "request": pairing.request and {"name": pairing.request.name, "ip": pairing.request.ip},

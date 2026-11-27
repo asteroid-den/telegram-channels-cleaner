@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useIntervalFn } from '@vueuse/core'
-import { onMounted, ref } from 'vue'
+import { nextTick, onMounted, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -16,6 +16,7 @@ const router = useRouter()
 type View =
   | { kind: 'loading' }
   | { kind: 'waiting'; code: string; computer: string }
+  | { kind: 'unpaired' }
   | { kind: 'denied' }
   | { kind: 'taken' }
 const view = ref<View>({ kind: 'loading' })
@@ -31,11 +32,14 @@ async function status(): Promise<PairingState | null> {
   }
 }
 
-function show(state: PairingState | null) {
+/** `turnedDown`: a link was tried and failed (else the phone just opened the app unpaired). */
+function show(state: PairingState | null, turnedDown = true) {
   // A full load: the app starts over with the cookie that now counts
   if (state?.status === 'paired') location.replace('/')
-  else if (state?.code) view.value = { kind: 'waiting', code: state.code, computer: state.computer }
-  else view.value = { kind: 'denied' }
+  else if (state?.code) {
+    view.value = { kind: 'waiting', code: state.code, computer: state.computer }
+    poll.resume()
+  } else view.value = { kind: turnedDown ? 'denied' : 'unpaired' }
 }
 
 async function claim(token: string) {
@@ -69,14 +73,47 @@ onMounted(async () => {
   try {
     // Already waiting or paired (a reload): the link is spent, don't claim it again
     const current = await status()
-    if (current || !token) show(current)
+    if (current || !token) show(current, !!current)
     else await claim(token)
   } catch {
     offline.value = true
-    view.value = { kind: 'denied' }
+    view.value = { kind: 'unpaired' }
   }
-  if (view.value.kind === 'waiting') poll.resume()
 })
+
+// The phone is on the app's address already: the code under the QR stands in for the camera
+const entering = ref(false)
+const entered = ref('')
+const wrong = ref<string | null>(null)
+const sending = ref(false)
+const codeInput = useTemplateRef<HTMLInputElement>('codeInput')
+const typedToken = () => entered.value.replace(/\s/g, '').toLowerCase()
+
+async function openCode() {
+  entering.value = true
+  entered.value = ''
+  wrong.value = null
+  await nextTick()
+  codeInput.value?.focus()
+}
+
+async function sendCode() {
+  if (typedToken().length !== 8 || sending.value) return
+  sending.value = true
+  wrong.value = null
+  try {
+    show(await api.post<PairingState>('/api/pairing/claim', { token: typedToken() }))
+    entering.value = false
+    offline.value = false
+  } catch (err) {
+    if (err instanceof ApiError && err.type === 'pairing_taken') {
+      entering.value = false
+      view.value = { kind: 'taken' }
+    } else wrong.value = err instanceof ApiError ? t('pair.codeWrong') : t('pair.offline')
+  } finally {
+    sending.value = false
+  }
+}
 </script>
 
 <template>
@@ -117,12 +154,78 @@ onMounted(async () => {
     </template>
 
     <template v-else>
-      <h1 class="mt-5 font-display text-[22px] font-semibold">{{ t('pair.deniedTitle') }}</h1>
-      <p class="mt-2 text-sm leading-relaxed text-muted">{{ t('pair.deniedText') }}</p>
-      <p class="mt-5 text-sm leading-relaxed text-muted">{{ t('pair.again') }}</p>
+      <h1 class="mt-5 font-display text-[22px] font-semibold">
+        {{ view.kind === 'denied' ? t('pair.deniedTitle') : t('pair.unpairedTitle') }}
+      </h1>
+      <p class="mt-2 text-sm leading-relaxed text-muted">
+        {{ view.kind === 'denied' ? t('pair.deniedText') : t('pair.unpairedText') }}
+      </p>
+      <p class="mt-5 text-sm leading-relaxed text-muted">{{ t('pair.unpairedHow') }}</p>
     </template>
 
+    <button
+      v-if="view.kind !== 'loading' && view.kind !== 'waiting'"
+      class="mt-7 w-full rounded-xl bg-text py-3.5 text-[15px] font-semibold text-bg"
+      @click="openCode"
+    >
+      {{ t('pair.enterCode') }}
+    </button>
+
     <p v-if="offline" class="mt-6 text-[13px] text-warn">{{ t('pair.offline') }}</p>
+
+    <Transition
+      enter-from-class="opacity-0"
+      enter-active-class="transition duration-200"
+      leave-to-class="opacity-0"
+      leave-active-class="transition duration-150"
+    >
+      <div v-if="entering" class="fixed inset-0 z-50 bg-black/55" @click="entering = false" />
+    </Transition>
+    <Transition
+      enter-from-class="translate-y-full"
+      enter-active-class="transition duration-250 ease-out"
+      leave-to-class="translate-y-full"
+      leave-active-class="transition duration-200 ease-in"
+    >
+      <form
+        v-if="entering"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="t('pair.codeTitle')"
+        class="fixed inset-x-0 bottom-0 z-50 rounded-t-[20px] border-t border-border-2 bg-surface px-[22px] pt-2.5 pb-7 text-left"
+        @submit.prevent="sendCode"
+        @keydown.esc="entering = false"
+      >
+        <div class="mx-auto mb-4 h-1 w-10 rounded-full bg-border-2" />
+        <h2 class="font-display text-[19px] font-semibold">{{ t('pair.codeTitle') }}</h2>
+        <p class="mt-1.5 mb-4 text-[13.5px] leading-normal text-muted">{{ t('pair.codeHint') }}</p>
+        <!-- its border shows focus and errors: the global focus ring would be a second frame -->
+        <input
+          ref="codeInput"
+          v-model="entered"
+          maxlength="9"
+          autocomplete="one-time-code"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
+          enterkeyhint="go"
+          :aria-label="t('pair.codeTitle')"
+          :aria-invalid="!!wrong"
+          class="w-full rounded-xl border-[1.5px] bg-bg px-3.5 py-3 font-mono text-[22px] font-semibold tracking-[0.12em]"
+          style="outline: none"
+          :class="wrong ? 'border-danger' : 'border-border-2 focus:border-accent'"
+          @input="wrong = null"
+        />
+        <p v-if="wrong" class="mt-2 text-[13px] text-danger">{{ wrong }}</p>
+        <button
+          type="submit"
+          class="mt-4 w-full rounded-xl bg-text py-3.5 text-[15px] font-semibold text-bg transition-opacity disabled:opacity-45"
+          :disabled="typedToken().length !== 8 || sending"
+        >
+          {{ t('pair.connect') }}
+        </button>
+      </form>
+    </Transition>
   </div>
 </template>
 
