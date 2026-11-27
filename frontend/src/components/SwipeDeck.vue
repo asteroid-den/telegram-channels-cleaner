@@ -14,7 +14,8 @@ const props = withDefaults(
   { pickOnLeft: false },
 )
 const emit = defineEmits<{
-  decide: [decision: Decision]
+  /** The card that flew away, by id: by the time it is gone, the list may have moved under it. */
+  decide: [decision: Decision, channelId: number]
   /** A card starts flying away (button, key, zone or drag); `from` is where it was. */
   flinging: [decision: Decision, from: DOMRect]
   /** Left on a chat the user owns: what leaving means there is chosen first (hand over, leave, delete). */
@@ -35,7 +36,8 @@ const entering = ref(false)
 let start = { x: 0, y: 0, t: 0 }
 let pointerId: number | null = null
 
-const busy = computed(() => flying.value !== null || entering.value)
+// A key pressed mid-drag would send the card away under the finger, and the next card would carry on the gesture
+const busy = computed(() => flying.value !== null || entering.value || dragging.value)
 
 // All cards in the stack share the stage height, so the fan behind never resizes from one
 // channel to the next. The front card is remembered for the "+1" chip's starting point.
@@ -266,6 +268,7 @@ function fling(decision: Decision, picked = false): boolean {
     emit('pick')
     return false
   }
+  const channelId = visible.value[0]!.id
   const card = front?.querySelector('article')
   if (card) emit('flinging', decision, card.getBoundingClientRect())
   preview.value = null
@@ -275,7 +278,7 @@ function fling(decision: Decision, picked = false): boolean {
     flying.value = null
     dx.value = 0
     dy.value = 0
-    emit('decide', decision)
+    emit('decide', decision, channelId)
   }, FLY_MS)
   return true
 }

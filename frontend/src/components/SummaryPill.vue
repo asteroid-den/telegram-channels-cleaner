@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router'
 
 import type { Decision } from '@/api/types'
 import { useNarrow } from '@/composables/useNarrow'
+import { useConnectionStore } from '@/stores/connection'
 import { useDeckStore } from '@/stores/deck'
 import { relativeTime } from '@/utils/format'
 
@@ -13,6 +14,7 @@ import ChannelAvatar from './ChannelAvatar.vue'
 
 const { t, locale } = useI18n()
 const deck = useDeckStore()
+const connection = useConnectionStore()
 const router = useRouter()
 const narrow = useNarrow()
 
@@ -138,7 +140,7 @@ function review() {
           <span>{{ t('deck.historyTitle') }}</span>
           <button
             class="font-sans text-[12px] tracking-normal text-muted normal-case hover:text-text disabled:opacity-40"
-            :disabled="!deck.history.length"
+            :disabled="!deck.history.length || deck.moving || connection.offline"
             @click="deck.undo()"
           >
             <kbd>⌫</kbd> {{ t('actions.undo').toLowerCase() }}

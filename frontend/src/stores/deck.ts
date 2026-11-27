@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, toRaw, watch } from 'vue'
 
 import { api, ApiError, subscribe } from '@/api/client'
 import type {
@@ -104,6 +104,8 @@ export const useDeckStore = defineStore('deck', () => {
   const loading = ref(false)
   /** Set right after undo so the card can animate back in from where it left. */
   const returning = ref<HistoryEntry | null>(null)
+  /** A card is flying away or back on screen: an undo waits until it has landed. */
+  const moving = ref(false)
 
   /** "+1" chips on their way to the progress bar; the bar waits for them to land. */
   const chipsInFlight = ref(0)
@@ -140,11 +142,40 @@ export const useDeckStore = defineStore('deck', () => {
     ui.toast(i18n.global.t('login.errors.generic', { msg }))
   }
 
+  /** Set when the server turned a decision down because the queue is being applied (from another screen). */
+  const applyRunning = ref(false)
+
+  function onRefused(err: unknown) {
+    if (err instanceof ApiError && err.type === 'apply_job_running') applyRunning.value = true
+    report(err)
+  }
+
   /**
    * Bumped by `clear()` (another account took over): an answer to a request made before it is the last account's,
    * and must not land in the deck of the new one.
    */
   let generation = 0
+
+  /**
+   * Decisions and undos reach the server one at a time, in the order made: an undo can't overtake the decision it
+   * takes back, and the last answer of a burst counts every decision in it. Meanwhile the counts move locally.
+   */
+  let writes: Promise<unknown> = Promise.resolve()
+  let writing = 0
+
+  async function write(send: () => Promise<{ counts: DeckCounts }>) {
+    const asked = generation
+    writing += 1
+    const turn = writes.then(send)
+    writes = turn.catch(() => undefined)
+    try {
+      const res = await turn
+      // An earlier answer knows nothing of the decisions still queued behind it
+      if (writing === 1 && asked === generation) counts.value = res.counts
+    } finally {
+      writing -= 1
+    }
+  }
 
   async function loadPrefs() {
     const asked = generation
@@ -156,35 +187,35 @@ export const useDeckStore = defineStore('deck', () => {
     }
   }
 
+  /** Bumped by every `load()`: only the latest one's answer lands (a sort switched twice, a sync done meanwhile). */
+  let loads = 0
+
   async function load() {
     const asked = generation
+    const ticket = ++loads
     loading.value = true
     try {
       if (!loaded.value) await loadPrefs()
-      const requested = kind.value
-      const requestedRole = role.value
-      const requestedArchive = prefs.value.archive
+      // Decisions still on their way first: a list read before them would bring their cards back
+      await writes
       const params = new URLSearchParams({
-        kind: requested,
-        role: requestedRole,
-        archive: requestedArchive,
+        kind: kind.value,
+        role: role.value,
+        archive: prefs.value.archive,
         sort: prefs.value.sort,
         reverse: String(prefs.value.reverse),
       })
+      const trailParams = new URLSearchParams({
+        kind: kind.value,
+        role: role.value,
+        archive: prefs.value.archive,
+      })
       const [data, decided] = await Promise.all([
         api.get<ChannelsResponse>(`/api/channels?${params}`),
-        api.get<{ items: Channel[] }>(
-          `/api/decisions/trail?kind=${requested}&role=${requestedRole}&archive=${requestedArchive}`,
-        ),
+        api.get<{ items: Channel[] }>(`/api/decisions/trail?${trailParams}`),
       ])
-      // the user switched again while this was loading (the deck, or the account)
-      if (
-        asked !== generation ||
-        requested !== kind.value ||
-        requestedRole !== role.value ||
-        requestedArchive !== prefs.value.archive
-      )
-        return
+      // the user switched again while this was loading (the deck, its order, or the account)
+      if (asked !== generation || ticket !== loads) return
       queue.value = data.items
       trail.value = decided.items
       cursor.value = null
@@ -192,9 +223,9 @@ export const useDeckStore = defineStore('deck', () => {
       sync.value = data.sync
       loaded.value = true
     } catch (err) {
-      report(err)
+      if (ticket === loads) report(err)
     } finally {
-      loading.value = false
+      if (ticket === loads) loading.value = false
     }
   }
 
@@ -253,8 +284,20 @@ export const useDeckStore = defineStore('deck', () => {
   }
   const toggleReverse = () => savePrefs({ ...prefs.value, reverse: !prefs.value.reverse })
 
-  function snapshot(): DeckCounts {
-    return { ...counts.value, by_decision: { ...counts.value.by_decision } }
+  /** Moves the counts by a decision made (1) or taken back (-1), as the server will once it hears of it. */
+  function tally(decision: Decision, sign: 1 | -1) {
+    if (decision === 'skip') return
+    const c = counts.value
+    c.undecided -= sign
+    c.by_decision[decision] += sign
+    if (ACTIONS.includes(decision)) c.pending += sign
+  }
+
+  /** The progress bar's letters, from the trail as it is now. */
+  function retrace() {
+    counts.value.trail = trail.value
+      .map((c) => (c.decision && c.decision !== 'skip' ? TRAIL_CODE[c.decision] : ''))
+      .join('')
   }
 
   function advance() {
@@ -262,65 +305,76 @@ export const useDeckStore = defineStore('deck', () => {
     cursor.value = cursor.value + 1 < trail.value.length ? cursor.value + 1 : null
   }
 
-  async function decide(decision: Decision, extra: DecisionExtra = {}) {
+  /**
+   * `channelId`: the card the swipe started on. By the time it has flown away the deck may have moved (a sync's
+   * reload, an undo from the summary), and the decision must still go to that card, not to whichever is on top.
+   */
+  async function decide(decision: Decision, extra: DecisionExtra = {}, channelId?: number) {
     returning.value = null
-    if (cursor.value !== null) return revise(cursor.value, decision, extra)
-    const channel = queue.value.shift()
-    if (!channel) return
+    const id = channelId ?? current.value?.id
+    if (id === undefined) return
+    const decidedAt = trail.value.findIndex((c) => c.id === id)
+    if (decidedAt >= 0) {
+      // Rewound to it; it moved on in the trail meanwhile only if the deck was reloaded under the swipe
+      if (cursor.value === null) return
+      return revise(decidedAt, decision, extra, decidedAt === cursor.value)
+    }
+    const at = queue.value.findIndex((c) => c.id === id)
+    if (at < 0) return // gone from the deck while it flew
+    const [channel] = queue.value.splice(at, 1) as [Channel]
     if (decision === 'skip') queue.value.push(channel)
     else trail.value.push({ ...channel, decision, successor_id: extra.successor_id ?? null })
-    history.value.push({ channel, decision })
-    const before = snapshot()
-    if (decision !== 'skip') {
-      counts.value.undecided -= 1
-      counts.value.by_decision[decision] += 1
-      counts.value.trail += TRAIL_CODE[decision]
-      if (ACTIONS.includes(decision)) counts.value.pending += 1
-      stamps.value.push(Date.now())
-    }
+    const entry: HistoryEntry = { channel, decision }
+    history.value.push(entry)
+    tally(decision, 1)
+    retrace()
+    if (decision !== 'skip') stamps.value.push(Date.now())
     try {
-      const res = await api.put<{ counts: DeckCounts }>(`/api/decisions/${channel.id}`, {
-        decision,
-        ...extra,
-      })
-      counts.value = res.counts
+      await write(() => api.put(`/api/decisions/${id}`, { decision, ...extra }))
     } catch (err) {
-      history.value.pop()
-      if (decision === 'skip') queue.value.pop()
-      else trail.value.pop()
+      // Taken out by what it is, not by position: later decisions may have come after it meanwhile
+      history.value = history.value.filter((h) => toRaw(h) !== entry)
+      queue.value = queue.value.filter((c) => c.id !== id)
+      trail.value = trail.value.filter((c) => c.id !== id)
       queue.value.unshift(channel)
-      counts.value = before
-      report(err)
+      tally(decision, -1)
+      retrace()
+      onRefused(err)
     }
   }
 
-  /** Change a decision made earlier, in place, and move on to the next one. */
-  async function revise(index: number, decision: Decision, extra: DecisionExtra = {}) {
+  /** Change a decision made earlier, in place; `moveOn`: to the next one, as for the card on top. */
+  async function revise(
+    index: number,
+    decision: Decision,
+    extra: DecisionExtra = {},
+    moveOn = true,
+  ) {
     const channel = trail.value[index]
     if (!channel) return
     const previous = channel.decision ?? 'keep'
     // While rewinding, "later" means "leave this one as it is".
-    if (decision === 'skip' || decision === previous) return advance()
-    const before = snapshot()
+    if (decision === 'skip' || decision === previous) return moveOn ? advance() : undefined
     trail.value[index] = { ...channel, decision, successor_id: extra.successor_id ?? null }
-    counts.value.trail =
-      counts.value.trail.slice(0, index) +
-      TRAIL_CODE[decision] +
-      counts.value.trail.slice(index + 1)
-    history.value.push({ channel, decision, previous, index })
-    advance()
+    tally(previous, -1)
+    tally(decision, 1)
+    retrace()
+    const entry: HistoryEntry = { channel, decision, previous, index }
+    history.value.push(entry)
+    if (moveOn) advance()
     try {
-      const res = await api.put<{ counts: DeckCounts }>(`/api/decisions/${channel.id}`, {
-        decision,
-        ...extra,
-      })
-      counts.value = res.counts
+      await write(() => api.put(`/api/decisions/${channel.id}`, { decision, ...extra }))
     } catch (err) {
-      history.value.pop()
-      trail.value[index] = channel
-      cursor.value = index
-      counts.value = before
-      report(err)
+      history.value = history.value.filter((h) => toRaw(h) !== entry)
+      const at = trail.value.findIndex((c) => c.id === channel.id)
+      if (at >= 0) {
+        trail.value[at] = channel
+        if (moveOn) cursor.value = at
+      }
+      tally(decision, -1)
+      tally(previous, 1)
+      retrace()
+      onRefused(err)
     }
   }
 
@@ -329,35 +383,46 @@ export const useDeckStore = defineStore('deck', () => {
    * server first was a pause you could see on a phone. A refusal puts everything where it was.
    */
   async function undo() {
+    // A card on its way out: its decision isn't in the history yet, and an undo now would take the one before
+    if (moving.value) return
     const entry = history.value.pop()
     if (!entry) return
-    const before = snapshot()
+    const id = entry.channel.id
     const cursorBefore = cursor.value
-    // A changed decision goes back to what it was, and the card comes back on top.
-    if (entry.previous !== undefined && entry.index !== undefined) {
-      const index = entry.index
+    // A changed decision goes back to what it was, and the card comes back on top. Found by id: a reload since
+    // may have changed the trail's order
+    if (entry.previous !== undefined) {
+      const previous = entry.previous
+      const index = trail.value.findIndex((c) => c.id === id)
       const changed = trail.value[index]
-      trail.value[index] = { ...entry.channel, decision: entry.previous }
+      if (!changed) return
+      trail.value[index] = { ...entry.channel, decision: previous }
+      tally(entry.decision, -1)
+      tally(previous, 1)
+      retrace()
       cursor.value = index
       returning.value = entry
       try {
         // A transfer goes back to the same successor
-        const successor = entry.previous === 'transfer' ? entry.channel.successor_id : null
-        const res = await api.put<{ counts: DeckCounts }>(`/api/decisions/${entry.channel.id}`, {
-          decision: entry.previous,
-          ...(successor ? { successor_id: successor } : {}),
-        })
-        counts.value = res.counts
+        const successor = previous === 'transfer' ? entry.channel.successor_id : null
+        await write(() =>
+          api.put(`/api/decisions/${id}`, {
+            decision: previous,
+            ...(successor ? { successor_id: successor } : {}),
+          }),
+        )
       } catch (err) {
-        if (changed) trail.value[index] = changed
+        const at = trail.value.findIndex((c) => c.id === id)
+        if (at >= 0) trail.value[at] = changed
+        tally(previous, -1)
+        tally(entry.decision, 1)
+        retrace()
         cursor.value = cursorBefore
-        counts.value = before
         history.value.push(entry)
-        report(err)
+        onRefused(err)
       }
       return
     }
-    const id = entry.channel.id
     const skippedAt = entry.decision === 'skip' ? queue.value.findIndex((c) => c.id === id) : -1
     const trailAt = entry.decision === 'skip' ? -1 : trail.value.findIndex((c) => c.id === id)
     // What a refusal puts back: the very items, decision and all
@@ -367,19 +432,21 @@ export const useDeckStore = defineStore('deck', () => {
     if (trailAt >= 0) trail.value = trail.value.filter((c) => c.id !== id)
     cursor.value = null
     queue.value.unshift({ ...entry.channel, decision: null })
+    tally(entry.decision, -1)
+    retrace()
     returning.value = entry
     try {
-      const res = await api.del<{ counts: DeckCounts }>(`/api/decisions/${id}`)
-      counts.value = res.counts
+      await write(() => api.del(`/api/decisions/${id}`))
     } catch (err) {
       const back = queue.value.findIndex((c) => c.id === id)
       if (back >= 0) queue.value.splice(back, 1)
       if (skipped) queue.value.splice(skippedAt, 0, skipped)
       if (decided) trail.value.splice(trailAt, 0, decided)
+      tally(entry.decision, 1)
+      retrace()
       cursor.value = cursorBefore
-      counts.value = before
       history.value.push(entry)
-      report(err)
+      onRefused(err)
     }
   }
 
@@ -570,6 +637,8 @@ export const useDeckStore = defineStore('deck', () => {
     loaded,
     loading,
     returning,
+    moving,
+    applyRunning,
     chipsInFlight,
     landed,
     current,

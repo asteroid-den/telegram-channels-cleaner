@@ -31,10 +31,25 @@ useChannelColor(computed(() => deck.current))
 
 onMounted(async () => {
   deck.watchSync()
-  await deck.load()
+  deck.applyRunning = false
+  // The apply store hears its events only on the apply screen: ask once whether a job is running (a reload during
+  // it, another tab, a phone), or every swipe here would be turned down
+  await Promise.all([deck.load(), apply.refresh()])
   if (apply.running) void router.push('/apply')
 })
 onBeforeUnmount(() => deck.unwatchSync())
+
+// Started from another screen meanwhile: the server turns decisions down until it's done
+watch(
+  () => deck.applyRunning,
+  (running) => running && void router.push('/apply'),
+)
+
+// An undo from the summary waits for a card in flight too
+watch(
+  () => !!swiper.value?.busy,
+  (busy) => (deck.moving = busy),
+)
 
 const pressed = ref<string | null>(null)
 
@@ -51,7 +66,7 @@ function act(decision: Decision) {
 }
 
 async function undo() {
-  if (swiper.value?.busy) return
+  if (swiper.value?.busy || connection.offline) return
   flash('undo')
   await deck.undo()
 }
@@ -91,30 +106,33 @@ function picked(decision: Decision, with_: DecisionExtra = {}) {
   if (!swiper.value?.fling(decision, true)) extra = {}
 }
 const pickedAdmin = (admin: ChatAdmin) => picked('transfer', { successor_id: admin.id })
-function onDecide(decision: Decision) {
+function onDecide(decision: Decision, channelId: number) {
   const carried = extra
   extra = {}
-  void deck.decide(decision, carried)
+  void deck.decide(decision, carried, channelId)
 }
 
-useHotkeys({
-  ArrowLeft: () => act('unsubscribe'),
-  ArrowRight: () => act('keep'),
-  ArrowDown: () => act('skip'),
-  m: () => act('mute'),
-  a: () => act('archive'),
-  l: () => canFreeLink.value && act('free_link'),
-  // the chat itself, in the Telegram app
-  o: () => deck.current && window.location.assign(deck.current.telegram_url),
-  // Find a card by name and put it on top; Ctrl+K is what the browser would use for its own search otherwise
-  'mod+k': () => (searching.value = !swiper.value?.busy),
-  'mod+z': () => void undo(),
-  Backspace: () => void undo(),
-  Enter: review,
-  // Ctrl+←/→ walk through the deck one card at a time, back into decisions already made.
-  'mod+ArrowLeft': () => !swiper.value?.busy && deck.stepBack(),
-  'mod+ArrowRight': () => !swiper.value?.busy && deck.stepForward(),
-})
+useHotkeys(
+  {
+    ArrowLeft: () => act('unsubscribe'),
+    ArrowRight: () => act('keep'),
+    ArrowDown: () => act('skip'),
+    m: () => act('mute'),
+    a: () => act('archive'),
+    l: () => canFreeLink.value && act('free_link'),
+    // the chat itself, in the Telegram app
+    o: () => deck.current && window.location.assign(deck.current.telegram_url),
+    // Find a card by name and put it on top; Ctrl+K is what the browser would use for its own search otherwise
+    'mod+k': () => (searching.value = !swiper.value?.busy),
+    'mod+z': () => void undo(),
+    Backspace: () => void undo(),
+    Enter: review,
+    // Ctrl+←/→ walk through the deck one card at a time, back into decisions already made.
+    'mod+ArrowLeft': () => !swiper.value?.busy && deck.stepBack(),
+    'mod+ArrowRight': () => !swiper.value?.busy && deck.stepForward(),
+  },
+  { repeat: ['mod+ArrowLeft', 'mod+ArrowRight'] },
+)
 
 // The "+1" chip flies from the leaving card into the progress bar
 const CHIP_CLASS: Record<Exclude<Decision, 'skip'>, string> = {

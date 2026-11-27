@@ -72,6 +72,15 @@ export const useApplyStore = defineStore('apply', () => {
     })
   }
 
+  /** The state once, without the event stream (which only the apply screen keeps open). */
+  async function refresh() {
+    try {
+      state.value = await api.get<ApplyState>('/api/apply/state')
+    } catch {
+      /* the deck's own requests say what's wrong */
+    }
+  }
+
   function disconnect() {
     stop?.()
     stop = null
@@ -94,5 +103,5 @@ export const useApplyStore = defineStore('apply', () => {
     await api.post('/api/apply/cancel')
   }
 
-  return { state, cancelling, running, progress, connect, disconnect, start, cancel }
+  return { state, cancelling, running, progress, connect, refresh, disconnect, start, cancel }
 })
