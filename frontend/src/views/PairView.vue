@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useIntervalFn } from '@vueuse/core'
-import { nextTick, onMounted, ref, useTemplateRef } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -82,20 +82,10 @@ onMounted(async () => {
 })
 
 // The phone is on the app's address already: the code under the QR stands in for the camera
-const entering = ref(false)
 const entered = ref('')
 const wrong = ref<string | null>(null)
 const sending = ref(false)
-const codeInput = useTemplateRef<HTMLInputElement>('codeInput')
 const typedToken = () => entered.value.replace(/\s/g, '').toLowerCase()
-
-async function openCode() {
-  entering.value = true
-  entered.value = ''
-  wrong.value = null
-  await nextTick()
-  codeInput.value?.focus()
-}
 
 /** The code is always eight characters: the eighth sends it, no reaching for the button under the keyboard. */
 function onCodeInput() {
@@ -109,13 +99,10 @@ async function sendCode() {
   wrong.value = null
   try {
     show(await api.post<PairingState>('/api/pairing/claim', { token: typedToken() }))
-    entering.value = false
     offline.value = false
   } catch (err) {
-    if (err instanceof ApiError && err.type === 'pairing_taken') {
-      entering.value = false
-      view.value = { kind: 'taken' }
-    } else wrong.value = err instanceof ApiError ? t('pair.codeWrong') : t('pair.offline')
+    if (err instanceof ApiError && err.type === 'pairing_taken') view.value = { kind: 'taken' }
+    else wrong.value = err instanceof ApiError ? t('pair.codeWrong') : t('pair.offline')
   } finally {
     sending.value = false
   }
@@ -166,24 +153,15 @@ async function sendCode() {
       <p class="mt-2 text-sm leading-relaxed text-muted">
         {{ view.kind === 'denied' ? t('pair.deniedText') : t('pair.unpairedText') }}
       </p>
-      <p class="mt-5 text-sm leading-relaxed text-muted">{{ t('pair.unpairedHow') }}</p>
     </template>
 
     <template v-if="view.kind !== 'loading' && view.kind !== 'waiting'">
-      <!-- In the page itself, not a sheet at the bottom: a phone's keyboard comes up over the bottom of the screen
-           (Firefox doesn't shrink the page for it), and a fixed sheet ended up behind it, half painted -->
-      <form
-        v-if="entering"
-        class="mt-7 w-full text-left"
-        @submit.prevent="sendCode"
-        @keydown.esc="entering = false"
-      >
-        <label for="pair-code" class="text-[15px] font-semibold">{{ t('pair.codeTitle') }}</label>
-        <p class="mt-1 mb-2.5 text-[13px] leading-snug text-muted">{{ t('pair.codeHint') }}</p>
+      <!-- Right on the page, no button to open it: the eighth character sends the code (Enter sends it again), and
+           nothing is fixed to the bottom, where a phone's keyboard covers it (Firefox doesn't shrink the page for it).
+           Not focused on its own: the keyboard comes up only when the user goes for the field. -->
+      <form class="mt-7 w-full" @submit.prevent="sendCode">
         <!-- its border shows focus and errors: the global focus ring would be a second frame -->
         <input
-          id="pair-code"
-          ref="codeInput"
           v-model="entered"
           maxlength="9"
           autocomplete="one-time-code"
@@ -191,29 +169,17 @@ async function sendCode() {
           autocorrect="off"
           spellcheck="false"
           enterkeyhint="go"
+          :placeholder="t('pair.codePlaceholder')"
+          :aria-label="t('pair.codeTitle')"
           :aria-invalid="!!wrong"
-          class="w-full rounded-xl border-[1.5px] bg-bg px-3.5 py-3 font-mono text-[22px] font-semibold tracking-[0.12em]"
+          class="w-full rounded-xl border-[1.5px] bg-bg px-3.5 py-3 font-mono text-[22px] font-semibold tracking-[0.12em] placeholder:font-sans placeholder:text-[15px] placeholder:font-normal placeholder:tracking-normal placeholder:text-faint"
           style="outline: none"
           :class="wrong ? 'border-danger' : 'border-border-2 focus:border-accent'"
           @input="onCodeInput"
         />
-        <p v-if="wrong" class="mt-2 text-[13px] text-danger">{{ wrong }}</p>
-        <!-- No Connect button: the eighth character sends the code, Enter on the keyboard sends it again -->
-        <button
-          type="button"
-          class="mt-3 w-full rounded-xl border border-border-2 py-3.5 text-[15px] font-semibold"
-          @click="entering = false"
-        >
-          {{ t('common.cancel') }}
-        </button>
+        <p v-if="wrong" class="mt-2 text-left text-[13px] text-danger">{{ wrong }}</p>
+        <p class="mt-2.5 text-[13px] leading-normal text-muted">{{ t('pair.codeWhere') }}</p>
       </form>
-      <button
-        v-else
-        class="mt-7 w-full rounded-xl bg-text py-3.5 text-[15px] font-semibold text-bg"
-        @click="openCode"
-      >
-        {{ t('pair.enterCode') }}
-      </button>
     </template>
 
     <p v-if="offline" class="mt-6 text-[13px] text-warn">{{ t('pair.offline') }}</p>
