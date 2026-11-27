@@ -9,7 +9,6 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from channels_cleaner.app import create_app
 from channels_cleaner.config import Settings
 from channels_cleaner.context import AppContext
 from channels_cleaner.database import utc_now
@@ -266,20 +265,18 @@ async def test_paired_devices_and_the_toggle_outlive_a_restart(setup: Setup) -> 
         assert (await phone.get("/api/auth/state")).status_code == 200
 
 
-async def test_the_toggle_is_off_limits_when_the_app_already_listens_everywhere(tmp_path: Path) -> None:
-    settings = Settings(data_dir=tmp_path, mock=True, host="0.0.0.0", _env_file=None)  # noqa: S104  # pyright: ignore[reportCallIssue]
-    ctx = AppContext.create(settings)
-    app = create_app(settings, ctx)
+async def test_the_toggle_is_off_limits_when_the_app_already_listens_everywhere(
+    setup: Setup, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Started with --host 0.0.0.0 (or in Docker): the network service reads the setting each time it is asked
+    monkeypatch.setattr(setup.ctx.settings, "host", "0.0.0.0")  # noqa: S104 - not a bind
 
-    async with app.router.lifespan_context(app):
-        transport = httpx.ASGITransport(app=app)
-
-        async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as computer:
-            state = await get_json(computer, "/api/network")
-            r = await computer.put("/api/network", json={"enabled": True})
+    state = await get_json(setup.computer, "/api/network")
+    r = await setup.computer.put("/api/network", json={"enabled": True})
 
     assert (state["available"], state["unavailable_reason"]) == (False, "custom_host")
     assert (r.status_code, r.json()["type"], r.json()["reason"]) == (409, "network_unavailable", "custom_host")
+    assert not setup.ctx.network.enabled
 
 
 @pytest.mark.parametrize(

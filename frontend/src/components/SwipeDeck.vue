@@ -117,7 +117,8 @@ function depthStyle(depth: number) {
   return {
     transform: `translate(${x}px, ${y}px) rotate(${r}deg) scale(${s})`,
     transformOrigin: '50% 85%',
-    transition: 'transform 0.35s cubic-bezier(.2,.8,.2,1)',
+    // Under a finger they follow it frame by frame: a transition restarted on every move only stutters
+    transition: dragging.value ? 'none' : 'transform 0.35s cubic-bezier(.2,.8,.2,1)',
   }
 }
 
@@ -217,14 +218,30 @@ function onPointerCancel(e: PointerEvent) {
   dy.value = 0
 }
 
+let moveFrame = 0
+let lastMove: { x: number; y: number } | null = null
+
 function onPointerMove(e: PointerEvent) {
   if (!dragging.value || e.pointerId !== pointerId) return
-  dx.value = e.clientX - start.x
-  dy.value = Math.max(-40, e.clientY - start.y) // only "down" is meaningful vertically
+  // One update per frame: a mouse or a pen can report several moves in one
+  lastMove = { x: e.clientX, y: e.clientY }
+  moveFrame ||= requestAnimationFrame(applyMove)
+}
+
+function applyMove() {
+  moveFrame = 0
+  if (!dragging.value || !lastMove) return
+  dx.value = lastMove.x - start.x
+  dy.value = Math.max(-40, lastMove.y - start.y) // only "down" is meaningful vertically
 }
 
 function onPointerUp(e: PointerEvent) {
   if (!dragging.value || e.pointerId !== pointerId) return
+  // The last move counts even if its frame hasn't come yet
+  if (moveFrame) {
+    cancelAnimationFrame(moveFrame)
+    applyMove()
+  }
   dragging.value = false
   pointerId = null
   const elapsed = Math.max(1, performance.now() - start.t)
@@ -289,7 +306,7 @@ defineExpose({ fling, busy, preview })
       v-for="(channel, depth) in visible"
       :key="channel.id"
       :ref="(el) => depth === 0 && el && setFront(el as Element)"
-      class="absolute inset-0"
+      class="card-layer absolute inset-0"
       :style="{
         zIndex: 10 - depth,
         ...(depth === 0 ? {} : depthStyle(depth)),
@@ -299,7 +316,7 @@ defineExpose({ fling, busy, preview })
     >
       <div
         v-if="depth === 0"
-        class="h-full w-full touch-none select-none"
+        class="card-layer h-full w-full touch-none select-none"
         :class="dragging ? 'cursor-grabbing' : 'cursor-grab'"
         :style="topStyle"
         @pointerdown="onPointerDown"
@@ -311,7 +328,7 @@ defineExpose({ fling, busy, preview })
         <ChannelCard :channel="channel" />
         <div
           v-if="stamp"
-          class="pointer-events-none absolute z-10 flex items-center gap-2 rounded-lg border-2 bg-surface-2/90 px-3 py-1.5 font-mono text-lg font-bold tracking-wide uppercase backdrop-blur-sm"
+          class="pointer-events-none absolute z-10 flex items-center gap-2 rounded-lg border-2 bg-surface-2 px-3 py-1.5 font-mono text-lg font-bold tracking-wide uppercase"
           :class="[STAMPS[stamp.decision].cls, STAMPS[stamp.decision].pos]"
           :style="{ opacity: stamp.strength }"
         >
@@ -324,3 +341,11 @@ defineExpose({ fling, busy, preview })
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Each card is a layer of its own: moving it moves a picture already drawn, instead of repainting the screen (card,
+   its shadow and the glow behind it) on every frame of a drag. A blurred backdrop on the stamp did the same */
+.card-layer {
+  will-change: transform;
+}
+</style>

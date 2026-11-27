@@ -203,6 +203,14 @@ async function logout(wipe: boolean) {
         </button>
       </div>
     </Transition>
-    <PhoneAccessDialog v-if="phoneOpen" @close="phoneOpen = false" />
+    <!-- The backdrop fades in and out; the dialog animates its own panel -->
+    <Transition
+      enter-from-class="opacity-0"
+      enter-active-class="transition-opacity duration-150 ease-out"
+      leave-to-class="opacity-0"
+      leave-active-class="transition-opacity duration-150 ease-in"
+    >
+      <PhoneAccessDialog v-if="phoneOpen" @close="phoneOpen = false" />
+    </Transition>
   </div>
 </template>
