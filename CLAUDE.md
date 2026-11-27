@@ -143,7 +143,11 @@ Safety (2026-11-20, after an audit run from the mercury session):
   On the LAN listener the guard wants Host == that address and the `cc_device` cookie of a paired device (sha256 in
   `devices`, kept in memory, last visit written at most once a minute); strangers get only the SPA's GETs,
   `/api/health`, `GET /api/pairing`, `POST /api/pairing/claim` (else 401 `device_not_paired`). `/api/network/*` is
-  `computer_only` (403 from the LAN). Pairing: the computer shows a QR link (2 min, one claim) + 4-digit code; the
+  `computer_only` (403 from the LAN). Phone cameras open a scanned link only with a domain (a bare IP is just copied,
+  seen on a Nothing Phone 2), so the QR goes through `docs/pair/index.html` on GitHub Pages (`CC_PAIRING_PAGE`, empty =
+  the app's own link): the address and token ride after `#`, never sent to GitHub, and the page follows only
+  `http://<IPv4>:<port>/pair/<token>`. The token is 8 typeable characters, shown under the QR to type in by hand.
+  Pairing: the computer shows a QR link (2 min, one claim) + 4-digit code; the
   phone that claims it gets its cookie at once, valid only after the user approves it *on the computer* with the
   same code on both screens (a second claim: 409 `pairing_taken`). The enabled flag is an app-wide setting
   (`settings.account_id = 0`) and comes back on start. Disconnecting a device or turning access off kicks their

@@ -80,6 +80,10 @@ class Settings(BaseSettings):
     data_dir: Path = Field(default_factory=default_data_dir)
     host: str = "127.0.0.1"
     port: int = Field(default=8765, ge=1, le=65535)
+    # Phone cameras open a scanned link only when it has a domain, not a bare IP: the pairing QR points to this static
+    # page, which sends the phone on to the address after `#` (never sent to the page's server). Empty: the QR holds
+    # the app's own link.
+    pairing_page: str = "https://asteroid-den.github.io/telegram-channels-cleaner/pair/"
 
     mock: bool = False
     mock_channels: int = Field(default=120, ge=0)

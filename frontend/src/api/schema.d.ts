@@ -1692,6 +1692,8 @@ export interface components {
         Pairing: {
             /** Url */
             url: string;
+            /** Qr */
+            qr: string;
             /** Code */
             code: string;
             /**

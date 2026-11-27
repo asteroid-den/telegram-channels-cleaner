@@ -122,7 +122,10 @@ async def test_the_toggle_starts_and_stops_listening_in_the_network(setup: Setup
 async def test_a_phone_is_let_in_only_after_the_yes_on_the_computer(setup: Setup) -> None:
     await turn_on(setup.computer)
     pairing = (await setup.computer.post("/api/network/pairing")).json()["pairing"]
-    assert pairing["url"].startswith(f"http://{setup.address}/pair/")
+    token = pairing["url"].removeprefix(f"http://{setup.address}/pair/")
+    assert len(token) == 8
+    # Cameras open links with a domain only: the QR goes through the pairing page, the address stays after `#`
+    assert pairing["qr"] == f"{setup.ctx.settings.pairing_page}#{setup.address}/{token}"
     assert len(pairing["code"]) == 4
 
     async with setup.phone() as phone:
@@ -294,3 +297,14 @@ async def test_the_toggle_is_off_limits_when_the_app_already_listens_everywhere(
 )
 def test_devices_are_named_after_their_browser(user_agent: str, name: str) -> None:
     assert device_name(user_agent) == name
+
+
+async def test_without_a_pairing_page_the_qr_holds_the_link_itself(
+    setup: Setup, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(setup.ctx.settings, "pairing_page", "")
+    await turn_on(setup.computer)
+
+    pairing = (await setup.computer.post("/api/network/pairing")).json()["pairing"]
+
+    assert pairing["qr"] == pairing["url"]

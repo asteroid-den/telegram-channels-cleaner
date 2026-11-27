@@ -101,6 +101,7 @@ export default {
     publicNetwork:
       'An open or public network (a café, a hotel)? Better not: there other devices see the app too, though they can’t get in.',
     qrOff: 'Turn on access from the network to get a QR code',
+    typeIt: "Didn't open? Type this address in the phone's browser",
     expiresIn: 'One-time link · {time} left',
     showDevices: 'Connected devices: {n}',
     requestTitle: 'Connect {name}?',
