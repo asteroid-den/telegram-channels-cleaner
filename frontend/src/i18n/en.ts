@@ -145,7 +145,6 @@ export default {
     enterCode: 'Enter the code from the computer',
     codeTitle: 'Code from the computer',
     codeHint: '8 letters and digits under the QR code in the “Open on your phone” window.',
-    connect: 'Connect',
     codeWrong: 'No such code, or it ran out. Check the window on the computer.',
     takenTitle: 'This link was already used',
     takenText: 'Another device opened it. If it wasn’t you, press “Not my phone” on the computer.',

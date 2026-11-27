@@ -97,6 +97,12 @@ async function openCode() {
   codeInput.value?.focus()
 }
 
+/** The code is always eight characters: the eighth sends it, no reaching for the button under the keyboard. */
+function onCodeInput() {
+  wrong.value = null
+  if (typedToken().length === 8) void sendCode()
+}
+
 async function sendCode() {
   if (typedToken().length !== 8 || sending.value) return
   sending.value = true
@@ -189,25 +195,17 @@ async function sendCode() {
           class="w-full rounded-xl border-[1.5px] bg-bg px-3.5 py-3 font-mono text-[22px] font-semibold tracking-[0.12em]"
           style="outline: none"
           :class="wrong ? 'border-danger' : 'border-border-2 focus:border-accent'"
-          @input="wrong = null"
+          @input="onCodeInput"
         />
         <p v-if="wrong" class="mt-2 text-[13px] text-danger">{{ wrong }}</p>
-        <div class="mt-3 flex gap-2.5">
-          <button
-            type="button"
-            class="flex-1 rounded-xl border border-border-2 py-3.5 text-[15px] font-semibold"
-            @click="entering = false"
-          >
-            {{ t('common.cancel') }}
-          </button>
-          <button
-            type="submit"
-            class="flex-[2] rounded-xl bg-text py-3.5 text-[15px] font-semibold text-bg transition-opacity disabled:opacity-45"
-            :disabled="typedToken().length !== 8 || sending"
-          >
-            {{ t('pair.connect') }}
-          </button>
-        </div>
+        <!-- No Connect button: the eighth character sends the code, Enter on the keyboard sends it again -->
+        <button
+          type="button"
+          class="mt-3 w-full rounded-xl border border-border-2 py-3.5 text-[15px] font-semibold"
+          @click="entering = false"
+        >
+          {{ t('common.cancel') }}
+        </button>
       </form>
       <button
         v-else
