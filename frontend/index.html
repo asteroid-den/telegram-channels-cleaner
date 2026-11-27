@@ -5,7 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- resizes-content: a phone's keyboard makes the page shorter instead of covering it. Covered, Firefox on Android
+         painted only what was above the keyboard and, once it went, left the rest unpainted until a scroll (the
+         review's Apply button, changed by typing the 2FA password, stayed blank on a page too short to scroll) -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content"
+    />
     <!-- The browser's own bar in the colour of the header; the ui store follows the theme -->
     <meta name="theme-color" content="#121318" />
     <meta name="apple-mobile-web-app-title" content="Cleaner" />
