@@ -112,12 +112,21 @@ def settings_from_args(args: argparse.Namespace) -> Settings:
 
 
 class AppServer(uvicorn.Server):
-    """Ends the app's event streams first when it stops: uvicorn waits for every open connection, and an open tab
-    holds one forever, so Ctrl+C would hang until the second press."""
+    """Says where phones find the app once it listens for them. Ends the app's event streams first when it stops:
+    uvicorn waits for every open connection, and an open tab holds one forever, so Ctrl+C would hang until the second
+    press."""
 
     def __init__(self, config: uvicorn.Config, app: FastAPI) -> None:
         super().__init__(config)
         self.fastapi = app
+
+    async def startup(self, sockets: list[socket.socket] | None = None) -> None:
+        await super().startup(sockets)
+        ctx = getattr(self.fastapi.state, "ctx", None)
+
+        # Phone access came back on with the app: where phones find it, next to the address above
+        if self.started and ctx is not None and ctx.network.url:
+            print(f"Phones: {ctx.network.url}  (paired devices only)")
 
     async def shutdown(self, sockets: list[socket.socket] | None = None) -> None:
         ctx = getattr(self.fastapi.state, "ctx", None)
