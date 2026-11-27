@@ -26,10 +26,16 @@ export const useUiStore = defineStore('ui', () => {
   const locale = ref<Locale>(i18n.global.locale.value as Locale)
   const mock = ref(false)
   const toasts = ref<Toast[]>([])
+  /** The deck's search (Ctrl+K, or the header's button on a phone) */
+  const searching = ref(false)
   let toastSeq = 0
 
   function applyTheme() {
     document.documentElement.dataset.theme = theme.value
+    // The header's colour (--surface), for the phone browser's own bar around it
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', theme.value === 'dark' ? '#121318' : '#ffffff')
   }
   applyTheme()
   storeLocale(locale.value)
@@ -76,6 +82,7 @@ export const useUiStore = defineStore('ui', () => {
   }
 
   return {
+    searching,
     theme,
     locale,
     mock,

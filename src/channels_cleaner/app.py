@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import mimetypes
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -15,6 +16,8 @@ from channels_cleaner.config import Settings
 from channels_cleaner.context import AppContext
 
 STATIC_DIR = Path(__file__).parent / "static"
+# Not in every system's mime table: served as octet-stream, the manifest of "Add to Home screen" would be refused
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 NOT_BUILT = """<!doctype html><meta charset="utf-8"><title>Channels Cleaner</title>
 <body style="font-family:system-ui;padding:2rem;background:#111;color:#eee">
