@@ -166,7 +166,7 @@ useHotkeys({
 
 <template>
   <section
-    class="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pt-8 pb-32 max-md:pt-5 max-md:pb-40"
+    class="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pt-8 pb-32 max-md:pt-5 max-md:pb-0"
   >
     <RouterLink
       to="/"
@@ -418,9 +418,11 @@ useHotkeys({
       </div>
     </template>
 
+    <!-- On a phone it is part of the page, at its end (mt-auto keeps a short page's one at the bottom): fixed to the
+         screen with a blur, Firefox left it unpainted after the keyboard of the 2FA field went away -->
     <div
       v-if="pending.length"
-      class="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-bg/85 px-4 py-4 pb-[calc(16px+env(safe-area-inset-bottom))] backdrop-blur-md"
+      class="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-bg/85 px-4 py-4 pb-[calc(16px+env(safe-area-inset-bottom))] backdrop-blur-md max-md:static max-md:-mx-4 max-md:mt-auto max-md:bg-bg max-md:backdrop-blur-none"
     >
       <!-- On a phone: the warnings over a full-width button -->
       <div

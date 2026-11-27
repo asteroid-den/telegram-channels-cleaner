@@ -140,11 +140,10 @@ export default {
     deniedText: 'The computer turned it down, or the link ran out (2 minutes).',
     unpairedTitle: 'This phone isn’t connected',
     unpairedText: 'To open Channels Cleaner here, connect the phone on the computer.',
-    unpairedHow:
-      'Account menu → “Open on your phone”: point the camera at the QR code, or enter the code shown under it.',
-    enterCode: 'Enter the code from the computer',
+    codeWhere:
+      'The code is under the QR code in the “Open on your phone” window (the account menu on the computer). Or point the camera at the QR code itself.',
+    codePlaceholder: '8 letters and digits',
     codeTitle: 'Code from the computer',
-    codeHint: '8 letters and digits under the QR code in the “Open on your phone” window.',
     codeWrong: 'No such code, or it ran out. Check the window on the computer.',
     takenTitle: 'This link was already used',
     takenText: 'Another device opened it. If it wasn’t you, press “Not my phone” on the computer.',

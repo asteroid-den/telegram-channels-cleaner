@@ -111,8 +111,8 @@ The app still runs on the computer; a phone on the same Wi-Fi becomes a second s
 1. In the account menu, choose **Open on your phone** and turn on **Let devices in from this
    network**. The app starts answering at the computer's address in the network as well, for
    instance `http://192.168.1.23:8765`, and the console prints it.
-2. Scan the QR code with the phone's camera. Or open that address on the phone, tap **Enter the
-   code from the computer** and type in the eight characters shown under the QR code.
+2. Scan the QR code with the phone's camera. Or open that address on the phone and type in the
+   eight characters shown under the QR code: the phone goes on by itself once they're in.
 3. The phone shows a four-digit code, and so does the computer. If they match, press
    **Connect** on the computer.
 
