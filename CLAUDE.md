@@ -148,8 +148,8 @@ Safety (2026-11-20, after an audit run from the mercury session):
   the app's own link): the address and token ride after `#`, never sent to GitHub, and the page follows only
   `http://<IPv4>:<port>/pair/<token>`, or the app itself without a token (`open_qr`: the device list's QR,
   which opens the app on a phone paired already). The token is 8 typeable characters, shown in cells under the
-  QR: an unpaired phone on the app's address gets "This phone isn't connected" with **Enter the code** (a bottom sheet),
-  which claims it like the link would.
+  QR: an unpaired phone on the app's address gets "This phone isn't connected" with **Enter the code** (a field in
+  the page: a bottom sheet ended up behind the keyboard in Firefox), which claims it like the link would.
   Pairing: the computer shows a QR link (2 min, one claim) + 4-digit code; the
   phone that claims it gets its cookie at once, valid only after the user approves it *on the computer* with the
   same code on both screens (a second claim: 409 `pairing_taken`). The enabled flag is an app-wide setting
