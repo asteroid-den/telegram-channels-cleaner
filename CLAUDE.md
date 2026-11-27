@@ -264,7 +264,8 @@ Phone layout (below 768 px, Tailwind `max-md:` + `useNarrow()` where the script 
 header in one row (logo mark, deck settings with kind + filter, a search button for the missing Ctrl+K (`ui.searching`),
 the pending count, avatar; language and theme move into the account menu), a small undo button at the end of the
 progress row (DeckProgress's `end` slot; a pop-up "Undo" toast was rejected: noisy when deciding dozens in a row), the card with 24 px margins and at most 500 px tall, the next one peeking out below it (no side fan), round 52 px buttons with short labels
-(`actions.*Short`) instead of the keycaps, no side zones; deck settings and the summary open as bottom
+(`actions.*Short`) instead of the keycaps, no side zones; no key hints (every hint is a `<kbd>`, which style.css hides
+below 768 px: write new ones as `<kbd>` too); deck settings and the summary open as bottom
 sheets (`.sheet-narrow` in style.css); nothing with a text field is fixed to the bottom (Firefox on Android puts the
 keyboard over the page and leaves fixed, blurred parts unpainted once it goes): the review's footer is part of the page
 there (`max-md:static`, `mt-auto`); the loupe opens on a long press of the progress bar (a tap there does nothing)

@@ -137,6 +137,14 @@ button:disabled {
   outline-offset: 2px;
 }
 
+/* Key hints (Esc, ↵, ⌫, Ctrl K…) are for a keyboard: a phone has none. Every hint is a <kbd>, so one rule hides them
+   all below the phone breakpoint (Tailwind's md, 768 px); unlayered, it beats any display utility on them. */
+@media (max-width: 767px) {
+  kbd {
+    display: none !important;
+  }
+}
+
 @layer components {
   /* Section label: small caps in the panel headers. */
   .label {

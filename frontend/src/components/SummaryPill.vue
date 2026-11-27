@@ -141,7 +141,7 @@ function review() {
             :disabled="!deck.history.length"
             @click="deck.undo()"
           >
-            ⌫ {{ t('actions.undo').toLowerCase() }}
+            <kbd>⌫</kbd> {{ t('actions.undo').toLowerCase() }}
           </button>
         </div>
         <ul v-if="history.length" class="mb-4">
@@ -195,7 +195,7 @@ function review() {
           :disabled="!deck.counts.pending"
           @click="review"
         >
-          {{ t('deck.applyCta', { n: deck.counts.pending }) }} ↵
+          {{ t('deck.applyCta', { n: deck.counts.pending }) }} <kbd>↵</kbd>
         </button>
       </div>
     </Transition>
