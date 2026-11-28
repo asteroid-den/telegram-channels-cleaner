@@ -82,7 +82,12 @@ const runnable = computed(() => pending.value.length - heldTransfers.value - hel
 
 /** The chats about to be deleted, as a CSV to keep: titles, links, descriptions. */
 function saveDeletions() {
-  const cell = (v: string | number | null) => `"${String(v ?? '').replaceAll('"', '""')}"`
+  // A leading = + - @ would make a spreadsheet read the cell as a formula: a quote in front keeps it text
+  const cell = (v: string | number | null) => {
+    const text = String(v ?? '')
+    const safe = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text
+    return `"${safe.replaceAll('"', '""')}"`
+  }
   const rows = [
     ['title', 'link', 'members', 'about'],
     ...deletions.value.map((c) => [c.title, c.link, c.members_count, c.about]),
@@ -94,7 +99,8 @@ function saveDeletions() {
   a.href = URL.createObjectURL(blob)
   a.download = 'deleted-chats.csv'
   a.click()
-  URL.revokeObjectURL(a.href)
+  // Freed a little later: some browsers start the download only after the click returns
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000)
 }
 const minutes = computed(() => Math.round((pending.value.length * 2.6) / 60))
 /** Private channels being left: without an invite link there is no way back. */
@@ -165,11 +171,18 @@ async function start() {
 
 onMounted(load)
 
+function startIfReady() {
+  if (runnable.value && !starting.value) void start()
+}
+
+// From the password and the delete word's fields too (the hotkeys stay out of fields): that is where Ctrl+Enter is
+// most natural, right after typing
+const onFieldKey = (e: KeyboardEvent) =>
+  (e.ctrlKey || e.metaKey) && (e.preventDefault(), startIfReady())
+
 useHotkeys({
   Escape: () => void router.push('/'),
-  'mod+Enter': () => {
-    if (runnable.value && !starting.value) void start()
-  },
+  'mod+Enter': startIfReady,
 })
 </script>
 
@@ -244,6 +257,7 @@ useHotkeys({
               :aria-label="t('review.password')"
               :placeholder="t('review.password')"
               class="w-64 rounded-[10px] border border-border-2 bg-surface-3 px-3 py-2 text-sm outline-none focus:border-accent"
+              @keydown.enter="onFieldKey"
             />
             <span v-if="!password" class="text-xs text-warn">{{ t('review.transfersWait') }}</span>
           </div>
@@ -328,6 +342,7 @@ useHotkeys({
               spellcheck="false"
               class="w-32 rounded-[10px] border bg-surface-3 px-3 py-1.5 text-sm outline-none"
               :class="deletionsConfirmed ? 'border-danger' : 'border-border-2 focus:border-accent'"
+              @keydown.enter="onFieldKey"
             />
           </label>
           <p v-if="!deletionsConfirmed" class="mt-2 text-xs text-warn">
