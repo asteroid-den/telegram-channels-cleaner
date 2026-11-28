@@ -153,7 +153,11 @@ async function start() {
   }
 }
 
-onMounted(load)
+// A swipe right before coming here may still be on its way: its card belongs on this list
+onMounted(async () => {
+  await deck.settled()
+  await load()
+})
 
 function startIfReady() {
   if (runnable.value && !starting.value) void start()

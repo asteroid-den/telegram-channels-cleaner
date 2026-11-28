@@ -141,6 +141,12 @@ export const useDeckStore = defineStore('deck', () => {
   /** Set when the server turned a decision down because the queue is being applied (from another screen). */
   const applyRunning = ref(false)
 
+  /** Unknown whether it went through: the deck as the server has it, rather than a guess either way. */
+  function reloadAfter(err: unknown) {
+    report(err)
+    void load()
+  }
+
   function onRefused(err: unknown) {
     if (err instanceof ApiError && err.type === 'apply_job_running') applyRunning.value = true
     report(err)
@@ -180,6 +186,21 @@ export const useDeckStore = defineStore('deck', () => {
       writing -= 1
     }
   }
+
+  /**
+   * Once every decision sent so far has its answer, those made while waiting included: a list read before then may
+   * not have them (a reload, the review screen opened right after a swipe).
+   */
+  async function settled() {
+    let chain: Promise<unknown>
+    do {
+      chain = writes
+      await chain
+    } while (chain !== writes)
+  }
+
+  /** No answer in time: the decision may have reached the server after all, so what it holds is read back. */
+  const timedOut = (err: unknown) => err instanceof ApiError && err.type === 'timeout'
 
   function listParams() {
     return new URLSearchParams({
@@ -225,7 +246,7 @@ export const useDeckStore = defineStore('deck', () => {
     try {
       if (!loaded.value) await loadPrefs()
       // Decisions still on their way first: a list read before them would bring their cards back
-      await writes
+      await settled()
       const seen = wrote
       const params = listParams()
       const trailParams = new URLSearchParams({
@@ -240,7 +261,7 @@ export const useDeckStore = defineStore('deck', () => {
       // the user switched again while this was loading (the deck, its order, or the account)
       if (asked !== generation || ticket !== loads) return
       // A decision was made while it was read: the list may not have it, so read it again
-      if (seen !== wrote) return await load()
+      if (seen !== wrote || writing > 0) return await load()
       queue.value = data.items
       trail.value = decided.items
       cursor.value = null
@@ -359,6 +380,7 @@ export const useDeckStore = defineStore('deck', () => {
     } catch (err) {
       // Taken out by what it is, not by position: later decisions may have come after it meanwhile
       history.value = history.value.filter((h) => toRaw(h) !== entry)
+      if (timedOut(err)) return reloadAfter(err)
       queue.value = queue.value.filter((c) => c.id !== id)
       trail.value = trail.value.filter((c) => c.id !== id)
       queue.value.unshift(channel)
@@ -391,6 +413,7 @@ export const useDeckStore = defineStore('deck', () => {
       await write(() => api.put(`/api/decisions/${channel.id}`, { decision, ...extra }, WRITE_OPTS))
     } catch (err) {
       history.value = history.value.filter((h) => toRaw(h) !== entry)
+      if (timedOut(err)) return reloadAfter(err)
       const at = trail.value.findIndex((c) => c.id === channel.id)
       if (at >= 0) {
         trail.value[at] = channel
@@ -438,6 +461,7 @@ export const useDeckStore = defineStore('deck', () => {
           ),
         )
       } catch (err) {
+        if (timedOut(err)) return reloadAfter(err)
         const at = trail.value.findIndex((c) => c.id === id)
         if (at >= 0) trail.value[at] = changed
         tally(previous, -1)
@@ -464,6 +488,7 @@ export const useDeckStore = defineStore('deck', () => {
     try {
       await write(() => api.del(`/api/decisions/${id}`, WRITE_OPTS))
     } catch (err) {
+      if (timedOut(err)) return reloadAfter(err)
       const back = queue.value.findIndex((c) => c.id === id)
       if (back >= 0) queue.value.splice(back, 1)
       if (skipped) queue.value.splice(skippedAt, 0, skipped)
@@ -683,6 +708,7 @@ export const useDeckStore = defineStore('deck', () => {
     admins,
     loadAdmins,
     load,
+    settled,
     setKind,
     setRole,
     setArchive,

@@ -26,7 +26,10 @@ async function load() {
     loadError.value = errorText(err)
   }
 }
-onMounted(load)
+onMounted(async () => {
+  await deck.settled()
+  await load()
+})
 
 const applied = (decision: string) => stats.value?.decisions[decision]?.applied ?? 0
 const failedTotal = computed(() =>
