@@ -241,13 +241,6 @@ button:disabled {
   }
 }
 
-.scrollbar-none {
-  scrollbar-width: none;
-}
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

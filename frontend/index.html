@@ -18,12 +18,47 @@
     <title>Channels Cleaner</title>
   </head>
   <body>
+    <script>
+      // The saved theme before the first paint: a light one otherwise flashes dark while the app loads (the ui store
+      // takes over from here, with the same key and colours)
+      try {
+        if (localStorage.getItem('cc.theme') === 'light') {
+          document.documentElement.dataset.theme = 'light'
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      } catch {}
+    </script>
     <div id="app">
+      <!-- The bg, border-2 and accent tokens of style.css, which isn't loaded yet -->
       <style>
-        #splash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0d0e12}
-        [data-theme='light'] #splash{background:#f3f4f7}
-        #splash i{width:36px;height:36px;border-radius:50%;border:3px solid #2b2e39;border-top-color:#5b8cff;animation:s 0.8s linear infinite}
-        @keyframes s{to{transform:rotate(360deg)}}
+        #splash {
+          position: fixed;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #0b0c0f;
+        }
+        [data-theme='light'] #splash {
+          background: #f3f4f6;
+        }
+        #splash i {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          border: 3px solid #2e313b;
+          border-top-color: #6aa2ff;
+          animation: s 0.8s linear infinite;
+        }
+        [data-theme='light'] #splash i {
+          border-color: #d7d9df;
+          border-top-color: #2563d9;
+        }
+        @keyframes s {
+          to {
+            transform: rotate(360deg);
+          }
+        }
       </style>
       <div id="splash"><i></i></div>
     </div>

@@ -8,7 +8,7 @@ import { useDeckStore } from '@/stores/deck'
 
 import TrailLoupe from './TrailLoupe.vue'
 
-const { t, tk } = useKindI18n()
+const { tk } = useKindI18n()
 const deck = useDeckStore()
 
 /**
@@ -195,7 +195,6 @@ const runs = computed(() => {
     >
       <div
         class="pointer-events-none relative h-2.5 w-full rounded-full bg-surface-3"
-        :title="deck.eta !== null ? t('deck.eta', { m: t('time.minutes', deck.eta) }) : undefined"
         role="progressbar"
         :aria-label="tk('deck.progressLabel')"
         :aria-valuemin="0"

@@ -13,7 +13,7 @@ const props = withDefaults(
     /** Telegram's colour of the peer when known (an owner may pick one), else derived from the id as Telegram does */
     colorIndex?: number | null
   }>(),
-  { size: 48, rounded: '9999px' },
+  { size: 48, rounded: '9999px', colorIndex: null },
 )
 
 const stops = computed(() => userpicColors(props.colorIndex ?? colorIndexOf(props.id)))
