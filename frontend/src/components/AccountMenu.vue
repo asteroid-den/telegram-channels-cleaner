@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onClickOutside } from '@vueuse/core'
+import { onClickOutside, onKeyStroke } from '@vueuse/core'
 import { computed, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -25,6 +25,17 @@ const open = ref(false)
 const phoneOpen = ref(false)
 const root = useTemplateRef<HTMLElement>('root')
 onClickOutside(root, () => (open.value = false))
+// Its own keys while open (the deck's are off meanwhile): Esc closes it, the arrows walk its items
+onKeyStroke('Escape', () => open.value && (open.value = false))
+function onMenuKey(e: KeyboardEvent) {
+  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+  const items = [...(root.value?.querySelectorAll<HTMLElement>('[role^="menuitem"]') ?? [])]
+  if (!items.length) return
+  e.preventDefault()
+  const at = items.indexOf(document.activeElement as HTMLElement)
+  const step = e.key === 'ArrowDown' ? 1 : -1
+  items[(at + step + items.length) % items.length]!.focus()
+}
 
 const user = computed(() => auth.state.user)
 const name = computed(() => user.value?.first_name ?? '')
@@ -87,7 +98,8 @@ async function logout(wipe: boolean) {
 </script>
 
 <template>
-  <div ref="root" class="relative">
+  <!-- On the root: the arrows also start from the button that opened the menu -->
+  <div ref="root" class="relative" @keydown="open && onMenuKey($event)">
     <button
       class="flex h-[30px] shrink-0 items-center gap-2 rounded-lg border border-border-2 pr-2 pl-1 text-[12.5px] text-muted hover:text-text max-md:px-1"
       :aria-label="t('account.menu')"
