@@ -243,7 +243,7 @@ describe('deck store', () => {
     expect(deck.trail.map((c) => c.id)).toEqual([1])
   })
 
-  it('gives up on a decision that gets no answer, and the deck still loads', async () => {
+  it('reads the deck back from the server when a decision gets no answer', async () => {
     const deck = await loaded([channel(1), channel(2)])
     const timeouts: AbortController[] = []
     vi.spyOn(AbortSignal, 'timeout').mockImplementation(() => {
@@ -258,16 +258,40 @@ describe('deck store', () => {
     expect(calls.filter((c) => c.method === 'GET')).toHaveLength(0) // waits for the decision
     timeouts[0]!.abort(new DOMException('timed out', 'TimeoutError'))
     await settle()
-    expect(deck.items.map((c) => c.id)).toEqual([1, 2]) // taken back
+    // It may have gone through: no guess, the server says how things are
+    expect(deck.history).toHaveLength(0)
     const lists = calls.filter((c) => c.url.startsWith('/api/channels?'))
-    // The refused decision's counts are read once, and the reload goes on
+    const trails = calls.filter((c) => c.url.startsWith('/api/decisions/trail'))
     expect(lists.length).toBeGreaterThanOrEqual(1)
     for (const list of lists)
-      await list.answer({ items: [channel(1), channel(2)], counts: counts(2), sync: null })
-    await calls.find((c) => c.url.startsWith('/api/decisions/trail'))!.answer({ items: [] })
+      await list.answer({ items: [channel(2)], counts: counts(1, 'k'), sync: null })
+    for (const trail of trails) await trail.answer({ items: [channel(1, 'keep')] })
     await reload
+    await settle()
+    expect(deck.items.map((c) => c.id)).toEqual([2])
+    expect(deck.trail.map((c) => c.id)).toEqual([1])
     expect(deck.loading).toBe(false)
     vi.restoreAllMocks()
+  })
+
+  it('waits for decisions made while it waited for others before reading the list', async () => {
+    const deck = await loaded([channel(1), channel(2), channel(3)])
+    void deck.decide('keep', {}, 1)
+    await settle()
+    const reload = deck.load()
+    await settle()
+    // A swipe while the reload waits for the first decision
+    void deck.decide('keep', {}, 2)
+    await settle()
+    await writes()[0]!.answer({ counts: counts(2, 'k') })
+    expect(calls.filter((c) => c.method === 'GET')).toHaveLength(0) // the second is still on its way
+    await writes()[1]!.answer({ counts: counts(1, 'kk') })
+    const gets = calls.filter((c) => c.method === 'GET')
+    expect(gets).toHaveLength(2)
+    await gets[0]!.answer({ items: [channel(3)], counts: counts(1, 'kk'), sync: null })
+    await gets[1]!.answer({ items: [channel(1, 'keep'), channel(2, 'keep')] })
+    await reload
+    expect(deck.items.map((c) => c.id)).toEqual([3])
   })
 
   it('reads the counts again after the last decision of a burst is turned down', async () => {
