@@ -11,7 +11,7 @@ import { useHotkeys } from '@/composables/useHotkeys'
 import { useApplyStore } from '@/stores/apply'
 import { useDeckStore } from '@/stores/deck'
 import { useUiStore } from '@/stores/ui'
-import { actionErrorKind } from '@/utils/errors'
+import { actionErrorKind, errorText } from '@/utils/errors'
 import { relativeTime } from '@/utils/format'
 
 const { t, locale } = useI18n()
@@ -23,6 +23,8 @@ const ui = useUiStore()
 const pending = ref<Channel[]>([])
 const failed = ref<Channel[]>([])
 const loading = ref(true)
+/** Why the queue couldn't be read: shown instead of an empty queue, which it isn't. */
+const loadError = ref<string | null>(null)
 const starting = ref(false)
 
 const GROUPS: {
@@ -113,6 +115,7 @@ const modKey = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'
 
 async function load() {
   loading.value = true
+  loadError.value = null
   try {
     const [p, f] = await Promise.all([
       api.get<{ items: Channel[] }>('/api/decisions?status=pending'),
@@ -120,6 +123,8 @@ async function load() {
     ])
     pending.value = p.items
     failed.value = f.items
+  } catch (err) {
+    loadError.value = errorText(err)
   } finally {
     loading.value = false
   }
@@ -132,12 +137,16 @@ async function putBack(channel: Channel) {
     failed.value = failed.value.filter((c) => c.id !== channel.id)
     deck.forget(channel.id)
   } catch (err) {
-    ui.toast(String(err))
+    ui.toast(errorText(err))
   }
 }
 
 async function retryFailed() {
-  await api.post('/api/decisions/retry-failed')
+  try {
+    await api.post('/api/decisions/retry-failed')
+  } catch (err) {
+    return ui.toast(errorText(err))
+  }
   await load()
 }
 
@@ -148,7 +157,7 @@ async function start() {
     password.value = ''
     await router.push('/apply')
   } catch (err) {
-    ui.toast(err instanceof Error ? err.message : String(err))
+    ui.toast(errorText(err))
   } finally {
     starting.value = false
   }
@@ -180,6 +189,10 @@ useHotkeys({
 
     <div v-if="loading" class="mt-8 space-y-3">
       <div v-for="i in 4" :key="i" class="skeleton h-16 w-full rounded-xl" />
+    </div>
+    <div v-else-if="loadError" class="mt-10 flex flex-col items-center gap-3 text-center">
+      <p class="text-danger">{{ t('common.loadFailed', { msg: loadError }) }}</p>
+      <button class="key" @click="load">{{ t('common.retry') }}</button>
     </div>
 
     <template v-else>
