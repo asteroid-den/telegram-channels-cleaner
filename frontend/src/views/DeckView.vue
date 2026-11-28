@@ -38,7 +38,11 @@ onMounted(async () => {
   await Promise.all([deck.load(), apply.refresh()])
   if (apply.running) void router.push('/apply')
 })
-onBeforeUnmount(() => deck.unwatchSync())
+onBeforeUnmount(() => {
+  deck.unwatchSync()
+  // The watch below stops with the deck: a card left in flight would otherwise hold the undo until the next swipe
+  deck.moving = false
+})
 
 // Started from another screen meanwhile: the server turns decisions down until it's done
 watch(

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import type { Channel, Decision } from '@/api/types'
@@ -243,15 +243,25 @@ function fling(decision: Decision, picked = false): boolean {
   if (card) emit('flinging', decision, card.getBoundingClientRect())
   preview.value = null
   flying.value = decision
-  setTimeout(() => {
+  landing = () => {
+    clearTimeout(timer)
+    landing = null
     // Reset and shift the list in the same tick: one render, no flicker on the next card.
     flying.value = null
     dx.value = 0
     dy.value = 0
     emit('decide', decision, channelId)
-  }, FLY_MS)
+  }
+  const timer = setTimeout(() => landing?.(), FLY_MS)
   return true
 }
+
+/** The decision of the card in flight, sent when it has flown away. */
+let landing: (() => void) | null = null
+
+// Leaving the deck mid-flight (Enter for the review, a link, the account menu): the decision goes now, while the
+// deck can still say it; once unmounted, Vue drops whatever it emits
+onBeforeUnmount(() => landing?.())
 
 // After an undo the restored card flies back in from where it left.
 watch(

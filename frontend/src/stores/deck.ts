@@ -21,6 +21,11 @@ import { DECISIONS } from '@/utils/decisions'
 import { useUiStore } from './ui'
 
 const PREFETCH_AHEAD = 8
+/**
+ * A decision not answered by then is taken back: one hanging request would otherwise hold every write after it, and
+ * the reloads waiting for them.
+ */
+const WRITE_OPTS = { timeoutMs: 15_000 }
 const KIND_KEY = 'cc.kind'
 const ROLE_KEY = 'cc.role'
 
@@ -153,18 +158,50 @@ export const useDeckStore = defineStore('deck', () => {
    */
   let writes: Promise<unknown> = Promise.resolve()
   let writing = 0
+  /** Writes started so far: a list read while one was sent is older than the deck on screen. */
+  let wrote = 0
 
   async function write(send: () => Promise<{ counts: DeckCounts }>) {
     const asked = generation
     writing += 1
+    wrote += 1
     const turn = writes.then(send)
     writes = turn.catch(() => undefined)
     try {
       const res = await turn
       // An earlier answer knows nothing of the decisions still queued behind it
       if (writing === 1 && asked === generation) counts.value = res.counts
+    } catch (err) {
+      // The last of a burst turned down: no answer brought the server's counts, and the local ones can't know
+      // everything it does (a changed mute that was applied already is pending again)
+      if (writing === 1 && asked === generation) void refreshCounts()
+      throw err
     } finally {
       writing -= 1
+    }
+  }
+
+  function listParams() {
+    return new URLSearchParams({
+      kind: kind.value,
+      role: role.value,
+      archive: prefs.value.archive,
+      sort: prefs.value.sort,
+      reverse: String(prefs.value.reverse),
+    })
+  }
+
+  /** The server's counts, the list itself left as it is. */
+  async function refreshCounts() {
+    const asked = generation
+    const seen = wrote
+    try {
+      const data = await api.get<ChannelsResponse>(`/api/channels?${listParams()}`)
+      // A decision made meanwhile isn't in them; a reload brings its own
+      if (asked === generation && seen === wrote && !writing && !loading.value)
+        counts.value = data.counts
+    } catch {
+      /* the next decision's answer brings them */
     }
   }
 
@@ -189,13 +226,8 @@ export const useDeckStore = defineStore('deck', () => {
       if (!loaded.value) await loadPrefs()
       // Decisions still on their way first: a list read before them would bring their cards back
       await writes
-      const params = new URLSearchParams({
-        kind: kind.value,
-        role: role.value,
-        archive: prefs.value.archive,
-        sort: prefs.value.sort,
-        reverse: String(prefs.value.reverse),
-      })
+      const seen = wrote
+      const params = listParams()
       const trailParams = new URLSearchParams({
         kind: kind.value,
         role: role.value,
@@ -207,6 +239,8 @@ export const useDeckStore = defineStore('deck', () => {
       ])
       // the user switched again while this was loading (the deck, its order, or the account)
       if (asked !== generation || ticket !== loads) return
+      // A decision was made while it was read: the list may not have it, so read it again
+      if (seen !== wrote) return await load()
       queue.value = data.items
       trail.value = decided.items
       cursor.value = null
@@ -321,7 +355,7 @@ export const useDeckStore = defineStore('deck', () => {
     retrace()
     if (decision !== 'skip') stamps.value.push(Date.now())
     try {
-      await write(() => api.put(`/api/decisions/${id}`, { decision, ...extra }))
+      await write(() => api.put(`/api/decisions/${id}`, { decision, ...extra }, WRITE_OPTS))
     } catch (err) {
       // Taken out by what it is, not by position: later decisions may have come after it meanwhile
       history.value = history.value.filter((h) => toRaw(h) !== entry)
@@ -354,7 +388,7 @@ export const useDeckStore = defineStore('deck', () => {
     history.value.push(entry)
     if (moveOn) advance()
     try {
-      await write(() => api.put(`/api/decisions/${channel.id}`, { decision, ...extra }))
+      await write(() => api.put(`/api/decisions/${channel.id}`, { decision, ...extra }, WRITE_OPTS))
     } catch (err) {
       history.value = history.value.filter((h) => toRaw(h) !== entry)
       const at = trail.value.findIndex((c) => c.id === channel.id)
@@ -397,10 +431,11 @@ export const useDeckStore = defineStore('deck', () => {
         // A transfer goes back to the same successor
         const successor = previous === 'transfer' ? entry.channel.successor_id : null
         await write(() =>
-          api.put(`/api/decisions/${id}`, {
-            decision: previous,
-            ...(successor ? { successor_id: successor } : {}),
-          }),
+          api.put(
+            `/api/decisions/${id}`,
+            { decision: previous, ...(successor ? { successor_id: successor } : {}) },
+            WRITE_OPTS,
+          ),
         )
       } catch (err) {
         const at = trail.value.findIndex((c) => c.id === id)
@@ -427,7 +462,7 @@ export const useDeckStore = defineStore('deck', () => {
     retrace()
     returning.value = entry
     try {
-      await write(() => api.del(`/api/decisions/${id}`))
+      await write(() => api.del(`/api/decisions/${id}`, WRITE_OPTS))
     } catch (err) {
       const back = queue.value.findIndex((c) => c.id === id)
       if (back >= 0) queue.value.splice(back, 1)
@@ -615,6 +650,7 @@ export const useDeckStore = defineStore('deck', () => {
     history.value = []
     loaded.value = false
     returning.value = null
+    moving.value = false
     admins.value = {}
     pausedUntil = 0
     if (resumeTimer) clearTimeout(resumeTimer)
