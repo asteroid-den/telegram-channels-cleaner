@@ -596,16 +596,23 @@ export const useDeckStore = defineStore('deck', () => {
     }
   }
 
-  /** Who could take over each chat the user owns: loaded when its card comes up, `null` when Telegram said no. */
+  /**
+   * Who could take over each chat the user owns: loaded when its card comes up, `null` when it failed. A failure is
+   * asked again the next time (the card comes up again, the picker opens): it may have been only the connection.
+   */
   const admins = ref<Record<number, ChatAdmin[] | null>>({})
+  const askingAdmins = new Set<number>()
 
   async function loadAdmins(channelId: number) {
-    if (channelId in admins.value) return
+    if (admins.value[channelId] || askingAdmins.has(channelId)) return
+    askingAdmins.add(channelId)
     try {
       const res = await api.get<{ items: ChatAdmin[] }>(`/api/channels/${channelId}/admins`)
       admins.value[channelId] = res.items
     } catch {
       admins.value[channelId] = null
+    } finally {
+      askingAdmins.delete(channelId)
     }
   }
 

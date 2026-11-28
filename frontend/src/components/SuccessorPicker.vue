@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import type { Channel, ChatAdmin } from '@/api/types'
 import { useKindI18n } from '@/composables/useKindI18n'
@@ -34,18 +34,26 @@ const choices = computed<Choice[]>(() => [
   { kind: 'leave' },
   ...(tooLarge.value ? [] : [{ kind: 'delete' as const }]),
 ])
-const noAdmins = computed(() => props.admins !== undefined && !props.admins?.length)
-const selected = ref(0)
+/** Telegram listed nobody (a list that failed to load is not "nobody"). */
+const noAdmins = computed(() => !!props.admins && !props.admins.length)
 
-// The usual heir already has "add admins"; without admins the default is to leave
-watch(
-  () => props.admins,
-  (admins) => {
-    const heir = admins?.findIndex((a) => a.can_promote) ?? -1
-    selected.value = Math.max(0, heir)
+const keyOf = (c: Choice) => (c.kind === 'admin' ? `admin:${c.admin.id}` : c.kind)
+/**
+ * What the user picked, by what it is: the admins may come in after "leave" was picked while they loaded, and an
+ * index would then point at the first admin. Until a pick, the default.
+ */
+const chosen = ref<string | null>(null)
+const selected = computed({
+  get: () => {
+    const at = choices.value.findIndex((c) => keyOf(c) === chosen.value)
+    // The usual heir already has "add admins"; without admins the default is to leave
+    return at >= 0 ? at : Math.max(0, props.admins?.findIndex((a) => a.can_promote) ?? -1)
   },
-  { immediate: true },
-)
+  set: (index: number) => {
+    const c = choices.value[index]
+    if (c) chosen.value = keyOf(c)
+  },
+})
 
 const current = computed(() => choices.value[selected.value] ?? null)
 const fullName = (a: ChatAdmin) => [a.first_name, a.last_name].filter(Boolean).join(' ')
@@ -190,7 +198,7 @@ const deleteChoice = computed(() => choices.value.find((c) => c.kind === 'delete
       </div>
 
       <footer class="flex justify-end gap-2 border-t border-border px-5 py-3.5">
-        <button v-if="noAdmins" class="btn" @click="emit('later')">
+        <button v-if="noAdmins || admins === null" class="btn" @click="emit('later')">
           {{ t('actions.skip') }}
         </button>
         <button v-else class="btn" @click="emit('cancel')">{{ t('common.cancel') }}</button>
