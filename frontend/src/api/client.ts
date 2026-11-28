@@ -15,12 +15,30 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
-  const response = await fetch(url, {
-    method,
-    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  })
+export interface RequestOptions {
+  /** Give up after this long: an ApiError of type `timeout` (the request may still have reached the server). */
+  timeoutMs?: number
+}
+
+async function request<T>(
+  method: string,
+  url: string,
+  body?: unknown,
+  opts: RequestOptions = {},
+): Promise<T> {
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method,
+      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: opts.timeoutMs ? AbortSignal.timeout(opts.timeoutMs) : undefined,
+    })
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'TimeoutError')
+      throw new ApiError(0, 'timeout', 'No answer in time')
+    throw err
+  }
   const text = await response.text()
   const data = parseJson(text)
   if (!response.ok) {
@@ -50,9 +68,9 @@ function parseJson(text: string): unknown {
 export const api = {
   get: <T>(url: string) => request<T>('GET', url),
   post: <T>(url: string, body: unknown = {}) => request<T>('POST', url, body),
-  put: <T>(url: string, body: unknown) => request<T>('PUT', url, body),
+  put: <T>(url: string, body: unknown, opts?: RequestOptions) => request<T>('PUT', url, body, opts),
   patch: <T>(url: string, body: unknown) => request<T>('PATCH', url, body),
-  del: <T>(url: string) => request<T>('DELETE', url),
+  del: <T>(url: string, opts?: RequestOptions) => request<T>('DELETE', url, undefined, opts),
 }
 
 export type SseHandlers = Record<string, (data: never) => void>
