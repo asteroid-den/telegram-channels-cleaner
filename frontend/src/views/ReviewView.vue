@@ -11,6 +11,7 @@ import { useHotkeys } from '@/composables/useHotkeys'
 import { useApplyStore } from '@/stores/apply'
 import { useDeckStore } from '@/stores/deck'
 import { useUiStore } from '@/stores/ui'
+import { DECISIONS, SOFT, soft } from '@/utils/decisions'
 import { actionErrorKind, errorText } from '@/utils/errors'
 import { relativeTime } from '@/utils/format'
 
@@ -27,33 +28,16 @@ const loading = ref(true)
 const loadError = ref<string | null>(null)
 const starting = ref(false)
 
-const GROUPS: {
-  decision: Decision
-  icon: IconName
-  label: string
-  cls: string
-}[] = [
-  {
-    decision: 'free_link',
-    icon: 'link',
-    label: 'review.freeLink',
-    cls: 'bg-accent-soft text-accent',
-  },
-  {
-    decision: 'unsubscribe',
-    icon: 'x',
-    label: 'review.unsubscribe',
-    cls: 'bg-danger-soft text-danger',
-  },
-  { decision: 'mute', icon: 'bellOff', label: 'review.mute', cls: 'bg-warn-soft text-warn' },
-  {
-    decision: 'archive',
-    icon: 'archive',
-    label: 'review.archive',
-    cls: 'bg-accent-soft text-accent',
-  },
+/** The plain actions, a block each, in this order; their heading is a sentence of its own (`review.*`). */
+const GROUPS: { decision: Decision; icon: IconName; label: string; cls: string }[] = [
+  ...(['free_link', 'unsubscribe', 'mute', 'archive'] as const).map((decision) => ({
+    decision,
+    icon: DECISIONS[decision].icon,
+    label: `review.${decision === 'free_link' ? 'freeLink' : decision}`,
+    cls: soft(decision),
+  })),
   // "keep" only shows up here when it takes back a mute/archive applied earlier
-  { decision: 'keep', icon: 'undo', label: 'review.revert', cls: 'bg-surface-3 text-muted' },
+  { decision: 'keep', icon: 'undo', label: 'review.revert', cls: SOFT.muted },
 ]
 
 const grouped = computed(() =>

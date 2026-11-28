@@ -5,6 +5,7 @@ import { computed, ref, useTemplateRef, watch } from 'vue'
 import type { DeckCounts } from '@/api/types'
 import { useKindI18n } from '@/composables/useKindI18n'
 import { useDeckStore } from '@/stores/deck'
+import { DECISION_BY_CODE, fill } from '@/utils/decisions'
 
 import TrailLoupe from './TrailLoupe.vue'
 
@@ -37,16 +38,6 @@ watch(
 
 const decided = computed(() => shown.value.total - shown.value.undecided)
 const pct = computed(() => (shown.value.total ? (decided.value / shown.value.total) * 100 : 0))
-
-const RUN_CLASS: Record<string, string> = {
-  k: 'bg-success',
-  u: 'bg-danger',
-  m: 'bg-warn',
-  a: 'bg-accent',
-  t: 'bg-danger',
-  d: 'bg-danger',
-  l: 'bg-accent',
-}
 
 // The loupe: hover the bar to see the decisions around the pointer, click to rewind
 const hit = useTemplateRef<HTMLElement>('hit')
@@ -215,7 +206,7 @@ const runs = computed(() => {
             v-for="(r, i) in runs"
             :key="i"
             class="h-full transition-[flex-grow] duration-500 ease-out"
-            :class="RUN_CLASS[r.code]"
+            :class="fill(DECISION_BY_CODE[r.code] ?? 'keep')"
             :style="{ flex: `${r.n} 0 0` }"
           />
         </div>

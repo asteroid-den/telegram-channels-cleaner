@@ -2,11 +2,13 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import type { Channel, Decision } from '@/api/types'
+import type { Channel } from '@/api/types'
 import { useNarrow } from '@/composables/useNarrow'
 import { relativeTime } from '@/utils/format'
 
-import AppIcon, { type IconName } from './AppIcon.vue'
+import { DECISIONS, soft, strong } from '@/utils/decisions'
+
+import AppIcon from './AppIcon.vue'
 import ChannelAvatar from './ChannelAvatar.vue'
 
 /**
@@ -36,24 +38,6 @@ const shown = computed(() => {
 })
 const focused = computed(() => props.trail[props.focus] ?? null)
 
-const BADGE: Record<Exclude<Decision, 'skip'>, { icon: IconName; cls: string }> = {
-  keep: { icon: 'check', cls: 'bg-success' },
-  unsubscribe: { icon: 'x', cls: 'bg-danger-strong' },
-  mute: { icon: 'bellOff', cls: 'bg-warn' },
-  archive: { icon: 'archive', cls: 'bg-accent' },
-  transfer: { icon: 'user', cls: 'bg-danger-strong' },
-  delete: { icon: 'trash', cls: 'bg-danger-strong' },
-  free_link: { icon: 'link', cls: 'bg-accent' },
-}
-const TAG: Record<Exclude<Decision, 'skip'>, string> = {
-  keep: 'bg-success-soft text-success',
-  unsubscribe: 'bg-danger-soft text-danger',
-  mute: 'bg-warn-soft text-warn',
-  archive: 'bg-accent-soft text-accent',
-  transfer: 'bg-danger-soft text-danger',
-  delete: 'bg-danger-soft text-danger',
-  free_link: 'bg-accent-soft text-accent',
-}
 const kind = (c: Channel) => (c.decision && c.decision !== 'skip' ? c.decision : 'keep')
 
 const slotPx = () => (narrow.value ? 20 : 34)
@@ -144,9 +128,9 @@ function place(i: number) {
           </div>
           <span
             class="absolute -right-1.5 -bottom-1.5 flex h-[22px] w-[22px] items-center justify-center rounded-full text-white ring-[3px] ring-surface"
-            :class="BADGE[kind(channel)].cls"
+            :class="strong(kind(channel))"
           >
-            <AppIcon :name="BADGE[kind(channel)].icon" :size="11" :stroke="3" />
+            <AppIcon :name="DECISIONS[kind(channel)].icon" :size="11" :stroke="3" />
           </span>
         </div>
       </div>
@@ -158,7 +142,7 @@ function place(i: number) {
     >
       <span class="flex min-w-0 items-baseline gap-2">
         <b class="truncate font-display text-[15px] font-semibold">{{ focused.title }}</b>
-        <span class="tag shrink-0" :class="TAG[kind(focused)]">{{
+        <span class="tag shrink-0" :class="soft(kind(focused))">{{
           t(`deck.tags.${kind(focused)}`)
         }}</span>
       </span>

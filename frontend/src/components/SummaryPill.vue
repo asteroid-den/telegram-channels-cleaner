@@ -4,10 +4,10 @@ import { computed, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import type { Decision } from '@/api/types'
 import { useNarrow } from '@/composables/useNarrow'
 import { useConnectionStore } from '@/stores/connection'
 import { useDeckStore } from '@/stores/deck'
+import { soft } from '@/utils/decisions'
 import { relativeTime } from '@/utils/format'
 
 import ChannelAvatar from './ChannelAvatar.vue'
@@ -45,17 +45,6 @@ onKeyStroke('Escape', () => open.value && close())
 
 const history = computed(() => deck.history.slice(-6).reverse())
 const next = computed(() => deck.items.slice(1, 5))
-
-const TAG_CLASS: Record<Decision, string> = {
-  keep: 'bg-success-soft text-success',
-  unsubscribe: 'bg-danger-soft text-danger',
-  skip: 'bg-surface-3 text-muted',
-  mute: 'bg-warn-soft text-warn',
-  archive: 'bg-accent-soft text-accent',
-  transfer: 'bg-danger-soft text-danger',
-  delete: 'bg-danger-soft text-danger',
-  free_link: 'bg-accent-soft text-accent',
-}
 
 function review() {
   close()
@@ -161,9 +150,7 @@ function review() {
               rounded="6px"
             />
             <span class="min-w-0 flex-1 truncate">{{ h.channel.title }}</span>
-            <span class="tag" :class="TAG_CLASS[h.decision]">{{
-              t(`deck.tags.${h.decision}`)
-            }}</span>
+            <span class="tag" :class="soft(h.decision)">{{ t(`deck.tags.${h.decision}`) }}</span>
           </li>
         </ul>
         <p v-else class="mb-4 text-[13px] text-faint">{{ t('deck.historyEmpty') }}</p>

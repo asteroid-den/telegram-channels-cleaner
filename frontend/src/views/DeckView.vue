@@ -17,6 +17,7 @@ import { useApplyStore } from '@/stores/apply'
 import { useConnectionStore } from '@/stores/connection'
 import { type DecisionExtra, useDeckStore } from '@/stores/deck'
 import { useUiStore } from '@/stores/ui'
+import { DECISIONS, strong } from '@/utils/decisions'
 
 const { t, tk } = useKindI18n()
 const deck = useDeckStore()
@@ -134,16 +135,6 @@ useHotkeys(
   { repeat: ['mod+ArrowLeft', 'mod+ArrowRight'] },
 )
 
-// The "+1" chip flies from the leaving card into the progress bar
-const CHIP_CLASS: Record<Exclude<Decision, 'skip'>, string> = {
-  keep: 'bg-success',
-  unsubscribe: 'bg-danger-strong',
-  mute: 'bg-warn',
-  archive: 'bg-accent',
-  transfer: 'bg-danger-strong',
-  delete: 'bg-danger-strong',
-  free_link: 'bg-accent',
-}
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
 
 function onFlinging(decision: Decision, from: DOMRect) {
@@ -158,7 +149,7 @@ function onFlinging(decision: Decision, from: DOMRect) {
   if (!target || reduceMotion.matches) return void setTimeout(land, 200)
 
   const chip = document.createElement('div')
-  chip.className = `chip ${CHIP_CLASS[decision]}`
+  chip.className = `chip ${strong(decision)}`
   chip.textContent = '+1'
   chip.setAttribute('aria-hidden', 'true')
   document.body.appendChild(chip)
@@ -240,14 +231,9 @@ const KEYS = computed<Key[]>(() => [
 ])
 
 /** On a phone the keys become round buttons under the thumb: an icon each, the label under it. */
-const ROUND_ICON: Record<string, IconName> = {
-  unsubscribe: 'x',
-  skip: 'arrowDown',
-  free_link: 'link',
-  mute: 'bellOff',
-  archive: 'archive',
-  keep: 'check',
-}
+const roundIcon = (decision: Decision): IconName =>
+  // "later" points where the card goes, as the key does
+  decision === 'skip' ? 'arrowDown' : DECISIONS[decision].icon
 const ROUND_SHORT = computed<Record<string, string>>(() => ({
   unsubscribe: owned.value
     ? 'actions.transferShort'
@@ -425,7 +411,7 @@ const ZONES = [
           :class="[k.cls, pressed === k.id ? 'pressed' : '']"
           @click="act(k.id)"
         >
-          <span class="disc"><AppIcon :name="ROUND_ICON[k.id]!" :size="20" :stroke="2" /></span>
+          <span class="disc"><AppIcon :name="roundIcon(k.id)" :size="20" :stroke="2" /></span>
           <span class="text-xs text-muted">{{ t(ROUND_SHORT[k.id]!) }}</span>
         </button>
       </div>

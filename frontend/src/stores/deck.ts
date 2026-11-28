@@ -16,6 +16,7 @@ import type {
   SyncState,
 } from '@/api/types'
 import { i18n } from '@/i18n'
+import { DECISIONS } from '@/utils/decisions'
 
 import { useUiStore } from './ui'
 
@@ -38,16 +39,6 @@ function readKind(): ChatKind {
     return 'channel'
   }
 }
-const ACTIONS: Decision[] = ['unsubscribe', 'mute', 'archive', 'transfer', 'delete', 'free_link']
-const TRAIL_CODE = {
-  keep: 'k',
-  unsubscribe: 'u',
-  mute: 'm',
-  archive: 'a',
-  transfer: 't',
-  delete: 'd',
-  free_link: 'l',
-} as const
 
 /** What a decision may carry besides itself: who gets the chat on a transfer. */
 export interface DecisionExtra {
@@ -290,13 +281,13 @@ export const useDeckStore = defineStore('deck', () => {
     const c = counts.value
     c.undecided -= sign
     c.by_decision[decision] += sign
-    if (ACTIONS.includes(decision)) c.pending += sign
+    if (DECISIONS[decision].applied) c.pending += sign
   }
 
   /** The progress bar's letters, from the trail as it is now. */
   function retrace() {
     counts.value.trail = trail.value
-      .map((c) => (c.decision && c.decision !== 'skip' ? TRAIL_CODE[c.decision] : ''))
+      .map((c) => (c.decision ? (DECISIONS[c.decision].code ?? '') : ''))
       .join('')
   }
 
