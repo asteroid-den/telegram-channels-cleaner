@@ -8,6 +8,8 @@ import { useDeckStore } from '@/stores/deck'
 import { ageShort, compactNumber, fullDate, pulseAxis, relativeTime } from '@/utils/format'
 import { verdictOf } from '@/utils/verdict'
 
+import { soft } from '@/utils/decisions'
+
 import AppIcon from './AppIcon.vue'
 import ChannelAvatar from './ChannelAvatar.vue'
 import PulseChart from './PulseChart.vue'
@@ -35,15 +37,6 @@ const earlier = computed(() => {
   const applied = props.channel.decision_status === 'applied' && (d === 'mute' || d === 'archive')
   return { decision: d, applied }
 })
-const EARLIER_CLASS: Record<string, string> = {
-  keep: 'bg-success-soft text-success',
-  unsubscribe: 'bg-danger-soft text-danger',
-  mute: 'bg-warn-soft text-warn',
-  archive: 'bg-accent-soft text-accent',
-  transfer: 'bg-danger-soft text-danger',
-  delete: 'bg-danger-soft text-danger',
-  free_link: 'bg-accent-soft text-accent',
-}
 const members = computed(() =>
   props.channel.members_count === null
     ? null
@@ -79,7 +72,7 @@ const rate = computed(() =>
     >
       <!-- met again while rewinding: what was decided for it -->
       <div v-if="earlier" class="-mb-1.5 flex">
-        <span class="tag" :class="EARLIER_CLASS[earlier.decision]">
+        <span class="tag" :class="soft(earlier.decision)">
           {{ t('deck.was') }}: {{ t(`deck.tags.${earlier.decision}`)
           }}<template v-if="earlier.applied"> · {{ t('deck.appliedMark') }}</template>
         </span>

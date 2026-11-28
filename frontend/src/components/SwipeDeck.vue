@@ -6,7 +6,9 @@ import type { Channel, Decision } from '@/api/types'
 import { useNarrow } from '@/composables/useNarrow'
 import type { HistoryEntry } from '@/stores/deck'
 
-import AppIcon, { type IconName } from './AppIcon.vue'
+import { DECISIONS, outline } from '@/utils/decisions'
+
+import AppIcon from './AppIcon.vue'
 import ChannelCard from './ChannelCard.vue'
 
 const props = withDefaults(
@@ -145,56 +147,24 @@ const stamp = computed<{ decision: Decision; strength: number } | null>(() => {
   return null
 })
 
-const STAMPS: Record<Decision, { label: string; icon: IconName; cls: string; pos: string }> = {
-  keep: {
-    label: 'deck.stampKeep',
-    icon: 'check',
-    cls: 'border-success text-success',
-    pos: 'left-5 top-[86px] -rotate-6',
-  },
-  unsubscribe: {
-    label: 'deck.stampLeave',
-    icon: 'x',
-    cls: 'border-danger text-danger',
-    pos: 'right-5 top-[86px] rotate-6',
-  },
-  skip: {
-    label: 'deck.stampSkip',
-    icon: 'skip',
-    cls: 'border-muted text-muted',
-    pos: 'left-1/2 bottom-10 -translate-x-1/2',
-  },
-  mute: {
-    label: 'actions.mute',
-    icon: 'bellOff',
-    cls: 'border-warn text-warn',
-    pos: 'left-1/2 top-1/3 -translate-x-1/2',
-  },
-  archive: {
-    label: 'actions.archive',
-    icon: 'archive',
-    cls: 'border-accent text-accent',
-    pos: 'left-1/2 top-1/3 -translate-x-1/2',
-  },
-  transfer: {
-    label: 'actions.transfer',
-    icon: 'user',
-    cls: 'border-danger text-danger',
-    pos: 'right-5 top-[86px] rotate-6',
-  },
-  delete: {
-    label: 'actions.delete',
-    icon: 'trash',
-    cls: 'border-danger text-danger',
-    pos: 'right-5 top-[86px] rotate-6',
-  },
-  free_link: {
-    label: 'actions.freeLink',
-    icon: 'link',
-    cls: 'border-accent text-accent',
-    pos: 'left-1/2 top-1/3 -translate-x-1/2',
-  },
+/** Where a stamp sits on the card: on the side it flies away from, or in the middle. */
+const STAMP_POS: Record<Decision, string> = {
+  keep: 'left-5 top-[86px] -rotate-6',
+  unsubscribe: 'right-5 top-[86px] rotate-6',
+  transfer: 'right-5 top-[86px] rotate-6',
+  delete: 'right-5 top-[86px] rotate-6',
+  skip: 'left-1/2 bottom-10 -translate-x-1/2',
+  mute: 'left-1/2 top-1/3 -translate-x-1/2',
+  archive: 'left-1/2 top-1/3 -translate-x-1/2',
+  free_link: 'left-1/2 top-1/3 -translate-x-1/2',
 }
+/** A stamp's word: a verdict for the three swipes, the action's own name for the rest. */
+const STAMP_LABEL: Partial<Record<Decision, string>> = {
+  keep: 'deck.stampKeep',
+  unsubscribe: 'deck.stampLeave',
+  skip: 'deck.stampSkip',
+}
+const stampLabel = (decision: Decision) => STAMP_LABEL[decision] ?? DECISIONS[decision].label
 
 function onPointerDown(e: PointerEvent) {
   if (e.button !== 0) return
@@ -332,11 +302,11 @@ defineExpose({ fling, busy, preview })
         <div
           v-if="stamp"
           class="pointer-events-none absolute z-10 flex items-center gap-2 rounded-lg border-2 bg-surface-2 px-3 py-1.5 font-mono text-lg font-bold tracking-wide uppercase"
-          :class="[STAMPS[stamp.decision].cls, STAMPS[stamp.decision].pos]"
+          :class="[outline(stamp.decision), STAMP_POS[stamp.decision]]"
           :style="{ opacity: stamp.strength }"
         >
-          <AppIcon :name="STAMPS[stamp.decision].icon" :size="22" :stroke="3" />
-          {{ t(STAMPS[stamp.decision].label) }}
+          <AppIcon :name="DECISIONS[stamp.decision].icon" :size="22" :stroke="3" />
+          {{ t(stampLabel(stamp.decision)) }}
         </div>
       </div>
       <!-- the next card shows its content only once the top one starts leaving -->

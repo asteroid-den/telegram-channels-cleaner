@@ -11,6 +11,7 @@ import { useHotkeys } from '@/composables/useHotkeys'
 import { useApplyStore } from '@/stores/apply'
 import { useDeckStore } from '@/stores/deck'
 import { actionErrorKind } from '@/utils/errors'
+import { DECISIONS, FILL } from '@/utils/decisions'
 
 const { t } = useI18n()
 const apply = useApplyStore()
@@ -61,16 +62,12 @@ const floodLeft = computed(() =>
     : null,
 )
 
-const BADGE: Record<Decision, { icon: IconName; cls: string; verb: string }> = {
-  unsubscribe: { icon: 'x', cls: 'bg-danger', verb: 'actions.unsubscribe' },
-  // a changed decision that only takes back an applied mute/archive
-  keep: { icon: 'undo', cls: 'bg-faint', verb: 'review.revert' },
-  skip: { icon: 'undo', cls: 'bg-faint', verb: 'review.revert' },
-  mute: { icon: 'bellOff', cls: 'bg-warn', verb: 'actions.mute' },
-  archive: { icon: 'archive', cls: 'bg-accent', verb: 'actions.archive' },
-  transfer: { icon: 'user', cls: 'bg-danger', verb: 'actions.transfer' },
-  delete: { icon: 'trash', cls: 'bg-danger', verb: 'actions.delete' },
-  free_link: { icon: 'link', cls: 'bg-accent', verb: 'actions.freeLink' },
+/** An item's badge: a "keep" (or "later") here only takes back a mute/archive applied earlier. */
+function badge(decision: Decision): { icon: IconName; cls: string; verb: string } {
+  if (decision === 'keep' || decision === 'skip')
+    return { icon: 'undo', cls: FILL.muted, verb: 'review.revert' }
+  const meta = DECISIONS[decision]
+  return { icon: meta.icon, cls: FILL[meta.tone], verb: meta.label }
 }
 
 const avatarUrl = (id: number, hasPhoto: boolean) =>
@@ -152,7 +149,7 @@ function onLeave(el: Element, done: () => void) {
           </h1>
           <p class="mt-1 h-5 truncate text-sm text-muted" aria-live="polite">
             <template v-if="current">
-              {{ t(BADGE[current.decision].verb) }} ·
+              {{ t(badge(current.decision).verb) }} ·
               <span class="text-text">{{ current.title }}</span>
             </template>
           </p>
@@ -226,9 +223,9 @@ function onLeave(el: Element, done: () => void) {
             </div>
             <span
               class="absolute -right-1.5 -bottom-1.5 flex h-7 w-7 items-center justify-center rounded-full text-white ring-[3px] ring-bg"
-              :class="BADGE[item.decision].cls"
+              :class="badge(item.decision).cls"
             >
-              <AppIcon :name="BADGE[item.decision].icon" :size="14" :stroke="3" />
+              <AppIcon :name="badge(item.decision).icon" :size="14" :stroke="3" />
             </span>
             <span
               v-if="item.status === 'running'"
