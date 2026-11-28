@@ -148,8 +148,8 @@ function review() {
         </div>
         <ul v-if="history.length" class="mb-4">
           <li
-            v-for="h in history"
-            :key="`${h.channel.id}-${h.decision}`"
+            v-for="(h, i) in history"
+            :key="deck.history.length - i"
             class="flex items-center gap-2.5 border-b border-dashed border-border py-1.5 text-[13px]"
           >
             <ChannelAvatar

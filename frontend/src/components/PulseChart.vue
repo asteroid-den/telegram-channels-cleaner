@@ -32,7 +32,6 @@ const bars = computed(() => {
     width="100%"
     :height="height"
     preserveAspectRatio="none"
-    role="img"
     aria-hidden="true"
   >
     <rect
@@ -45,7 +44,6 @@ const bars = computed(() => {
       :rx="mini ? 0.5 : 1.5"
       :fill="b.unknown ? 'var(--faint)' : 'currentColor'"
       :opacity="b.opacity"
-      :stroke-dasharray="b.unknown ? '2 2' : undefined"
     />
   </svg>
 </template>
