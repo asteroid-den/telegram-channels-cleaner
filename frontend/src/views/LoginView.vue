@@ -9,7 +9,10 @@ import QrCode from '@/components/QrCode.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 
-const { t, tm, rt } = useI18n()
+const { t, te, tm, rt } = useI18n()
+
+/** `autofocus` works only on the page's first load: these fields come and go with the login step. */
+const vFocus = { mounted: (el: HTMLElement) => el.focus() }
 const auth = useAuthStore()
 const ui = useUiStore()
 const now = useNow({ interval: 1000 })
@@ -60,9 +63,7 @@ function describe(err: unknown): string {
   if (err instanceof ApiError) {
     if (err.type === 'flood_wait') return t('login.errors.flood_wait', { s: err.retryAfter ?? '?' })
     const key = `login.errors.${err.type}`
-    const msg = t(key)
-    if (msg !== key) return msg
-    return t('login.errors.generic', { msg: err.message })
+    return te(key) ? t(key) : t('login.errors.generic', { msg: err.message })
   }
   return t('login.errors.generic', { msg: String(err) })
 }
@@ -214,11 +215,11 @@ watch(
               <span class="text-muted">{{ t('login.phoneLabel') }}</span>
               <input
                 v-model="phone"
+                v-focus
                 type="tel"
                 autocomplete="tel"
                 :placeholder="t('login.phonePlaceholder')"
                 class="rounded-[10px] border border-border-2 bg-surface-3 px-4 py-3 text-base outline-none focus:border-accent"
-                autofocus
               />
             </label>
             <button
@@ -235,11 +236,11 @@ watch(
               <span class="text-muted">{{ t('login.codeLabel') }}</span>
               <input
                 v-model="code"
+                v-focus
                 inputmode="numeric"
                 autocomplete="one-time-code"
                 maxlength="8"
                 class="rounded-[10px] border border-border-2 bg-surface-3 px-4 py-3 text-center font-mono text-2xl tracking-[0.5em] outline-none focus:border-accent"
-                autofocus
               />
             </label>
             <button
@@ -264,10 +265,10 @@ watch(
               <div class="relative">
                 <input
                   v-model="password"
+                  v-focus
                   :type="showPassword ? 'text' : 'password'"
                   autocomplete="current-password"
                   class="w-full rounded-[10px] border border-border-2 bg-surface-3 px-4 py-3 pr-12 text-base outline-none focus:border-accent"
-                  autofocus
                 />
                 <button
                   type="button"
