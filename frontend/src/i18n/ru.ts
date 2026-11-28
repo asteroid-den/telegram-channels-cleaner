@@ -38,6 +38,7 @@ const ru: typeof en = {
     back: 'Назад',
     cancel: 'Отмена',
     retry: 'Повторить',
+    loadFailed: 'Не удалось загрузить: {msg}',
     continue: 'Продолжить',
     loading: 'Загрузка…',
     done: 'Готово',

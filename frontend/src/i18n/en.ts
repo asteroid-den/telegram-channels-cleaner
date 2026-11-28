@@ -37,6 +37,7 @@ export default {
     back: 'Back',
     cancel: 'Cancel',
     retry: 'Retry',
+    loadFailed: 'Couldn’t load it: {msg}',
     continue: 'Continue',
     loading: 'Loading…',
     done: 'Done',

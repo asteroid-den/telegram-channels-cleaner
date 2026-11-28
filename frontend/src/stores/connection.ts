@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-import { heard } from '@/api/client'
+import { heardNow, lastHeard, reopenStreams } from '@/api/client'
 
 import { onComputer } from './network'
 
@@ -22,7 +22,6 @@ export const useConnectionStore = defineStore('connection', () => {
   const back = ref(false)
   let backTimer: ReturnType<typeof setTimeout> | undefined
   let checking = false
-  let reconnect: () => void = () => undefined
 
   async function reachable(): Promise<boolean> {
     // A phone asks about itself: it may have been disconnected on the computer in the meantime
@@ -42,7 +41,7 @@ export const useConnectionStore = defineStore('connection', () => {
   async function check() {
     if (checking) return
     checking = true
-    const quiet = Date.now() - heard.at > QUIET_MS
+    const quiet = Date.now() - lastHeard() > QUIET_MS
     try {
       const ok = await reachable()
       if (!ok) {
@@ -51,24 +50,25 @@ export const useConnectionStore = defineStore('connection', () => {
         return
       }
       const wasOffline = offline.value
-      heard.at = Date.now()
       if (wasOffline) {
         offline.value = false
         back.value = true
         clearTimeout(backTimer)
         backTimer = setTimeout(() => (back.value = false), BACK_SHOWN_MS)
       }
-      // The server is there but the stream went quiet: it died on the way (a sleep, a network change)
-      if (quiet || wasOffline) reconnect()
+      // The server is there but a stream went quiet: it died on the way (a sleep, a network change). Every stream
+      // after being offline; otherwise those gone quiet, whichever they are (the deck's sync, apply, the auth state)
+      if (wasOffline) reopenStreams()
+      else if (quiet) reopenStreams(QUIET_MS)
+      heardNow()
     } finally {
       checking = false
     }
   }
 
-  function start(onReconnect: () => void) {
-    reconnect = onReconnect
+  function start() {
     setInterval(() => {
-      if (offline.value || Date.now() - heard.at > QUIET_MS) void check()
+      if (offline.value || Date.now() - lastHeard() > QUIET_MS) void check()
     }, CHECK_EVERY_MS)
     // Unlocked phone, a tab come back to: ask now instead of waiting for the silence to add up
     document.addEventListener('visibilitychange', () => {

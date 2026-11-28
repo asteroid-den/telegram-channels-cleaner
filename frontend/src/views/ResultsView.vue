@@ -6,16 +6,25 @@ import { api } from '@/api/client'
 import type { Stats } from '@/api/types'
 import AppIcon from '@/components/AppIcon.vue'
 import { useDeckStore } from '@/stores/deck'
+import { useUiStore } from '@/stores/ui'
+import { errorText } from '@/utils/errors'
 import { compactNumber } from '@/utils/format'
 
 const { t, locale } = useI18n()
 const deck = useDeckStore()
+const ui = useUiStore()
 const stats = ref<Stats | null>(null)
+const loadError = ref<string | null>(null)
 
 const AGE_ORDER = ['week', 'month', 'quarter', 'half_year', 'year', 'older', 'never'] as const
 
 async function load() {
-  stats.value = await api.get<Stats>(`/api/stats?kind=${deck.kind}&role=${deck.role}`)
+  loadError.value = null
+  try {
+    stats.value = await api.get<Stats>(`/api/stats?kind=${deck.kind}&role=${deck.role}`)
+  } catch (err) {
+    loadError.value = errorText(err)
+  }
 }
 onMounted(load)
 
@@ -34,7 +43,11 @@ const tiles = computed(() => [
 const ageMax = computed(() => Math.max(1, ...Object.values(stats.value?.last_post_age ?? {})))
 
 async function retryFailed() {
-  await api.post(`/api/decisions/retry-failed?kind=${deck.kind}&role=${deck.role}`)
+  try {
+    await api.post(`/api/decisions/retry-failed?kind=${deck.kind}&role=${deck.role}`)
+  } catch (err) {
+    return ui.toast(errorText(err))
+  }
   await load()
 }
 </script>
@@ -49,7 +62,11 @@ async function retryFailed() {
     </RouterLink>
     <h1 class="text-3xl font-semibold tracking-tight">{{ t('results.title') }}</h1>
 
-    <div v-if="!stats" class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
+    <div v-if="loadError" class="mt-10 flex flex-col items-center gap-3 text-center">
+      <p class="text-danger">{{ t('common.loadFailed', { msg: loadError }) }}</p>
+      <button class="key" @click="load">{{ t('common.retry') }}</button>
+    </div>
+    <div v-else-if="!stats" class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
       <div v-for="i in 6" :key="i" class="skeleton h-24 rounded-xl" />
     </div>
 

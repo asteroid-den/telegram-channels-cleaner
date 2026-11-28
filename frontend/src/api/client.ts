@@ -57,25 +57,64 @@ export const api = {
 
 export type SseHandlers = Record<string, (data: never) => void>
 
-/** When an event stream last said anything, pings included: a quiet stream for long means the server is gone. */
-export const heard = { at: Date.now() }
+interface Stream {
+  /** When it last said anything, pings included: quiet for long, it died on the way or the server is gone. */
+  heard: number
+  reopen: () => void
+}
+
+/** The event streams open now, each able to start over: after a phone's sleep any of them may be dead. */
+const streams = new Set<Stream>()
+
+/** When the quietest open stream last said anything (now, with none open). */
+export function lastHeard(): number {
+  let at = Date.now()
+  for (const stream of streams) at = Math.min(at, stream.heard)
+  return at
+}
+
+/** Opens anew the streams quiet for longer than `ms` (all of them with 0): the server answers, they don't. */
+export function reopenStreams(ms = 0) {
+  const now = Date.now()
+  for (const stream of streams) if (now - stream.heard >= ms) stream.reopen()
+}
+
+/** Marks every stream as just heard: the server was found there by other means. */
+export function heardNow() {
+  for (const stream of streams) stream.heard = Date.now()
+}
 
 export function subscribe(url: string, handlers: SseHandlers): () => void {
-  const source = new EventSource(url)
-  // The server pings every 3 s even when nothing happens
-  source.addEventListener('ping', () => (heard.at = Date.now()))
-  // This phone was disconnected on the computer: back to the pairing screen at once
-  source.addEventListener('revoked', () => {
-    source.close()
-    location.replace('/pair')
-  })
-  for (const [event, handler] of Object.entries(handlers)) {
-    source.addEventListener(event, (e) => {
-      // A server's "error" event shares its name with the browser's own one (a failed reconnect), which has no data
-      if (!(e instanceof MessageEvent)) return
-      heard.at = Date.now()
-      handler(JSON.parse(e.data as string) as never)
+  let source: EventSource
+  const stream: Stream = { heard: Date.now(), reopen: () => (source.close(), open()) }
+
+  function open() {
+    stream.heard = Date.now()
+    source = new EventSource(url)
+    // The server pings every 3 s even when nothing happens
+    source.addEventListener('ping', () => (stream.heard = Date.now()))
+    // This phone was disconnected on the computer: back to the pairing screen at once
+    source.addEventListener('revoked', () => {
+      close()
+      location.replace('/pair')
     })
+    for (const [event, handler] of Object.entries(handlers)) {
+      source.addEventListener(event, (e) => {
+        // A server's "error" event shares its name with the browser's own one (a failed reconnect), which has no
+        // data
+        if (!(e instanceof MessageEvent)) return
+        stream.heard = Date.now()
+        handler(JSON.parse(e.data as string) as never)
+      })
+    }
   }
-  return () => source.close()
+
+  function close() {
+    source.close()
+    streams.delete(stream)
+  }
+
+  open()
+  streams.add(stream)
+  return close
 }

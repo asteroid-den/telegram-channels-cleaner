@@ -58,12 +58,14 @@ const problem = computed(() => {
     : t('phone.errors.other', { reason: s.error })
 })
 
-async function act(action: () => Promise<unknown>) {
+/** `onError`: runs before `busy` drops, so a watch on it already sees what the failure changed. */
+async function act(action: () => Promise<unknown>, onError?: () => void) {
   busy.value = true
   failure.value = null
   try {
     await action()
   } catch (err) {
+    onError?.()
     // The answer of a refused toggle carries no state: the next event or load brings the error with it
     if (err instanceof ApiError && err.type === 'network_unavailable') await network.load()
     else failure.value = err instanceof Error ? err.message : String(err)
@@ -79,15 +81,22 @@ onMounted(async () => {
   ready.value = true
 })
 
+/** When asking for a QR last failed: the next try waits a little, instead of asking again at once, forever. */
+const qrFailedAt = ref(0)
+const QR_RETRY_MS = 5000
+
+const newQr = () => act(network.newPairing, () => (qrFailedAt.value = Date.now()))
+
 // A fresh QR whenever one is due: on opening, once turned on, after the last one ran out or was turned down
 watch(
   () =>
     mode.value === 'pair' &&
     !!state.value?.enabled &&
     !busy.value &&
-    (!pairing.value || secondsLeft.value === 0),
+    (!pairing.value || secondsLeft.value === 0) &&
+    now.value.getTime() - qrFailedAt.value >= QR_RETRY_MS,
   (due) => {
-    if (due) void act(network.newPairing)
+    if (due) void newQr()
   },
 )
 

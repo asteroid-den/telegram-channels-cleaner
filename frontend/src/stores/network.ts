@@ -1,19 +1,27 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-import { api, subscribe } from '@/api/client'
+import { api, ApiError, subscribe } from '@/api/client'
 import type { NetworkState, PairingState } from '@/api/types'
 
 /** The app is open on the computer it runs on: only there can phones be paired (the API says computer_only). */
 export const onComputer = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)
 
-/** In a browser from the network (a phone), the app opens only once that browser is paired. */
-export async function paired(): Promise<boolean> {
+/**
+ * In a browser from the network (a phone), the app opens only once that browser is paired. Not answering is no
+ * answer: a paired phone that lost the computer for a moment (a network hiccup, the app restarting) asks again a few
+ * times before it settles for the pairing screen, which would only confuse it.
+ */
+export async function paired(tries = 5): Promise<boolean> {
   if (onComputer) return true
-  try {
-    return (await api.get<PairingState>('/api/pairing')).status === 'paired'
-  } catch {
-    return false
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return (await api.get<PairingState>('/api/pairing')).status === 'paired'
+    } catch (err) {
+      // The server answered (401 and the like): that is the answer
+      if (err instanceof ApiError || attempt >= tries) return false
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+    }
   }
 }
 

@@ -42,13 +42,6 @@ export const useAuthStore = defineStore('auth', () => {
     })
   }
 
-  /** A fresh stream: the old one may have died quietly while the phone slept. */
-  function reconnect() {
-    unsubscribe?.()
-    unsubscribe = null
-    connect()
-  }
-
   async function refresh() {
     set(await api.get<AuthState>('/api/auth/state'))
   }
@@ -99,7 +92,6 @@ export const useAuthStore = defineStore('auth', () => {
     ready,
     authorized,
     connect,
-    reconnect,
     refresh,
     waitReady,
     startQr,

@@ -24,7 +24,7 @@ onMounted(() => {
   // The pairing screen asks for nothing else: a phone there isn't let in yet
   if (route.name === 'pair') return
   auth.connect()
-  connection.start(auth.reconnect)
+  connection.start()
 })
 
 // Keep the route in line with the auth state (login elsewhere, logout, revoked session…).
