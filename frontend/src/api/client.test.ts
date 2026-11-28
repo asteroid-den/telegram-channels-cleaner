@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { api, ApiError } from './client'
+import { api, ApiError, lastHeard, reopenStreams, subscribe } from './client'
 
 function answer(status: number, body: string) {
   vi.stubGlobal(
@@ -43,5 +43,42 @@ describe('api client', () => {
   it('returns the parsed body on success', async () => {
     answer(200, JSON.stringify({ ok: true }))
     expect(await api.get('/api/health')).toEqual({ ok: true })
+  })
+})
+
+describe('event streams', () => {
+  it('opens anew only the streams gone quiet', () => {
+    vi.useFakeTimers()
+    const opened: string[] = []
+    const sources: { url: string; listeners: Record<string, () => void> }[] = []
+    vi.stubGlobal(
+      'EventSource',
+      class {
+        listeners: Record<string, () => void> = {}
+        url: string
+        constructor(url: string) {
+          this.url = url
+          opened.push(url)
+          sources.push(this)
+        }
+        addEventListener(event: string, fn: () => void) {
+          this.listeners[event] = fn
+        }
+        close() {}
+      },
+    )
+    const closeAuth = subscribe('/auth', {})
+    const closeSync = subscribe('/sync', {})
+    vi.advanceTimersByTime(8000)
+    sources[0]!.listeners.ping!() // the auth stream still pings; the sync one died quietly
+    expect(Date.now() - lastHeard()).toBe(8000)
+    reopenStreams(7000)
+    expect(opened).toEqual(['/auth', '/sync', '/sync'])
+    expect(Date.now() - lastHeard()).toBe(0)
+    closeAuth()
+    closeSync()
+    reopenStreams()
+    expect(opened).toHaveLength(3)
+    vi.useRealTimers()
   })
 })
